@@ -296,7 +296,7 @@
     <div style="background:#F3F4F6;border-radius:10px;padding:8px 10px;margin:0 0 6px"><div id="ownBank" style="background:#fff;border-radius:6px;padding:8px 10px;font-size:11.5px;line-height:1.75;color:#222"></div></div>
     <div class="row" style="margin-top:8px"><button class="pri" onclick="openIssuer(true)">自社情報とロゴを直す</button></div>
   </div>
-  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新167</b>（2026-10-12）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
+  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新168</b>（2026-10-12）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
   <div class="sec" style="margin-top:12px"><h2>備考の定型文（5つ設定可能）</h2>
     <div id="memoEdit"></div>
     <div class="row" style="margin-top:8px"><button class="pri" onclick="saveMemo()">定型文を保存</button></div>
@@ -370,7 +370,7 @@ function bootTimeText(){ const m = LIFFD.ms || {}; const s = k => m[k] == null ?
   return `起動 ${s('render')}（画面 ${s('load')}／前回の内容で表示 ${s('cache')}／本人確認 ${s('auth')}／台帳 ${s('data')}）` + (calls ? `<br>最近の呼び出し：${calls}` : ''); }
 // ② 前回の台帳をスマホに覚えさせ、まず前回の内容で画面を出す（外の置き場だけ。Google側は uid を信じる作りなので使わない）2026-10-11
 let STALE = false, FRESH_PENDING = null, CUR_TAB = 'cases';
-const PAGE_VER = '167';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
+const PAGE_VER = '168';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
 function cacheKey(){ return 'inv_cache_p' + PAGE_VER; }
 function cacheRead(){ try { const o = JSON.parse(localStorage.getItem(cacheKey()) || 'null'); return o && o.uid && o.S && o.S.labels ? o : null; } catch (e) { return null; } }
 function cacheWrite(uid, data){ try { const s = JSON.stringify({ uid, at: Date.now(), S: data }); if (s.length < 4000000) localStorage.setItem(cacheKey(), s); } catch (e) { /* 入らなければ覚えない */ } }
@@ -477,7 +477,7 @@ function viewerAct(ok){ const w = document.createElement('div'); w.className = '
 function run(fn, args, ok, ng){
   if (DEMO) { demoRun(fn, args, ok, ng); return; }
   const t0 = performance.now(); LIFFD.calls = LIFFD.calls || [];
-  srvReal(fn, args).then(r => { LIFFD.calls.push({ fn, ms: Math.round(performance.now() - t0), srv: LIFFD.lastSrvMs || 0, sa: LIFFD.lastSrvAuth || 0 }); if (LIFFD.calls.length > 8) LIFFD.calls.shift(); return r; }).then(ok).catch(err => { spin(false); FINALIZING = false; toast((err && err.message) || String(err)); if (ng) ng(err); });
+  srvReal(fn, args).then(r => { LIFFD.calls.push({ fn, ms: Math.round(performance.now() - t0), srv: LIFFD.lastSrvMs || 0, sa: LIFFD.lastSrvAuth || 0, t: r && r._t }); if (LIFFD.calls.length > 8) LIFFD.calls.shift(); return r; }).then(ok).catch(err => { spin(false); FINALIZING = false; toast((err && err.message) || String(err)); if (ng) ng(err); });
 }
 let DRAFT_ASKED = false;
 /** 途中の書類（前にアプリを閉じたときの下書き）があれば、開くか聞く */
@@ -1502,9 +1502,10 @@ function doFinalize(kind, send){
     FINALIZING = false; spin(false); originId = ''; originNo = ''; FROM_ID = ''; D = emptyDraft(); lastDeleted = null;
     if (res.docs) S.docs = res.docs; if (res.cases) S.cases = res.cases; if (res.customers) S.customers = res.customers;
     closeEd(true); VIEW = '見積'; initMemo('', '見積'); afterLoadDraft(); GSEL = kind === '請求' ? '請求中' : kind === '見積' ? '見積中' : GSEL; showTab('cases');
-    const sent = send && res.pdfUrl; if (sent) { sendDoc(kind + '書', res.no, res.viewUrl || res.pdfUrl, LAST_CUST, `${kind}書ができました（No. ${res.no}　${yen(res.total)}）`, res.total); return; }
-    dialog(`<h3>${kind}書ができました</h3><p>No. ${res.no}<br>${res.adv ? 'ご請求額' : '合計'} ${yen(res.total)}（税込${res.adv ? '・お預かり済 ' + yen(res.adv) + ' を差し引き後' : ''}）<br>${sent ? 'LINEの送り先を選ぶ画面を開きました。お客様を選んで送ってください。<br><small>開かなかったときは、下の「お客様にLINEで送る」から。</small>' : 'お客様には送っていません（「' + kind + 'PDFを送る」で送れます）。'}${res.pdfUrl ? '' : '<br>（PDFの作成に失敗しました。事務所に連絡してください）'}</p>
-      <div class="row" style="flex-wrap:wrap">${res.pdfUrl ? `<button onclick="previewDoc('${res.docId}')">PDFを見る</button>` : ''}${sendBtn(kind + '書', res, LAST_CUST)}<button class="pri" onclick="closeDlg()">現場に戻る</button></div>`);
+    if (res.pdfPending) pdfBuildLater(res.docId);   // PDFは裏で作る（保存の時短 2026-10-12）
+    const sent = send && (res.pdfUrl || res.viewUrl); if (sent) { sendDoc(kind + '書', res.no, res.viewUrl || res.pdfUrl, LAST_CUST, `${kind}書ができました（No. ${res.no}　${yen(res.total)}）`, res.total); return; }
+    dialog(`<h3>${kind}書ができました</h3><p>No. ${res.no}<br>${res.adv ? 'ご請求額' : '合計'} ${yen(res.total)}（税込${res.adv ? '・お預かり済 ' + yen(res.adv) + ' を差し引き後' : ''}）<br>${sent ? 'LINEの送り先を選ぶ画面を開きました。お客様を選んで送ってください。<br><small>開かなかったときは、下の「お客様にLINEで送る」から。</small>' : 'お客様には送っていません（「' + kind + 'PDFを送る」で送れます）。'}${res.pdfUrl || res.pdfPending ? '' : '<br>（PDFの作成に失敗しました。事務所に連絡してください）'}${res.pdfPending ? '<br><small style="color:var(--muted)">PDFは裏で作っています（数秒）。先に次の作業に進めます</small>' : ''}</p>
+      <div class="row" style="flex-wrap:wrap">${res.pdfUrl || res.pdfPending ? `<button onclick="previewDoc('${res.docId}')">PDFを見る</button>` : ''}${sendBtn(kind + '書', res, LAST_CUST)}<button class="pri" onclick="closeDlg()">現場に戻る</button></div>`);
   });
 }
 function closeAll(){ closeDlg(); try { if (!DEV_UID && liff.isInClient()) liff.closeWindow(); } catch (e) { /* 続ける */ } }
@@ -2186,6 +2187,10 @@ function docCard_(kindName, no, url, total, cust, ordPlan, guide){
 const sendBtn = (kindName, res, cust) => (res.viewUrl || res.pdfUrl) ? `<button onclick="sendDoc('${kindName}','${res.no}','${res.viewUrl || res.pdfUrl}','${esc(cust || '').replace(/'/g, '')}','',${+res.total || 0})">📤 お客様にLINEで送る</button>` : '';
 /** 確定した書類を、画面の中で見る（ドライブを開かない。2026-10-05） */
 let PV_DOC = '';   // 確定した書類のプレビューから送るとき（2026-10-07）
+/** 保存のあと、PDFを裏で作る（2026-10-12）。できたら台帳を差し替える。先に「PDFを見る」を押したときはサーバーがその場で作るので待つだけ */
+let PDF_BUILDING = {};
+function pdfBuildLater(id){ if (PDF_BUILDING[id]) return; PDF_BUILDING[id] = true;
+  srvReal('liffDocPdfBuild', [UID, id]).then(r => { delete PDF_BUILDING[id]; if (r && r.docs) { S.docs = r.docs; if (!document.getElementById('edv').classList.contains('on')) try { renderCases(); } catch (e) {} } }).catch(() => { delete PDF_BUILDING[id]; }); }
 function previewDoc(id, send){ if (PV_BUSY) return; PV_BUSY = true; PV_DOC = send ? id : ''; spin(true, '📄 PDFを開いています…'); { const d0 = S.docs.find(x => x.id === id); document.getElementById('pvMsg').textContent = d0 ? docTitle(d0) : ''; }
   run('liffDocPdf', [UID, id], b64 => { showPdf(b64).then(() => { PV_BUSY = false; spin(false); pvMode(send ? 'doc' : ''); document.getElementById('pv').classList.add('on'); })
     .catch(e => { PV_BUSY = false; spin(false); toast('PDFを表示できませんでした：' + ((e && e.message) || e)); }); }, () => { PV_BUSY = false; }); }
