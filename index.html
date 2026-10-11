@@ -296,7 +296,7 @@
     <div style="background:#F3F4F6;border-radius:10px;padding:8px 10px;margin:0 0 6px"><div id="ownBank" style="background:#fff;border-radius:6px;padding:8px 10px;font-size:11.5px;line-height:1.75;color:#222"></div></div>
     <div class="row" style="margin-top:8px"><button class="pri" onclick="openIssuer(true)">自社情報とロゴを直す</button></div>
   </div>
-  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新162</b>（2026-10-12）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
+  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新163</b>（2026-10-12）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
   <div class="sec" style="margin-top:12px"><h2>備考の定型文（5つ設定可能）</h2>
     <div id="memoEdit"></div>
     <div class="row" style="margin-top:8px"><button class="pri" onclick="saveMemo()">定型文を保存</button></div>
@@ -366,7 +366,7 @@ let STEP = '', LIFFD = { hash: '', init: '', client: '', api: '', ms: {} };   //
 const T0 = performance.now(); const tmark = k => { LIFFD.ms[k] = Math.round(performance.now() - T0); };
 /** 起動の秒数を文にする（設定の一番下）。画面＝HTMLが出るまで、本人確認＝LINE、台帳＝Googleの読み込み */
 function bootTimeText(){ const m = LIFFD.ms || {}; const s = k => m[k] == null ? '–' : (m[k] / 1000).toFixed(1) + '秒';
-  const calls = (LIFFD.calls || []).slice(-5).map(c => `${c.fn.replace(/^liff/, '')} ${(c.ms / 1000).toFixed(1)}秒${c.srv ? '（サーバー' + (c.srv / 1000).toFixed(1) + '秒）' : ''}`).join('／');
+  const calls = (LIFFD.calls || []).slice(-5).map(c => `${c.fn.replace(/^liff/, '')} ${(c.ms / 1000).toFixed(1)}秒${c.srv ? '（サーバー' + (c.srv / 1000).toFixed(1) + '秒）' : ''}${c.t ? '［' + Object.keys(c.t).filter(k => k !== 'total').map(k => k + (c.t[k] / 1000).toFixed(1)).join(' ') + '］' : ''}`).join('／');
   return `起動 ${s('render')}（画面 ${s('load')}／前回の内容で表示 ${s('cache')}／本人確認 ${s('auth')}／台帳 ${s('data')}）` + (calls ? `<br>最近の呼び出し：${calls}` : ''); }
 // ② 前回の台帳をスマホに覚えさせ、まず前回の内容で画面を出す（外の置き場だけ。Google側は uid を信じる作りなので使わない）2026-10-11
 let STALE = false, FRESH_PENDING = null, CUR_TAB = 'cases';
@@ -406,8 +406,9 @@ window.addEventListener('load', async () => { stickyTop();
       let logged = false; try { logged = inited && liff.isLoggedIn(); } catch (e) { logged = false; }
       if (logged && SERVER_MODE === 'api') {   // 本人確認（プロフィール）と台帳の読み込みを同時に走らせる。台帳の持ち主はサーバーが id_token で決める（2026-10-11）
         STEP = 'プロフィールと台帳'; let pr = null;
-        try { pr = await withTimeout(Promise.all([liff.getProfile(), srvReal('liffLoad', [''])]), 25000, '台帳の読み込み'); } catch (e) { pr = null; LIFFD.api = '同時読み込み失敗：' + (e && e.message || e); }
-        if (pr) { const uid0 = pr[0].userId; tmark('auth'); tmark('data');
+        const tq = performance.now();
+        try { pr = await withTimeout(Promise.all([liff.getProfile().then(x => { tmark('auth'); return x; }), srvReal('liffLoad', ['']).then(x => { tmark('data'); LIFFD.calls = (LIFFD.calls || []).concat([{ fn: 'liffLoad', ms: Math.round(performance.now() - tq), srv: LIFFD.lastSrvMs || 0, t: x && x._t }]); return x; })]), 25000, '台帳の読み込み'); } catch (e) { pr = null; LIFFD.api = '同時読み込み失敗：' + (e && e.message || e); }
+        if (pr) { const uid0 = pr[0].userId;
           if (STALE && UID && UID !== uid0) { cacheClear(); location.reload(); return; }   // 別の人の前回の内容を出していた → やり直し
           UID = uid0; cacheWrite(UID, pr[1]); STEP = '画面の組み立て';
           if (applyFresh(pr[1])) { try { boot(); } catch (e) { spin(false); dialog(`<h3>起動できませんでした（画面の組み立て）</h3><p>${esc(e.message || e)}</p><div class="row"><button class="pri" onclick="location.reload()">もう一度</button></div>`); return; } }
