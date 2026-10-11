@@ -295,7 +295,7 @@
     <div style="background:#F3F4F6;border-radius:10px;padding:8px 10px;margin:0 0 6px"><div id="ownBank" style="background:#fff;border-radius:6px;padding:8px 10px;font-size:11.5px;line-height:1.75;color:#222"></div></div>
     <div class="row" style="margin-top:8px"><button class="pri" onclick="openIssuer(true)">自社情報とロゴを直す</button></div>
   </div>
-  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新160</b>（2026-10-11）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
+  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新161</b>（2026-10-11）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
   <div class="sec" style="margin-top:12px"><h2>備考の定型文（5つ設定可能）</h2>
     <div id="memoEdit"></div>
     <div class="row" style="margin-top:8px"><button class="pri" onclick="saveMemo()">定型文を保存</button></div>
@@ -2434,15 +2434,15 @@ function drawNewCase(){
 }
 /** 現場を足す（2026-10-07）：最初の画面は「現場名」と「誰の仕事か」だけ。施主名・品目・住所・工期・メモ・支払の希望は「くわしく」に畳む（見積を作るときにも聞ける） */
 function drawNewCase2(){
-  const motoList = S.customers.filter(x => !x.del && x.kubun === '元請'), moto = NC.mode === '元請', many = motoList.length > 8;
-  const chips = motoList.slice(0, 8).map(c => `<button class="${moto && NC.custId === c.id ? 'on' : ''}" onclick="ncPickMoto('${c.id}')">${esc(c.name)}<small>（元請）</small></button>`).join('')
-    + `<button class="${!moto ? 'on' : ''}" onclick="ncWhoMode('施主')">お客様から直接</button><button class="${moto && NC.pickNew ? 'on' : ''}" onclick="ncWhoMode('new')">${many ? '🔍 ほかの元請・＋ 新しい元請' : '＋ 新しい元請'}</button>`;
-  const needPick = !moto || !!NC.pickNew;
+  const moto = NC.mode === '元請';
+  // 2026-10-11：まず「元請から／お客様から直接」の2択 → 下に候補（最近使った5件・名前を打つと絞り込み・一覧にない名前はそのまま）
+  const chips = `<div class="seg" style="margin-bottom:8px"><button class="${moto ? 'on s' : ''}" onclick="ncWhoMode('new')">🏢 元請から</button><button class="${!moto ? 'on' : ''}" onclick="ncWhoMode('施主')">🏠 お客様から直接</button></div>`;
+  const needPick = true;
   const list = S.customers.filter(x => !x.del && (x.kubun === '元請') === moto), word = moto ? '元請' : 'お客様';
   const pick = id => { NC.custId = id; NC.newName = ''; CS.sel = id; CS.neu = ''; csDraw(); ncWords(); };
   const add = nm => { NC.custId = ''; NC.newName = nm; CS.sel = ''; CS.neu = nm; csDraw(); ncWords(); };
   const html = bsHead('＋ ' + L.siteWord + 'を足す')
-    + sec(1, '誰の仕事？', `<div class="pchips">${chips}</div>` + (needPick ? `<div style="margin-top:8px">${csHtml({ list, word, sel: NC.custId, q: NC.q || NC.newName || '', neu: NC.newName || '', pick, add })}</div>` : ''))
+    + sec(1, '誰の仕事？', chips + (needPick ? `<div>${csHtml({ list, word, sel: NC.custId, q: NC.q || NC.newName || '', neu: NC.newName || '', pick, add })}</div>` : ''))
     + sec(2, L.siteWord + '名', `<input id="ncS" placeholder="例：山田様邸 屋根" value="${esc(NC.site || '')}" oninput="NC.site=this.value;wordMark('ncS')"><div id="ncW"></div>`, 'ここまでで登録できます')
     + ncPhotoHtml()
     + `<details class="ncmore" ${NC.moreOpen ? 'open' : ''} ontoggle="NC.moreOpen=this.open"><summary>くわしく（${moto ? L.ownerWord + '名・' : ''}品目・住所・工期・メモ・支払の希望）</summary>`
@@ -2471,7 +2471,7 @@ function ncPhotoView(fid){ const x = (NC.photos_new || []).find(p => p.id === fi
   dialog(`<h3>📷 写真</h3><img src="${PH_CACHE[fid] || ''}" style="width:100%;border-radius:8px"><input id="pvM" maxlength="40" placeholder="一言（例：施工前・雨漏り箇所）" value="${esc(x.memo || '')}" style="margin-top:6px">
     <div class="row"><button class="warn" onclick="NC.photos_new=NC.photos_new.filter(p=>p.id!=='${fid}');closeDlg();drawNewCase()">外す</button><button class="pri" onclick="(NC.photos_new.find(p=>p.id==='${fid}')||{}).memo=document.getElementById('pvM').value.trim().slice(0,40);closeDlg();drawNewCase()">決める</button></div>`); }
 function ncPickMoto(id){ NC.mode = '元請'; NC.custId = id; NC.newName = ''; NC.pickNew = false; NC.q = ''; drawNewCase(); }
-function ncWhoMode(m){ NC.mode = m === '施主' ? '施主' : '元請'; NC.pickNew = m !== '施主'; NC.custId = ''; NC.newName = ''; NC.q = ''; drawNewCase(); }
+function ncWhoMode(m){ const to = m === '施主' ? '施主' : '元請'; if (NC.mode === to && !NC.edit) { drawNewCase(); return; } NC.mode = to; NC.pickNew = m !== '施主'; NC.custId = ''; NC.newName = ''; NC.q = ''; drawNewCase(); }
 function ncWords(){ const w = document.getElementById('ncW'); if (w) w.innerHTML = wordChips('ncS', ncWho()); }
 function saveNewCase(next){
   const c = S.customers.find(x => x.id === NC.custId); const nm = (NC.newName || '').trim();
