@@ -296,7 +296,7 @@
     <div style="background:#F3F4F6;border-radius:10px;padding:8px 10px;margin:0 0 6px"><div id="ownBank" style="background:#fff;border-radius:6px;padding:8px 10px;font-size:11.5px;line-height:1.75;color:#222"></div></div>
     <div class="row" style="margin-top:8px"><button class="pri" onclick="openIssuer(true)">自社情報とロゴを直す</button></div>
   </div>
-  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新168</b>（2026-10-12）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
+  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新169</b>（2026-10-12）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
   <div class="sec" style="margin-top:12px"><h2>備考の定型文（5つ設定可能）</h2>
     <div id="memoEdit"></div>
     <div class="row" style="margin-top:8px"><button class="pri" onclick="saveMemo()">定型文を保存</button></div>
@@ -367,10 +367,10 @@ const T0 = performance.now(); const tmark = k => { LIFFD.ms[k] = Math.round(perf
 /** 起動の秒数を文にする（設定の一番下）。画面＝HTMLが出るまで、本人確認＝LINE、台帳＝Googleの読み込み */
 function bootTimeText(){ const m = LIFFD.ms || {}; const s = k => m[k] == null ? '–' : (m[k] / 1000).toFixed(1) + '秒';
   const calls = (LIFFD.calls || []).slice(-5).map(c => `${c.fn.replace(/^liff/, '')} ${(c.ms / 1000).toFixed(1)}秒${c.srv ? '（サーバー' + (c.srv / 1000).toFixed(1) + '秒' + (c.sa ? '・うち本人確認' + (c.sa / 1000).toFixed(1) : '') + '）' : ''}${c.t ? '［' + Object.keys(c.t).filter(k => k !== 'total').map(k => k + (c.t[k] / 1000).toFixed(1)).join(' ') + '］' : ''}`).join('／');
-  return `起動 ${s('render')}（画面 ${s('load')}／前回の内容で表示 ${s('cache')}／本人確認 ${s('auth')}／台帳 ${s('data')}）` + (calls ? `<br>最近の呼び出し：${calls}` : ''); }
+  return `起動 ${s('render')}（画面 ${s('load')}／前回の内容で表示 ${s('cache')}／本人確認 ${s('auth')}／台帳 ${s('data')}）` + (calls ? `<br>最近の呼び出し：${calls}` : '') + `<br>しらべ：LIFF起動 ${esc(LIFFD.init || '未')}／LINEの中 ${esc(LIFFD.client || '?')}／カード機能 ${esc(LIFFD.api || '?')}`; }
 // ② 前回の台帳をスマホに覚えさせ、まず前回の内容で画面を出す（外の置き場だけ。Google側は uid を信じる作りなので使わない）2026-10-11
 let STALE = false, FRESH_PENDING = null, CUR_TAB = 'cases';
-const PAGE_VER = '168';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
+const PAGE_VER = '169';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
 function cacheKey(){ return 'inv_cache_p' + PAGE_VER; }
 function cacheRead(){ try { const o = JSON.parse(localStorage.getItem(cacheKey()) || 'null'); return o && o.uid && o.S && o.S.labels ? o : null; } catch (e) { return null; } }
 function cacheWrite(uid, data){ try { const s = JSON.stringify({ uid, at: Date.now(), S: data }); if (s.length < 4000000) localStorage.setItem(cacheKey(), s); } catch (e) { /* 入らなければ覚えない */ } }
@@ -2158,7 +2158,7 @@ function shareDlg(o){ SHARE = o; const pick = canPick() && !o.noPick;
   dialog(`<h3>${esc(o.title)}</h3>${o.head ? `<p style="color:var(--ok);font-weight:800">✓ ${esc(o.head)}</p>` : ''}${o.warn ? `<div class="hint" style="background:#FFF8E1;border:1.5px solid #F0D27A;border-radius:10px;padding:8px 10px;color:#7A5A00;margin:0 0 6px">⚠ ${esc(o.warn)}</div>` : ''}
     ${o.docId ? `<div class="row" style="margin:0 0 6px"><button style="flex:1;color:var(--blue)" onclick="previewDoc('${o.docId}')">📄 PDFをプレビュー（自分で確かめる）</button></div>` : ''}
     <textarea id="shT" rows="7" style="font-size:13.5px;line-height:1.6" oninput="shareHref()">${esc(o.text)}</textarea>
-    ${o.url ? `<div class="hint" style="margin-top:2px">${pick && o.card ? '文の下に「📄 PDFを開く」ボタン付きのカードが付きます' : '文の最後に、PDFを開くリンクが付きます<br><span style="color:#7A5A00">※ LINEのメニュー（liff.line.me のURL）から開くと、リンクの代わりに「📄 PDFを開く」ボタン付きのカードで送れます</span><br><span style="font-size:11px;color:#999">しらべ：LIFF起動 ' + esc(LIFFD.init || '未') + '／LINEの中 ' + esc(LIFFD.client || '?') + '／カード機能 ' + esc(LIFFD.api || '?') + '／枠の外の印 ' + esc(LIFFD.hash || '?') + '</span>'}</div>` : ''}
+    ${o.url ? `<div class="hint" style="margin-top:2px">${pick && o.card ? '文の下に「📄 PDFを開く」ボタン付きのカードが付きます' : '文の最後に、PDFを開くリンクが付きます<br><span style="color:#7A5A00">※ LINEのメニュー（liff.line.me のURL）から開くと、リンクの代わりに「📄 PDFを開く」ボタン付きのカードで送れます</span>'}</div>` : ''}
     <div id="shGo">${DEMO ? '<div class="hint" style="text-align:center;padding:10px;border:1.5px dashed var(--line);border-radius:12px">🎓 お試し中は送れません。本番では、ここで「📤 LINEで送り先を選ぶ」を押すとLINEの送り先選びが開きます</div>' : pick ? `<button class="sendln" style="width:100%;border:none;font-family:inherit" onclick="sharePick()">📤 LINEで送り先を選ぶ${o.warn ? '（再送）' : ''}</button>` : shareLink()}</div>
     <div class="row"><button onclick="closeDlg()">閉じる</button></div>`); }
 function shareText(){ const t = (document.getElementById('shT') || {}).value || SHARE.text; return t.trim(); }
