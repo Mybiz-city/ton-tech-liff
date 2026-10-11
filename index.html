@@ -296,7 +296,7 @@
     <div style="background:#F3F4F6;border-radius:10px;padding:8px 10px;margin:0 0 6px"><div id="ownBank" style="background:#fff;border-radius:6px;padding:8px 10px;font-size:11.5px;line-height:1.75;color:#222"></div></div>
     <div class="row" style="margin-top:8px"><button class="pri" onclick="openIssuer(true)">自社情報とロゴを直す</button></div>
   </div>
-  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新163</b>（2026-10-12）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
+  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新164</b>（2026-10-12）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
   <div class="sec" style="margin-top:12px"><h2>備考の定型文（5つ設定可能）</h2>
     <div id="memoEdit"></div>
     <div class="row" style="margin-top:8px"><button class="pri" onclick="saveMemo()">定型文を保存</button></div>
@@ -818,11 +818,16 @@ function subjAuto(){ const g = period(); if (VIEW === '請求' && g) return (+g.
   return '見積日 ' + jpd(issueYmd()) + '分' + (D.sites.length === 1 && D.sites[0].name ? ' ' + D.sites[0].name : ''); }
 const closeText = r => (r.close === '末日' || !r.close ? '末日' : r.close + '日') + '締め・' + (r.payMonth || '翌月') + (r.payDay === '末日' || !r.payDay ? '末日' : r.payDay + '日') + '払い';
 const issuerNow = () => Object.assign({}, S.iss || {}, D.issuer || {});
-function totals(){ const rate = (S.taxRate || 10) / 100; let sub = 0;
-  D.sites.forEach(s => s.items.forEach(r => { const p = D.tax_included ? Math.round((r.unit_price || 0) / (1 + rate)) : (r.unit_price || 0); sub += Math.round(p * (r.qty || 0)); }));
+function totals(){ const rate = (S.taxRate || 10) / 100; let sub = 0; const adv = VIEW === '請求' && D.advance && D.advance.amount > 0 ? Math.round(D.advance.amount) : 0;
+  if (D.incl_total) {   // 税込固定（着手金・中間金の請求書 2026-10-12）：入れた税込金額が合計。消費税は税込からの割り戻し
+    let total = 0; D.sites.forEach(s => s.items.forEach(r => { total += Math.round((r.unit_price || 0) * (r.qty || 0)); }));
+    const rp = S.taxRate || 10; const tax = taxR(total * rp / (100 + rp)); return { sub: total - tax, tax, total, rate: rp, adv, bill: Math.max(0, total - adv) }; }
+  D.sites.forEach(s => s.items.forEach(r => { sub += Math.round(netPrice(r) * (r.qty || 0)); }));
   sub -= discAmt();
   const tax = S.rounding === '四捨五入' ? Math.round(sub * rate) : S.rounding === '切上げ' ? Math.ceil(sub * rate) : Math.floor(sub * rate);
-  return { sub, tax, total: sub + tax, rate: S.taxRate || 10 }; }
+  return { sub, tax, total: sub + tax, rate: S.taxRate || 10, adv, bill: Math.max(0, sub + tax - adv) }; }
+/** 行の税抜単価（税込で入れた書類は税抜に直す） */
+const netPrice = r => { const rate = (S.taxRate || 10) / 100; return D.tax_included || D.incl_total ? Math.round((r.unit_price || 0) / (1 + rate)) : (r.unit_price || 0); };
 const pph = t => `<span class="pph">${t}</span>`;
 const discAmt = () => D.discount && D.discount.amount > 0 ? Math.round(D.discount.amount) : 0;
 /** 発行者のかたまり（サーバーの liffIssuerBlock_ と同じ並び。空の行は詰める）。edit＝true でロゴの置き場の案内を出す */
@@ -853,10 +858,10 @@ function render(){
   const custName = c ? esc(c.name) + ' ' + esc(c.honor || '') : D.customer.name ? esc(D.customer.name) + ' ' + (moto ? '御中' : '様') : pph(moto ? '元請を選ぶ' : 'お客様を選ぶ');
   const auto = moto && D.subject_auto !== false;
   const subj = auto ? esc(subjAuto()) + '<span class="pmut">（自動）</span>' : D.subject ? esc(D.subject) : pph('件名を入れる');
-  let rows = '', n = 0;
+  let rows = '', n = 0, accNet = 0;
   D.sites.forEach((s, si) => {
     if (moto || D.sites.length > 1) rows += `<tr class="psite"><td colspan="5"><span class="ped" onclick="openSite(${si})">■ ${s.name ? esc(s.name) : pph(L.siteWord + '名')}${s.owner ? '（' + L.ownerWord + '：' + esc(s.owner) + ' 様）' : ''}</span></td></tr>`;
-    s.items.forEach((r, i) => { n++; const p = D.tax_included ? Math.round((r.unit_price || 0) / (1 + rate)) : (r.unit_price || 0);
+    s.items.forEach((r, i) => { n++; const p = D.incl_total && i === s.items.length - 1 && si === D.sites.length - 1 ? k.sub - accNet : netPrice(r); accNet += Math.round(p * (r.qty || 0));
       rows += `<tr class="prow${SORT ? ' srt' : ''}"${SORT ? '' : ` onclick="openRow(${si},${i})"`}><td class="pc">${SORT ? `<button class="smv" onclick="mvRow(${si},${i},-1)"${i ? '' : ' disabled'}>▲</button><button class="smv" onclick="mvRow(${si},${i},1)"${i < s.items.length - 1 ? '' : ' disabled'}>▼</button>` : n}</td><td>${r.name ? esc(r.name) : pph('品目を入れる')}</td><td class="pr">${r.qty} ${esc(unitN(r.unit))}</td><td class="pr">${p || !r.name ? yen(p) : '<span class="pzero">単価を入れる</span>'}</td><td class="pr">${yen(Math.round(p * (r.qty || 0)))}</td></tr>`; });
     rows += SORT ? `<tr class="padd srt"><td colspan="5" onclick="SORT=false;render()">✓ 並べ替えを終わる</td></tr>` : `<tr class="padd">${s.items.length > 1 ? `<td class="psrt" onclick="SORT=true;render()">↕<br>並べ替え</td>` : ''}<td colspan="${s.items.length > 1 ? 4 : 5}" onclick="addRow(${si})">＋ 行を足す</td></tr>`;
   });
@@ -883,13 +888,14 @@ function render(){
         <div class="piss ped" onclick="openIssuer()">${issuerBlockHtml(iss, true)}</div>
       </div>
     </div>
-    <div class="pbig"><span class="lb">${VIEW === '見積' ? '御見積金額' : '御請求金額'}</span><span class="v">${yen(k.total)}<span class="sm">（税込）（内、消費税 ${yen(k.tax)}）</span></span></div>
+    <div class="pbig"><span class="lb">${VIEW === '見積' ? '御見積金額' : '御請求金額'}</span><span class="v">${yen(k.adv ? k.bill : k.total)}<span class="sm">（税込）${k.adv ? '' : `（内、消費税 ${yen(k.tax)}）`}</span></span></div>
     ${splitNote}<table class="pit">
       <tr><th style="width:6%">No.</th><th>品目</th><th style="width:15%">数量</th><th style="width:18%">単価（税抜）</th><th style="width:19%">金額（税抜）</th></tr>
       ${rows}
       <tr class="ptot"><td colspan="4" class="pr">小計（税抜）</td><td class="pr">${yen(k.sub)}</td></tr>
       <tr class="ptot"><td colspan="4" class="pr">消費税（${k.rate}%）</td><td class="pr">${yen(k.tax)}</td></tr>
       <tr class="ptot"><td colspan="4" class="pr">合計（税込）</td><td class="pr">${yen(k.total)}</td></tr>
+      ${k.adv ? `<tr class="ptot"><td colspan="4" class="pr">${esc(D.advance.names || '着手金・中間金')}（お預かり済・${esc((D.advance.nos || []).join('・'))}）</td><td class="pr">▲${yen(k.adv)}</td></tr><tr class="ptot"><td colspan="4" class="pr">今回ご請求額</td><td class="pr">${yen(k.bill)}</td></tr>` : ''}
     </table>
     ${bdHtml()}
     ${VIEW === '見積' ? stageHtml(k) : ''}
@@ -1285,7 +1291,7 @@ const kindOf = r => KINDS.includes(r.kind) ? r.kind : kindGuess(r.name);
 /** 内訳（材料費・労務費・経費）を出すか。未指定なら元請あてだけ出す（2026-10-07） */
 function bdOn(){ return D.breakdown === true || D.breakdown === false ? D.breakdown : !!S.bdDefault; }   // 標準は出さない。設定「内訳の初期値」が「出す」なら最初から出す（2026-10-08）
 function bdSums(){ const rate = (S.taxRate || 10) / 100, s = { '材料': 0, '労務': 0, '経費': 0 };
-  D.sites.forEach(x => x.items.forEach(r => { if (!r.name) return; const p = D.tax_included ? Math.round((r.unit_price || 0) / (1 + rate)) : (r.unit_price || 0); s[kindOf(r)] += Math.round(p * (r.qty || 0)); }));
+  D.sites.forEach(x => x.items.forEach(r => { if (!r.name) return; const p = netPrice(r); s[kindOf(r)] += Math.round(p * (r.qty || 0)); }));
   const wr = (S.welfareRate === 0 || S.welfareRate === '0') ? 0 : (S.welfareRate || 15); const c = S.cases.find(x => x.id === (D.sites[0] || {}).case_id); const tm = c && c.term ? c.term : null;
   const md = v => v ? (+v.slice(5, 7)) + '月' + (+v.slice(8, 10)) + '日' : '';
   const term = tm ? (tm.mode === 'date' && (tm.start || tm.end) ? (md(tm.start) || '') + '〜' + (md(tm.end) || '') + '（予定）' : tm.days ? '約' + tm.days + '日間' : '') : '';
@@ -1358,8 +1364,8 @@ function itemPickHtml(q){ q = normQ(q); const cur = ROW && ROW.r ? ROW.r.item_id
     return `<details class="ipb" ${op ? 'open' : ''} ontoggle="IP_OPEN['${esc(k)}']=this.open"><summary>${esc(B.big)}<small>${n}</small></summary>${B.gs.map(mid).join('')}</details>`; }).join('');
   return h; }
 function itemPickDraw(q){ const b = document.getElementById('rPick'); if (b) b.innerHTML = itemPickHtml(q); }
-function rowAmt(){ const rate = (S.taxRate || 10) / 100; const p = D.tax_included ? Math.round((ROW.r.unit_price || 0) / (1 + rate)) : (ROW.r.unit_price || 0);
-  document.getElementById('rA').textContent = '金額 ' + yen(Math.round(p * (ROW.r.qty || 0))) + '（税抜）'; }
+function rowAmt(){ const p = netPrice(ROW.r);
+  document.getElementById('rA').textContent = D.incl_total ? '税込 ' + yen(Math.round((ROW.r.unit_price || 0) * (ROW.r.qty || 0))) + '（入れた金額がそのまま請求額）' : '金額 ' + yen(Math.round(p * (ROW.r.qty || 0))) + '（税抜）'; }
 function saveRow(){ const r = ROW.r; r.name = String(r.name || '').trim(); if (!r.item_id) { const m = S.items.find(x => x.name === r.name); if (m) r.item_id = m.id; }
   D.sites[ROW.si].items[ROW.i] = r; closeBs(); render(); }
 function delRow(){ const it = D.sites[ROW.si].items; lastDeleted = { si: ROW.si, i: ROW.i, row: it[ROW.i] }; it.splice(ROW.i, 1);
@@ -1491,7 +1497,7 @@ function doFinalize(kind, send){
     if (res.docs) S.docs = res.docs; if (res.cases) S.cases = res.cases; if (res.customers) S.customers = res.customers;
     closeEd(true); VIEW = '見積'; initMemo('', '見積'); afterLoadDraft(); GSEL = kind === '請求' ? '請求中' : kind === '見積' ? '見積中' : GSEL; showTab('cases');
     const sent = send && res.pdfUrl; if (sent) { sendDoc(kind + '書', res.no, res.viewUrl || res.pdfUrl, LAST_CUST, `${kind}書ができました（No. ${res.no}　${yen(res.total)}）`, res.total); return; }
-    dialog(`<h3>${kind}書ができました</h3><p>No. ${res.no}<br>合計 ${yen(res.total)}（税込）<br>${sent ? 'LINEの送り先を選ぶ画面を開きました。お客様を選んで送ってください。<br><small>開かなかったときは、下の「お客様にLINEで送る」から。</small>' : 'お客様には送っていません（「' + kind + 'PDFを送る」で送れます）。'}${res.pdfUrl ? '' : '<br>（PDFの作成に失敗しました。事務所に連絡してください）'}</p>
+    dialog(`<h3>${kind}書ができました</h3><p>No. ${res.no}<br>${res.adv ? 'ご請求額' : '合計'} ${yen(res.total)}（税込${res.adv ? '・お預かり済 ' + yen(res.adv) + ' を差し引き後' : ''}）<br>${sent ? 'LINEの送り先を選ぶ画面を開きました。お客様を選んで送ってください。<br><small>開かなかったときは、下の「お客様にLINEで送る」から。</small>' : 'お客様には送っていません（「' + kind + 'PDFを送る」で送れます）。'}${res.pdfUrl ? '' : '<br>（PDFの作成に失敗しました。事務所に連絡してください）'}</p>
       <div class="row" style="flex-wrap:wrap">${res.pdfUrl ? `<button onclick="previewDoc('${res.docId}')">PDFを見る</button>` : ''}${sendBtn(kind + '書', res, LAST_CUST)}<button class="pri" onclick="closeDlg()">現場に戻る</button></div>`);
   });
 }
@@ -2101,26 +2107,28 @@ const payMemoText = q => ppText(q);
 
 // ============ 支払の分け方（着手金・中間金・完成時）：相談・見積・注文で同じ部品を使う
 const PP_ROWS = [['order', '着手金', '注文時'], ['mid', '中間金', '中間時']];
+/** 段の税込金額。新しい段（incl あり）は入れた金額そのまま。古い段（incl なし）は税抜で持っていたので税込に直す（2026-10-12） */
+const stgAmt = x => x.incl ? Math.round(x.amount || 0) : inclTax(Math.round(x.amount || 0));
 const ppNew = () => ({ order: { on: false, method: '口座振込', pct: 0, amount: 0 }, mid: { on: false, method: '口座振込', pct: 0, amount: 0 }, done: { method: '口座振込' }, note: '' });
 /** 書類の stages（と相談の支払メモ q）から、編集用の形にする */
 function ppFrom(st, dm, q){ const p = ppNew();
-  (st || []).forEach(x => { const k = /中間/.test((x.name || '') + (x.when || '')) ? 'mid' : 'order'; p[k] = { on: true, method: x.method || '口座振込', pct: x.pct || 0, amount: x.amount || 0 }; });
+  (st || []).forEach(x => { const k = /中間/.test((x.name || '') + (x.when || '')) ? 'mid' : 'order'; p[k] = { on: true, method: x.method || '口座振込', pct: x.pct || 0, amount: stgAmt(x) }; });
   if (!(st || []).length && q) PP_ROWS.forEach(([k]) => { const v = q[k]; if (v && (v === true || v.on)) p[k] = { on: true, method: (v.method) || ((q.method || [])[0]) || '口座振込', pct: v.pct || 0, amount: 0 }; });
   p.done.method = dm || (q && q.done && q.done.method) || (q && (q.method || [])[0]) || '口座振込'; if (q && q.note) p.note = q.note; return p; }
-function ppStages(p, sub){ return PP_ROWS.filter(([k]) => p[k].on).map(([k, n, w]) => { const x = p[k]; return { name: n, when: w, pct: x.pct || 0, method: x.method, amount: x.pct && sub > 0 ? Math.round(sub * x.pct / 100) : Math.round(x.amount || 0) }; }); }
-/** 編集画面（path＝'NC.pay' など、redraw＝描き直し、sub＝工事の税抜合計。0なら割合だけ） */
+function ppStages(p, total){ return PP_ROWS.filter(([k]) => p[k].on).map(([k, n, w]) => { const x = p[k]; return { name: n, when: w, pct: x.pct || 0, method: x.method, amount: x.pct && total > 0 ? Math.round(total * x.pct / 100) : Math.round(x.amount || 0), incl: true }; }); }
+/** 編集画面（path＝'NC.pay' など、redraw＝描き直し、total＝工事の税込合計。0なら割合だけ）。金額は税込でそのまま（2026-10-12） */
 function ppEd(path, redraw, sub){ const p = eval(path);
   const mch = k => ['口座振込', '現金'].map(m => `<button class="${p[k].method === m ? 'on' : ''}" onclick="${path}.${k}.method='${m}';${redraw}">${p[k].method === m ? '☑' : '☐'} ${m}</button>`).join('');
   const st = t => `<div class="ppst">${t}</div>`;
   const row = ([k, n, w]) => { const x = p[k];
     return `<div class="ppbox${x.on ? ' on' : ''}"><button class="pph2" onclick="${path}.${k}.on=!${path}.${k}.on;${redraw}">${x.on ? '☑' : '☐'} ${n}<small>（${w}）</small></button>`
       + (x.on ? st('支払方法') + `<div class="pchips">${mch(k)}</div>` + st('割合') + `<div class="pchips">${[30, 50].map(pc => `<button class="${x.pct === pc ? 'on' : ''}" onclick="${path}.${k}.pct=${path}.${k}.pct===${pc}?0:${pc};${redraw}">${x.pct === pc ? '☑' : '☐'} ${pc / 10}割</button>`).join('')}</div>`
-        + (sub > 0 ? `<div class="drow" style="margin-top:6px"><input type="number" inputmode="numeric" placeholder="金額（割合を使わないとき・税抜）" value="${x.pct ? Math.round(sub * x.pct / 100) : (x.amount || '')}" oninput="${path}.${k}.amount=Math.round(+this.value||0);${path}.${k}.pct=0;ppSum('${path}',${sub})"><span id="pp_${k}" style="min-width:118px;text-align:right;font-size:13px"></span></div>` : '') : '') + `</div>`; };
+        + (sub > 0 ? `<div class="drow" style="margin-top:6px"><input type="number" inputmode="numeric" placeholder="金額（税込・そのまま）" value="${x.pct ? Math.round(sub * x.pct / 100) : (x.amount || '')}" oninput="${path}.${k}.amount=Math.round(+this.value||0);${path}.${k}.pct=0;ppSum('${path}',${sub})"><span id="pp_${k}" style="min-width:60px;text-align:right;font-size:12px;color:var(--muted)">税込</span></div>` : '') : '') + `</div>`; };
   setTimeout(() => ppSum(path, sub), 0);
   return PP_ROWS.map(row).join('') + `<div class="ppbox on"><div class="pph2">☑ ${p.order.on || p.mid.on ? '残金' : '一括'}<small>（完成時）</small></div>${st('支払方法')}<div class="pchips">${mch('done')}</div>${st('金額')}<div style="font-size:12.5px;color:var(--muted)" id="pp_done">自動で計算します（工事の金額 − 着手金・中間金）</div></div>`; }
-function ppSum(path, sub){ const p = eval(path); if (!(sub > 0)) return; const st = ppStages(p, sub); let used = 0;
-  PP_ROWS.forEach(([k, n]) => { const s = st.find(x => x.name === n); const el = document.getElementById('pp_' + k); if (s) used += inclTax(s.amount); if (el) el.textContent = s && s.amount ? '税込 ' + yen(inclTax(s.amount)) : ''; });
-  const d = document.getElementById('pp_done'); if (d) { const r = inclTax(sub) - used; d.textContent = '完成時 ' + yen(r) + '（税込・自動計算）'; d.style.color = r < 0 ? 'var(--danger)' : ''; } }
+function ppSum(path, total){ const p = eval(path); if (!(total > 0)) return; const st = ppStages(p, total); let used = 0;
+  PP_ROWS.forEach(([k, n]) => { const s = st.find(x => x.name === n); if (s) used += s.amount; });
+  const d = document.getElementById('pp_done'); if (d) { const r = total - used; d.textContent = '完成時 ' + yen(r) + '（税込・自動計算）'; d.style.color = r < 0 ? 'var(--danger)' : ''; } }
 const ppText = p => !p ? '' : [...PP_ROWS.filter(([k]) => p[k] && (p[k] === true || p[k].on)).map(([k, n, w]) => `${n}（${w}）${p[k].pct ? p[k].pct / 10 + '割' : ''}${p[k].method ? '・' + p[k].method : ''}`), (p.order && (p.order === true || p.order.on)) || (p.mid && (p.mid === true || p.mid.on)) ? `完成時（残金）${p.done && p.done.method ? '・' + p.done.method : ''}` : (p.done && p.done.method ? '完成時一括・' + p.done.method : ''), (p.method || []).join('・'), p.note || ''].filter(String).join('／');
 /** お客様へ LINE で送る（LINEの「送り先を選ぶ」画面が開く） */
 /** 送る（2026-10-06）：PDFの準備のあと自動でLINEを開くと、スマホが「押していないのに開いた」と止めることがある。
@@ -2188,19 +2196,19 @@ function resendDoc(id){ const d = S.docs.find(x => x.id === id); if (!d) return;
 // ============ 着手金・中間金（ふだんは出さない。「＋ 着手金・中間金を分ける」から足す）
 const taxR = x => S.rounding === '四捨五入' ? Math.round(x) : S.rounding === '切上げ' ? Math.ceil(x) : Math.floor(x);
 const inclTax = sub => sub + taxR(sub * (S.taxRate || 10) / 100);
-function stageHtml(k){ const st = D.stages || []; st.forEach(x => { if (x.pct) x.amount = Math.round(k.sub * x.pct / 100); });
+function stageHtml(k){ const st = D.stages || []; st.forEach(x => { if (x.pct) { x.amount = Math.round(k.total * x.pct / 100); x.incl = true; } });   // 割合の段は税込合計から（2026-10-12）
   if (!st.length) return `<div class="pstgadd" onclick="openStages()">＋ 着手金・中間金を分ける</div>`;
-  let used = 0; const rows = st.map(x => { const v = inclTax(x.amount || 0); used += v; return `<tr><td>${esc(x.name)}${x.pct ? '（' + x.pct / 10 + '割）' : ''}</td><td>${esc(x.when || '')}</td><td>${esc(x.method || '')}</td><td class="pr">${x.amount ? yen(v) : pph('金額')}</td></tr>`; }).join('');
+  let used = 0; const rows = st.map(x => { const v = stgAmt(x); used += v; return `<tr><td>${esc(x.name)}${x.pct ? '（' + x.pct / 10 + '割）' : ''}</td><td>${esc(x.when || '')}</td><td>${esc(x.method || '')}</td><td class="pr">${x.amount ? yen(v) : pph('金額')}</td></tr>`; }).join('');
   return `<div class="pstg ped" onclick="openStages()"><div class="pnl">お支払い予定（税込）</div><table>${rows}<tr><td>残金</td><td>工事完成時</td><td>${esc(D.done_method || '')}</td><td class="pr">${yen(k.total - used)}</td></tr></table></div>`; }
 let PPE = null;
 function openStages(){ const c = S.cases.find(x => x.id === ((D.sites || [])[0] || {}).case_id) || {};
   PPE = ppFrom(D.stages, D.done_method, c.pay); if (!PPE.order.on && !PPE.mid.on) PPE.order.on = true; bsOpen(''); drawStages(); }
 function drawStages(){ const k = totals();
-  bsSet(bsHead('お支払いの分け方') + `<div class="hint" style="margin:0 0 4px">工事の合計 ${yen(k.total)}（税抜 ${yen(k.sub)}）。チェックで選びます。割合（3割・5割）を選ぶと、明細を直しても金額が自動で変わります。完成時の金額は自動計算。見積書・注文書の「お支払い予定」に入り、請求書を作るときに「着手金を請求」のように選べます。</div>`
-    + sec(1, '分け方と払い方', ppEd('PPE', 'drawStages()', k.sub)) + bsBtns('saveStages()', D.stages && D.stages.length ? 'D.stages=[];D.done_method=\'\';closeBs();render()' : '')); }
-function saveStages(){ const k = totals(); const st = ppStages(PPE, k.sub);
+  bsSet(bsHead('お支払いの分け方') + `<div class="hint" style="margin:0 0 4px">工事の合計 ${yen(k.total)}（税込）。チェックで選びます。金額は税込で入れた数字がそのまま請求書になります。割合（3割・5割）を選ぶと、明細を直しても金額が自動で変わります。完成時の金額は自動計算。見積書・注文書の「お支払い予定」に入り、請求書を作るときに「着手金を請求」のように選べます。</div>`
+    + sec(1, '分け方と払い方', ppEd('PPE', 'drawStages()', k.total)) + bsBtns('saveStages()', D.stages && D.stages.length ? 'D.stages=[];D.done_method=\'\';closeBs();render()' : '')); }
+function saveStages(){ const k = totals(); const st = ppStages(PPE, k.total);
   if (st.some(x => !x.amount)) { toast('金額か割合を入れてください（使わないものはチェックを外す）'); return; }
-  if (st.reduce((a, x) => a + x.amount, 0) >= k.sub && st.length) { toast('分けた金額が工事の合計（税抜）以上になっています'); return; }
+  if (st.reduce((a, x) => a + x.amount, 0) >= k.total && st.length) { toast('分けた金額が工事の合計（税込）以上になっています'); return; }
   D.stages = st; D.done_method = PPE.done.method; closeBs(); render(); }
 
 // ============ 見積の結果（受注・失注）
@@ -2255,16 +2263,16 @@ function ordStart(estId, saved, originId, originNo){ const e = S.docs.find(x => 
     if (sr.clauses && !sr.lv) Object.keys(sr.clauses).forEach(k => { if (sr.clauses[k] === false) OD.rules.lv[k] = 'off'; });
     OD.plan = ppFrom(st0, (saved && saved.done_method) || ini.done_method, st0.length ? null : q);
     document.getElementById('ordv').classList.add('on'); drawOrd(); }); }
-function ordStages(){ return OI.change ? [] : ppStages(OD.plan, OI.sub).filter(x => x.amount > 0); }
+function ordStages(){ return OI.change ? [] : ppStages(OD.plan, OI.total).filter(x => x.amount > 0); }
 function ordPayText(){ const tot = OI.total, dm = OD.plan.done.method ? '（' + OD.plan.done.method + '）' : ''; const st = ordStages();
-  if (!st.length) return '工事完成時に一括 ' + yen(tot) + dm; let used = 0; const parts = st.map(x => { const v = inclTax(x.amount); used += v; return x.when + ' ' + yen(v) + (x.method ? '（' + x.method + '）' : ''); });
+  if (!st.length) return '工事完成時に一括 ' + yen(tot) + dm; let used = 0; const parts = st.map(x => { const v = stgAmt(x); used += v; return x.when + ' ' + yen(v) + (x.method ? '（' + x.method + '）' : ''); });
   return parts.join('、') + '、工事完成時 ' + yen(tot - used) + dm; }
 function drawOrd(){ const ch = OI.change, e = OI.est; const r = OD.rules; const lvs = ORD_CL.map(c => r.lv[c[0]] || 'std'); const nSoft = lvs.filter(v => v !== 'std').length, nSvc = ordSvcLines().length;
   const ed = (k, th, v, ph) => `<tr class="ed" onclick="ordSheet('${k}')"><th>${th}</th><td>${v ? v : `<span class="pph">${ph || 'タップして入れる'}</span>`}</td></tr>`;
   const money = ch ? `<tr><th>変更前の請負代金額</th><td>${yen(ch.before)}（税込）<br><small>元の注文書 ${esc(ch.baseNo)}</small></td></tr><tr><th>今回の増減額</th><td><b>${OI.total >= 0 ? '＋' : ''}${yen(OI.total)}</b>（税込）</td></tr><tr><th>変更後の請負代金額</th><td><b>${yen(ch.before + OI.total)}</b>（税込）</td></tr>`
     : `<tr><th>請負代金額</th><td><b style="font-size:15px">${yen(OI.total)}</b>（税込）（内、消費税 ${yen(OI.tax)}）</td></tr>`;
   let used = 0; const st = ordStages();
-  const stBox = st.length ? `<table class="otab" style="margin-top:4px">${st.map(x => { const v = inclTax(x.amount); used += v; return `<tr><td>${esc(x.name)}（${esc(x.when)}）${x.method ? '<br><small>' + esc(x.method) + '</small>' : ''}</td><td style="text-align:right">${yen(v)}</td></tr>`; }).join('')}<tr><td>残金（工事完成時）${OD.plan.done.method ? '<br><small>' + esc(OD.plan.done.method) + '</small>' : ''}</td><td style="text-align:right">${yen(OI.total - used)}</td></tr></table>` : '';
+  const stBox = st.length ? `<table class="otab" style="margin-top:4px">${st.map(x => { const v = stgAmt(x); used += v; return `<tr><td>${esc(x.name)}（${esc(x.when)}）${x.method ? '<br><small>' + esc(x.method) + '</small>' : ''}</td><td style="text-align:right">${yen(v)}</td></tr>`; }).join('')}<tr><td>残金（工事完成時）${OD.plan.done.method ? '<br><small>' + esc(OD.plan.done.method) + '</small>' : ''}</td><td style="text-align:right">${yen(OI.total - used)}</td></tr></table>` : '';
   document.getElementById('ordv').innerHTML = `<div class="ordh"><button onclick="closeOrd()">✕</button><b>${ch ? '変更注文書' : '注文書'}${OD.originId ? `の編集（${esc(OD.originNo)}）` : 'をつくる'}</b></div>
     <div class="ordb"><div class="opaper"><h2>${ch ? '変 更 注 文 書' : '注 文 書'}</h2><div class="osub">${ch ? '変更注文書と変更注文請書の2枚組' : '注文書・注文請書・約款の3枚組'}（緑の枠をタップして入力）</div>
       <div style="display:flex;justify-content:space-between;font-size:12px"><span>${esc(e.custName || '')} 様 → ${esc(S.issuer || '')}</span><span>見積 ${esc(OI.estNo)}</span></div>
@@ -2304,12 +2312,12 @@ function ordSheet(k){ const r = OD.rules; let body = '';
         ${key === 'defect' && v !== 'off' ? `<div class="pchips" style="margin-top:6px">${['1年', '2年', '5年'].map(w => `<button class="${r.warranty === w ? 'on' : ''}" onclick="OD.rules.warranty='${w}';if('${w}'!=='1年'&&OD.rules.lv.defect==='std')OD.rules.lv.defect='soft';ordSheet('rules')">保証 ${w}</button>`).join('')}</div>` : ''}
         ${sv && v !== 'std' ? `<label class="sv"><input type="checkbox" ${r.svc[key] ? 'checked' : ''} onchange="OD.rules.svc['${key}']=this.checked"><span>サービスとして書き出す：「${esc(sv.replace('{保証}', r.warranty || '1年'))}」</span></label>` : ''}</div>`; }).join('')
     + `<div class="hint">お客様が個人のときは消費者契約法がかかります（支払い遅れの損害金は年14.6%まで、責任を全部なくす書き方は無効など）。標準の文はその範囲で作っています。ひな形は一度、弁護士に確かめてもらってください。</div>` + save; }
-  if (k === 'pay') body = bsHead('支払条件') + `<div class="hint" style="margin:0 0 4px">請負代金 ${yen(OI.total)}（税込）。チェックで選びます。完成時の金額は自動計算です。</div>` + sec(1, 'いつ・どう払ってもらうか', ppEd('OD.plan', "ordSheet('pay')", OI.sub))
+  if (k === 'pay') body = bsHead('支払条件') + `<div class="hint" style="margin:0 0 4px">請負代金 ${yen(OI.total)}（税込）。チェックで選びます。金額は税込でそのまま。完成時の金額は自動計算です。</div>` + sec(1, 'いつ・どう払ってもらうか', ppEd('OD.plan', "ordSheet('pay')", OI.total))
       + `<div class="pamt" id="odSum" style="font-size:13px;text-align:left"></div><div class="bsb"><button class="ok" onclick="ordPayOk()">決定</button></div>`;
   if (document.getElementById('bsh').classList.contains('on')) bsSet(body); else bsOpen(body);
   if (k === 'pay') { const s2 = document.getElementById('odSum'); if (s2) s2.textContent = '書類には：' + ordPayText(); } }
-function ordPayOk(){ const st = ppStages(OD.plan, OI.sub); if (st.some(x => !x.amount)) { toast('金額か割合を入れてください（使わないものはチェックを外す）'); return; }
-  if (st.reduce((a, x) => a + x.amount, 0) >= OI.sub && st.length) { toast('着手金・中間金が工事の金額以上になっています'); return; } closeBs(); drawOrd(); }
+function ordPayOk(){ const st = ppStages(OD.plan, OI.total); if (st.some(x => !x.amount)) { toast('金額か割合を入れてください（使わないものはチェックを外す）'); return; }
+  if (st.reduce((a, x) => a + x.amount, 0) >= OI.total && st.length) { toast('着手金・中間金が工事の金額（税込）以上になっています'); return; } closeBs(); drawOrd(); }
 function ordPayload(){ return { delivery: OD.delivery === 'paper' ? 'paper' : 'digital', subject: OD.subject, content: OD.content, place: OD.place, term: OD.term, method: [], done_method: OD.plan.done.method, note: OD.note, rules: OD.rules, stages: ordStages(), pay: OI.change ? '' : ordPayText(), originId: OD.originId }; }
 function ordPreview(send){ if (PV_BUSY) return; PV_BUSY = true; PV_ORD = !!send; spin(true, '✍ プレビューを作っています…', '数秒かかります');
   run('liffOrderPreviewPdf', [UID, OD.estId, ordPayload()], b64 => { showPdf(b64).then(() => { PV_BUSY = false; spin(false); pvMode(send ? 'send' : ''); document.getElementById('pv').classList.add('on'); })
@@ -2575,7 +2583,7 @@ let PK = null;
 function openPick(res){ PK = res; const d = res.draft; const all = [];
   // 着手金・中間金（2026-10-10）：見積に支払条件がなくても、現場の「支払の希望」に着手金・中間金があれば段を作る（必須化）
   if (!(d.stages || []).length) { const fd0 = S.docs.find(x => x.id === res.fromId) || {}; const pc0 = S.cases.find(x => x.id === (fd0.caseId || ((d.sites || [])[0] || {}).case_id)); const q = pc0 && pc0.pay; const on = v => !!(v === true || (v && v.on));
-    if (q && (on(q.order) || on(q.mid))) { const sub0 = (d.sites || []).reduce((a, s) => a + (s.items || []).reduce((b, r) => b + Math.round((r.unit_price || 0) * (r.qty || 0)), 0), 0); d.stages = ppStages(ppFrom([], '', q), sub0).filter(x => x.amount > 0).map(x => Object.assign(x, { billed: (S.docs.find(v => live(v) && v.kind === '請求' && v.stage === x.name && docCases(v).includes(pc0.id)) || {}).no || '' })); } }
+    if (q && (on(q.order) || on(q.mid))) { const sub0 = (d.sites || []).reduce((a, s) => a + (s.items || []).reduce((b, r) => b + Math.round((r.unit_price || 0) * (r.qty || 0)), 0), 0); d.stages = ppStages(ppFrom([], '', q), inclTax(sub0)).filter(x => x.amount > 0).map(x => Object.assign(x, { billed: (S.docs.find(v => live(v) && v.kind === '請求' && v.stage === x.name && docCases(v).includes(pc0.id)) || {}).no || '' })); } }
   const st = d.stages || [];
   (d.sites || []).forEach((s, si) => (s.items || []).forEach((r, i) => { if (r.name || r.unit_price) all.push(r); }));
   const allBilled = all.length && all.every(r => r.billed);
@@ -2585,8 +2593,8 @@ function openPick(res){ PK = res; const d = res.draft; const all = [];
   const sites = (d.sites || []).map((s, si) => { const rows = (s.items || []).map((r, i) => (r.name || r.unit_price) ? row(r, si, i) : '').join(''); return rows ? sec((si % 4) + 1, esc(s.name || '明細'), rows, (d.sites.length > 1 && s.owner ? esc(s.owner) + ' 様' : '')) : ''; }).join('');
   const disc = d.discount && d.discount.amount ? `<label class="pck"><input type="checkbox" id="pkDisc" ${d.discount_billed ? '' : 'checked'} onchange="pickSum()"><span style="flex:1">${esc(d.discount.name || '値引き')}<br><small style="color:var(--muted)">−${yen(d.discount.amount)}</small></span>${d.discount_billed ? `<span class="ptag" style="flex:none">請求済 ${esc(d.discount_billed)}</span>` : ''}</label>` : '';
   const radio = (v, on, dis, body) => `<label class="pck"><input type="radio" name="pkM" value="${v}" ${on ? 'checked' : ''} ${dis ? 'disabled' : ''} onchange="pickMode(this.value)"><span style="flex:1">${body}</span></label>`;
-  const modes = st.length ? sec(1, '何を請求しますか', st.map((x, i) => radio(i, PK.mode === i, !!x.billed, `${esc(x.name)}　<b>${yen(inclTax(x.amount))}</b>（税込）<br><small style="color:var(--muted)">${esc(x.when || '')}</small>${x.billed ? ` <span class="ptag">請求済 ${esc(x.billed)}</span>` : ''}`)).join('')
-      + radio('rest', PK.mode === 'rest', false, `残金（工事の行から選ぶ）${d.advance ? `<br><small style="color:var(--muted)">請求済みの ${yen(d.advance.amount)}（税抜・${d.advance.nos.map(esc).join('・')}）を差し引きます</small>` : ''}`), '支払条件より') : '';
+  const modes = st.length ? sec(1, '何を請求しますか', st.map((x, i) => radio(i, PK.mode === i, !!x.billed, `${esc(x.name)}　<b>${yen(stgAmt(x))}</b>（税込）<br><small style="color:var(--muted)">${esc(x.when || '')}</small>${x.billed ? ` <span class="ptag">請求済 ${esc(x.billed)}</span>` : ''}`)).join('')
+      + radio('rest', PK.mode === 'rest', false, `残金（工事の行から選ぶ）${d.advance ? `<br><small style="color:var(--muted)">請求済みの ${yen(d.advance.amount)}（税込・${d.advance.nos.map(esc).join('・')}）を、合計から差し引いて請求します</small>` : ''}`), '支払条件より') : '';
   const fd = S.docs.find(x => x.id === res.fromId) || {}; PK.caseId = fd.caseId || ((d.sites || [])[0] || {}).case_id || ''; PK.rep = '';
   const pc = S.cases.find(x => x.id === PK.caseId), needDone = !!pc && ![L.done, L.statuses[3], '取りやめ'].includes(pc.status); PK.needDone = needDone;
   bsOpen(bsHead('請求書を作る') + (needDone ? pkDoneHtml(pc) : '') + `<div class="hint" style="margin:0 0 4px">見積 ${esc(res.fromNo)} から請求書を作ります。${res.billed && res.billed.length ? `<br>この見積からの請求書：${res.billed.map(esc).join('・')}（請求済の行は外してあります）` : ''}</div>`
@@ -2618,10 +2626,10 @@ function pickMode(v){ PK.mode = v === 'rest' ? 'rest' : +v; const box = document
 function pickAll(on){ document.querySelectorAll('#bsh input[data-s],#pkDisc').forEach(x => { x.checked = on; }); pickSum(); }
 function pickSel(){ return [...document.querySelectorAll('#bsh input[data-s]:checked')].map(x => PK.draft.sites[+x.dataset.s].items[+x.dataset.i]); }
 function pickSum(){ const el = document.getElementById('pkSum'); const d = PK.draft;
-  if (PK.mode !== 'rest') { const x = d.stages[PK.mode]; el.textContent = `${x.name} ／ 今回の請求 ${yen(inclTax(x.amount))}（税込）`; return; }
+  if (PK.mode !== 'rest') { const x = d.stages[PK.mode]; el.textContent = `${x.name} ／ 今回の請求 ${yen(stgAmt(x))}（税込）`; return; }
   const rows = pickSel(); const dc = document.getElementById('pkDisc'); const disc = dc && dc.checked ? d.discount.amount : 0; const adv = d.advance ? d.advance.amount : 0;
-  const t = rows.reduce((a, r) => a + Math.round((r.unit_price || 0) * (r.qty || 0)), 0) - disc - adv;
-  el.textContent = `${rows.length}行${adv ? '（請求済みの分を差し引き）' : ''} ／ 今回の請求 ${yen(t)}（税抜）`; }
+  const t = inclTax(rows.reduce((a, r) => a + Math.round((r.unit_price || 0) * (r.qty || 0)), 0) - disc);
+  el.textContent = `${rows.length}行 ／ 今回の請求 ${yen(t - adv)}（税込${adv ? '・お預かり済 ' + yen(adv) + ' を差し引き' : ''}）`; }
 /** 「この内容で請求書を作る」：完成にチェックがあれば、先に完成日を記録してから請求書を開く */
 function pickDo(){ const dn = document.getElementById('pkDn'), done = PK.needDone && dn && dn.checked;
   const date = done ? document.getElementById('pkDnD').value : ''; if (done && !date) { toast(L.done + '日を入れてください'); return; }
@@ -2632,7 +2640,8 @@ function pickDo(){ const dn = document.getElementById('pkDn'), done = PK.needDon
   step2(); }
 function pickDo2(){ const d = PK.draft; const dc = document.getElementById('pkDisc');
   if (PK.mode !== 'rest') { const x = d.stages[PK.mode]; const s0 = d.sites[0] || {};
-    d.sites = [{ case_id: s0.case_id || '', owner: s0.owner || '', name: s0.name || '', items: [{ item_id: '', name: x.name + '（' + (d.subject || s0.name || '工事') + '）', qty: 1, unit: '式', unit_price: x.amount, note: '分割:' + x.name }] }];
+    d.sites = [{ case_id: s0.case_id || '', owner: s0.owner || '', name: s0.name || '', items: [{ item_id: '', name: x.name + '（' + (d.subject || s0.name || '工事') + '）', qty: 1, unit: '式', unit_price: stgAmt(x), note: '分割:' + x.name }] }];
+    d.tax_included = false; d.incl_total = true;   // 入れた税込金額をそのまま請求額に。消費税は税込からの割り戻し（2026-10-12）
     if (x.method === '現金') d.notes = [d.notes || '', 'お支払いは現金でお願いいたします。'].filter(String).join('\n');
     d.discount = null; d.stages = []; delete d.discount_billed; delete d.advance; closeBs(); invOpen(PK, false, x.name);
     if (x.method === '現金') { D.notes = String(D.notes || '').split('\n').filter(l => !/振込/.test(l)).join('\n'); render(); } return; }
@@ -2648,9 +2657,10 @@ function pickDo2(){ const d = PK.draft; const dc = document.getElementById('pkDi
 let ADV = null;
 function advGo(merge){ const a = ADV; ADV = null; if (!a) return; advFinish(a.d, a.dc, a.partial, merge ? a.unpaidAdv : []); }
 function advFinish(d, discOn, partial, mergeDocs){
-  if (d.advance && mergeDocs.length) { const sum = mergeDocs.reduce((x, y) => x + (Number(y.subt) || 0), 0); const nos = mergeDocs.map(x => x.no); d.advance = { amount: Math.max(0, d.advance.amount - sum), nos: d.advance.nos.filter(n => !nos.includes(n)) }; if (!d.advance.amount) d.advance = null; d.merge_ids = (d.merge_ids || []).concat(mergeDocs.map(x => x.id)); }   // 税抜どうしで差し引く
-  if (d.advance) { const last = d.sites[d.sites.length - 1]; last.items.push({ item_id: '', name: '既にご請求の' + ((d.stages || []).filter(x => x.billed).map(x => x.name).join('・') || '着手金・中間金') + '（' + d.advance.nos.join('・') + '）', qty: 1, unit: '式', unit_price: -d.advance.amount, note: '前受' }); }
-  if (!discOn) d.discount = null; delete d.discount_billed; delete d.advance; d.stages = [];
+  if (d.advance && mergeDocs.length) { const sum = mergeDocs.reduce((x, y) => x + (Number(y.total) || 0), 0); const nos = mergeDocs.map(x => x.no); d.advance = { amount: Math.max(0, d.advance.amount - sum), nos: d.advance.nos.filter(n => !nos.includes(n)) }; if (!d.advance.amount) d.advance = null; d.merge_ids = (d.merge_ids || []).concat(mergeDocs.map(x => x.id)); }   // 税込どうしで差し引く（2026-10-12）
+  // お預かり済（着手金・中間金）は明細の行にせず、合計の下に「お預かり済 ▲」「今回ご請求額」として出す（2026-10-12 三浦さん）
+  if (d.advance) d.advance.names = (d.stages || []).filter(x => x.billed).map(x => x.name).join('・') || '着手金・中間金';
+  if (!discOn) d.discount = null; delete d.discount_billed; d.stages = [];
   closeBs(); if (mergeAsk(PK, partial)) return; invOpen(PK, partial); }
 /** 元請で、まだ送っていない請求書があるとき（2026-10-10）：1枚にまとめるか、別の紙にするかを聞く。送信済みの請求書には合流しない */
 function mergeCands(custId, caseIds){ return S.docs.filter(d => vis(d) && d.kind === '請求' && d.custId === custId && !d.sentN && bal(d) > 0 && ((d.paid || 0) + (d.adj || 0)) === 0 && !docCases(d).some(id => (caseIds || []).includes(id))).sort((a, b) => b.id.localeCompare(a.id)); }
@@ -2677,7 +2687,7 @@ function setStatus(caseId, status, cur){
 }
 function doStatus(caseId, status){ closeDlg(); spin(true, '記録しています…'); run('liffSetCaseStatus', [UID, caseId, status, {}], res => { spin(false); if (res.cases) S.cases = res.cases; toast('「' + ST_LABEL(status) + '」にしました'); showTab('cases'); }); }
 /** 編集画面の中身の「しるし」（2026-10-09）：編集して何も変わっていないかを見るため。お客様・現場ごとの品目・単価・税・値引・備考 */
-function draftSig(){ const d = currentDraft(); return JSON.stringify({ c: (d.customer || {}).name || '', s: (d.sites || []).map(x => [x.name, (x.items || []).map(it => [it.name, it.qty, it.unit, it.unit_price, it.kind || ''])]), t: !!d.tax_included, dc: d.discount || null, m: d.notes || '', sj: d.subject || '', ph: d.photos || [] }); }
+function draftSig(){ const d = currentDraft(); return JSON.stringify({ c: (d.customer || {}).name || '', s: (d.sites || []).map(x => [x.name, (x.items || []).map(it => [it.name, it.qty, it.unit, it.unit_price, it.kind || ''])]), t: !!d.tax_included, it: !!d.incl_total, adv: d.advance || null, dc: d.discount || null, m: d.notes || '', sj: d.subject || '', ph: d.photos || [] }); }
 let ORIGIN_SIG = '';
 function redoDoc(docId, force){
   const d0 = S.docs.find(x => x.id === docId) || {};
