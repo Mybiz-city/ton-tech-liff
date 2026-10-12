@@ -131,7 +131,7 @@
   .bsh h3{margin:0 0 10px;font-size:15px;display:flex;align-items:center}.bsh h3 .x{margin-left:auto;border:none;background:none;font-size:22px;color:var(--muted)}
   .bsh label.lb{display:block;font-size:12px;color:var(--muted);margin:10px 0 4px;font-weight:700}
   .bsh input,.bsh select,.bsh textarea{font-size:17px;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px}
-  .pchips{display:flex;flex-wrap:wrap;gap:6px}.pchips button{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:7px 12px;font-size:13px;font-weight:700;font-family:inherit;color:var(--ink)}.pchips button.on{background:#E9F6EC;border-color:var(--y);color:#1F7A33}
+  .pchips{display:flex;flex-wrap:wrap;gap:6px}.pchips.pch3{display:grid;grid-template-columns:1fr 1fr 1fr}.pchips.pch3 button{padding-left:4px;padding-right:4px;white-space:nowrap}.pchips button{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:7px 12px;font-size:13px;font-weight:700;font-family:inherit;color:var(--ink)}.pchips button.on{background:#E9F6EC;border-color:var(--y);color:#1F7A33}
   .pg3{display:grid;grid-template-columns:1fr .8fr 1.3fr;gap:8px}.pg3>div{min-width:0}.pg2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.pg2 input{min-width:0;font-size:15px;padding:10px 8px}
   .pg3e{display:grid;grid-template-columns:1.1fr .9fr 1.1fr;gap:6px}.pg3e select{min-width:0;font-size:15px;padding:10px 6px}
   .prow2{display:flex;gap:6px}.prow2 input{flex:1;min-width:0}.prow2 button{flex:none;border:1.5px solid var(--y);background:var(--y);color:#fff;border-radius:10px;padding:0 14px;font-weight:800;font-family:inherit}
@@ -296,7 +296,7 @@
     <div style="background:#F3F4F6;border-radius:10px;padding:8px 10px;margin:0 0 6px"><div id="ownBank" style="background:#fff;border-radius:6px;padding:8px 10px;font-size:11.5px;line-height:1.75;color:#222"></div></div>
     <div class="row" style="margin-top:8px"><button class="pri" onclick="openIssuer(true)">自社情報とロゴを直す</button></div>
   </div>
-  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新170</b>（2026-10-12）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
+  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新171</b>（2026-10-12）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
   <div class="sec" style="margin-top:12px"><h2>備考の定型文（5つ設定可能）</h2>
     <div id="memoEdit"></div>
     <div class="row" style="margin-top:8px"><button class="pri" onclick="saveMemo()">定型文を保存</button></div>
@@ -370,7 +370,7 @@ function bootTimeText(){ const m = LIFFD.ms || {}; const s = k => m[k] == null ?
   return `起動 ${s('render')}（画面 ${s('load')}／前回の内容で表示 ${s('cache')}／本人確認 ${s('auth')}／台帳 ${s('data')}）` + (calls ? `<br>最近の呼び出し：${calls}` : '') + `<br>しらべ：LIFF起動 ${esc(LIFFD.init || '未')}／LINEの中 ${esc(LIFFD.client || '?')}／カード機能 ${esc(LIFFD.api || '?')}`; }
 // ② 前回の台帳をスマホに覚えさせ、まず前回の内容で画面を出す（外の置き場だけ。Google側は uid を信じる作りなので使わない）2026-10-11
 let STALE = false, FRESH_PENDING = null, CUR_TAB = 'cases';
-const PAGE_VER = '170';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
+const PAGE_VER = '171';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
 function cacheKey(){ return 'inv_cache_p' + PAGE_VER; }
 function cacheRead(){ try { const o = JSON.parse(localStorage.getItem(cacheKey()) || 'null'); return o && o.uid && o.S && o.S.labels ? o : null; } catch (e) { return null; } }
 function cacheWrite(uid, data){ try { const s = JSON.stringify({ uid, at: Date.now(), S: data }); if (s.length < 4000000) localStorage.setItem(cacheKey(), s); } catch (e) { /* 入らなければ覚えない */ } }
@@ -2324,7 +2324,7 @@ function ordSheet(k){ const r = OD.rules; let body = '';
         <div class="cd">${v === 'std' ? sd : v === 'soft' ? so : off}</div>
         ${key === 'defect' && v !== 'off' ? `<div class="pchips" style="margin-top:6px">${['1年', '2年', '5年'].map(w => `<button class="${r.warranty === w ? 'on' : ''}" onclick="OD.rules.warranty='${w}';if('${w}'!=='1年'&&OD.rules.lv.defect==='std')OD.rules.lv.defect='soft';ordSheet('rules')">保証 ${w}</button>`).join('')}</div>` : ''}
         ${sv && v !== 'std' ? `<label class="sv"><input type="checkbox" ${r.svc[key] ? 'checked' : ''} onchange="OD.rules.svc['${key}']=this.checked"><span>サービスとして書き出す：「${esc(sv.replace('{保証}', r.warranty || '1年'))}」</span></label>` : ''}</div>`; }).join('')
-    + `<div class="hint">お客様が個人のときは消費者契約法がかかります（支払い遅れの損害金は年14.6%まで、責任を全部なくす書き方は無効など）。標準の文はその範囲で作っています。ひな形は一度、弁護士に確かめてもらってください。</div>` + save; }
+    + `<div class="hint">お客様が個人のときは消費者契約法がかかります（支払い遅れの損害金は年14.6%まで、責任を全部なくす書き方は無効など）。標準の文はその範囲で作っています。ひな形は弁護士の確認済みです（2026年10月）。</div>` + save; }
   if (k === 'pay') body = bsHead('支払条件') + `<div class="hint" style="margin:0 0 4px">請負代金 ${yen(OI.total)}（税込）。チェックで選びます。金額は税込でそのまま。完成時の金額は自動計算です。</div>` + sec(1, 'いつ・どう払ってもらうか', ppEd('OD.plan', "ordSheet('pay')", OI.total))
       + `<div class="pamt" id="odSum" style="font-size:13px;text-align:left"></div><div class="bsb"><button class="ok" onclick="ordPayOk()">決定</button></div>`;
   if (document.getElementById('bsh').classList.contains('on')) bsSet(body); else bsOpen(body);
@@ -2728,6 +2728,10 @@ let DP = null;   // { inp, y, m, sel }
 function dpEnhance(root){ (root || document).querySelectorAll('input[type="date"]').forEach(inp => {
     inp.type = 'text'; inp.readOnly = true; inp.classList.add('dp'); inp.setAttribute('inputmode', 'none'); inp.setAttribute('autocomplete', 'off');
     if (!inp.placeholder) inp.placeholder = '年月日';
+    // 見た目は 2026/10/15、プログラムから読む .value は 2026-10-15 のまま（2026-10-12 日付の表示）
+    if (!inp.dataset.dpv) { inp.dataset.dpv = '1'; const vd = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+      Object.defineProperty(inp, 'value', { configurable: true, get(){ const s = vd.get.call(inp); return /^\d{4}\/\d{2}\/\d{2}$/.test(s) ? s.replace(/\//g, '-') : s; }, set(v){ v = v == null ? '' : String(v); vd.set.call(inp, /^\d{4}-\d{2}-\d{2}$/.test(v) ? v.replace(/-/g, '/') : v); } });
+      const v0 = vd.get.call(inp); if (/^\d{4}-\d{2}-\d{2}$/.test(v0)) vd.set.call(inp, v0.replace(/-/g, '/')); }
     inp.addEventListener('click', e => { e.preventDefault(); dpOpen(inp); }); inp.addEventListener('focus', () => inp.blur()); }); }
 new MutationObserver(ms => { ms.forEach(m => m.addedNodes.forEach(n => { if (n.nodeType !== 1) return; if (n.matches && n.matches('input[type="date"]')) dpEnhance(n.parentNode); else dpEnhance(n); })); }).observe(document.documentElement, { childList: true, subtree: true });
 document.addEventListener('DOMContentLoaded', () => dpEnhance());
@@ -2898,10 +2902,10 @@ function payDialog(docId, payId){
   const ids = docCases(d), multi = ids.length > 1 && (Number(d.subt) || 0) > 0;
   const chip = (grp, v, lbl) => `<button data-g="${grp}" data-v="${v}" onclick="payPick('${grp}','${v}',${b})">${lbl || v}</button>`;
   dialog(`<h3>${old ? '入金を直す' : '入金を記録'}</h3><p style="font-size:12px;color:var(--muted)">請求書 ${esc(d.no)}　残り <b style="color:var(--danger)">${yen(b)}</b>${d.due ? '　お支払期限 ' + esc(d.due.replace(/-/g, '/')) : ''}</p>
-    <div class="ppst">① いつ入った？</div><div class="pchips">${chip('W', '通り', '期日どおり')}${chip('W', '前', '期日より前')}${chip('W', '後', '期日より後')}</div>
+    <div class="ppst">① いつ入った？</div><div class="pchips pch3">${chip('W', '通り', '期日どおり')}${chip('W', '前', '期日より前')}${chip('W', '後', '期日より後')}</div>
     <input type="date" id="pyD" max="${ymdStr(new Date())}" style="margin-top:6px" onclick="try{this.showPicker()}catch(e){}"><div class="hint" style="margin-top:2px">入金日（必須）。通帳の日付どおりに。「期日どおり」を押すと期日が入ります</div>
     <div class="pn" style="font-size:11.5px;color:#7A5A00;background:#FFF8E1;border:1px solid #F0D27A;border-radius:8px;padding:5px 8px;margin-top:6px">⚠️ 完成日と入金日は、税務調査・融資審査で最初に確認される記録です</div>
-    <div class="ppst">② いくら入った？</div><div class="pchips">${chip('A', '全額', '請求額どおり')}${chip('A', '手数料', '手数料を引かれた')}${chip('A', '一部', '一部だけ')}</div>
+    <div class="ppst">② いくら入った？</div><div class="pchips pch3">${chip('A', '全額', '請求額どおり')}${chip('A', '手数料', '手数料引き')}${chip('A', '一部', '一部だけ')}</div>
     <div id="pyAmtBox" style="display:none;margin-top:6px"><input type="number" inputmode="numeric" id="pyA" value="${b}" placeholder="入った金額" oninput="payCalc(${b})"></div>
     <div id="pyFeeBox" style="display:none;margin-top:6px"><input type="number" inputmode="numeric" id="pyF" placeholder="引かれた手数料（あれば。例：660）" oninput="payCalc(${b})"></div>
     <div id="pyCBox" style="display:none">${multi ? `
@@ -2910,7 +2914,7 @@ function payDialog(docId, payId){
         return `<div class="pyc"><span><b>${esc(c.name || id)}</b><small>残り ${yen(due)}</small></span><input type="number" inputmode="numeric" id="pyC${i}" data-id="${id}" data-due="${due}" placeholder="0" oninput="payCalc(${b})"><button onclick="payCFill(${i},${b})">残り全部</button></div>`; }).join('')}
         <div class="pchips" style="margin-top:6px">${chip('B', '先方の指定')}${chip('B', '話し合い', '話し合いで決めた')}${chip('B', '自分で決めた')}</div>
         <div class="hint" style="margin-top:4px">入金のときに先方と確かめた内容を記録してください</div></div>` : ''}</div>
-    <div class="ppst">③ 方法</div><div class="pchips">${chip('M', '振込', '口座振込')}${chip('M', '現金')}${chip('M', 'その他', 'その他')}</div>
+    <div class="ppst">③ 方法</div><div class="pchips pch3">${chip('M', '振込', '口座振込')}${chip('M', '現金')}${chip('M', 'その他', 'その他')}</div>
     <div id="pyOBox" style="display:none;margin-top:6px"><div class="pchips">${chip('O', 'でんさい')}${chip('O', '相殺')}${chip('O', '他', '他（下に書く）')}</div></div>
     <input id="pyN" placeholder="メモ（任意）例：〇〇銀行に入金" style="margin-top:8px">
     <p id="pyR" style="margin-top:10px;font-weight:800"></p>
@@ -3003,10 +3007,9 @@ function custPay(custId){ const cu = S.customers.find(x => x.id === custId) || {
   const row = (d, i) => { const cs = docCases(d).map(id => (S.cases.find(c => c.id === id) || {}).name).filter(Boolean);
     return `<div class="pyc"><span><b>${esc(cs.length > 1 ? '締め請求（' + cs.length + L.siteWord + '）' : (cs[0] || d.subject || ''))}</b><small>${esc(d.no)}${d.due ? '・期限 ' + esc(d.due.slice(5).replace('-', '/')) : ''}・残り ${yen(bal(d))}</small></span><input type="number" inputmode="numeric" id="cpR${i}" data-max="${bal(d)}" placeholder="0" oninput="CP.manual=true;cpSum()"><button onclick="cpRowFill(${i},'all')">全部</button><button onclick="cpRowFill(${i},'rest')">余り全部</button></div>`; };
   dialog(`<h3>💴 入金を記録</h3><p style="font-size:12.5px;color:var(--muted);margin:0">${esc(cu.name || '')}　未入金 ${list.length}件　<b style="color:var(--danger)">${yen(total)}</b>${list.length > 1 ? `<br>${list.map(d => esc(d.no) + (d.due ? '（期限 ' + esc(d.due.slice(5).replace('-', '/')) + '）' : '')).join('・')}` : ''}</p>
-    <div class="ppst">① 方法</div><div class="pchips">${chip('M', '振込', '口座振込')}${chip('M', '現金', '現金')}${chip('M', 'その他', 'その他')}</div>
+    <div class="ppst">① 方法</div><div class="pchips pch3">${chip('M', '振込', '口座振込')}${chip('M', '現金', '現金')}${chip('M', 'その他', 'その他')}</div>
     <div id="cpOw" style="display:none;margin-top:4px"><input type="text" id="cpO" placeholder="方法（例：でんさい・相殺）" maxlength="20"></div>
-    <div class="ppst">② 入金日</div><div class="pchips">${chip('W', '期日', '請求期日に入金' + (list.length > 1 ? '（請求書ごと）' : list[0].due ? ' ' + esc(list[0].due.slice(5).replace('-', '/')) : ''), !allDue)}${chip('W', '今日', '今日入金 ' + today.slice(5).replace('-', '/'))}</div>
-    <div class="pchips" style="margin-top:4px">${chip('W', '別', '別日入金')}</div><input type="date" id="cpD" max="${today}" style="margin-top:6px;display:none" onclick="try{this.showPicker()}catch(e){}">
+    <div class="ppst">② 入金日</div><div class="pchips" style="flex-direction:column;align-items:stretch">${chip('W', '期日', '請求期日に入金' + (list.length > 1 ? '（請求書ごと）' : list[0].due ? '（' + esc(list[0].due.slice(5).replace('-', '/')) + '）' : ''), !allDue)}${chip('W', '今日', '今日入金（' + today.slice(5).replace('-', '/') + '）')}${chip('W', '別', '別日入金（日付を選ぶ）')}</div><input type="date" id="cpD" max="${today}" style="margin-top:6px;display:none" onclick="try{this.showPicker()}catch(e){}">
     <div class="pn" style="font-size:11.5px;color:#7A5A00;background:#FFF8E1;border:1px solid #F0D27A;border-radius:8px;padding:5px 8px;margin-top:6px">⚠️ 入金日は通帳の日付どおりに。税務調査・融資審査で最初に確認される記録です</div>
     <div class="ppst">③ 入金額</div><div class="pchips" style="flex-direction:column;align-items:stretch">${chip('A', '全額', '☐ 請求どおり全額入金（' + yen(total) + '）')}${chip('A', '手数料', '☐ 振込手数料引きで入金（' + yen(total) + '－手数料）')}<div style="border-top:1px dashed var(--line);margin:4px 0"></div>${chip('A', '一部', '☐ 一部入金')}</div>
     <div id="cpPart" style="display:none">
