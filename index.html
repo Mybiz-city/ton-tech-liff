@@ -131,6 +131,7 @@
   .bsh h3{margin:0 0 10px;font-size:15px;display:flex;align-items:center}.bsh h3 .x{margin-left:auto;border:none;background:none;font-size:22px;color:var(--muted)}
   .bsh label.lb{display:block;font-size:12px;color:var(--muted);margin:10px 0 4px;font-weight:700}
   .bsh input,.bsh select,.bsh textarea{font-size:17px;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px}
+  .pvbtn{border:1.5px solid var(--line);background:#fff;border-radius:8px;padding:4px 8px;font-size:12px;font-family:inherit;color:var(--blue);flex:none}
   .pchips{display:flex;flex-wrap:wrap;gap:6px}.pchips.pch3{display:grid;grid-template-columns:1fr 1fr 1fr}.pchips.pch3 button{padding-left:4px;padding-right:4px;white-space:nowrap}.pchips button{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:7px 12px;font-size:13px;font-weight:700;font-family:inherit;color:var(--ink)}.pchips button.on{background:#E9F6EC;border-color:var(--y);color:#1F7A33}
   .pg3{display:grid;grid-template-columns:1fr .8fr 1.3fr;gap:8px}.pg3>div{min-width:0}.pg2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.pg2 input{min-width:0;font-size:15px;padding:10px 8px}
   .pg3e{display:grid;grid-template-columns:1.1fr .9fr 1.1fr;gap:6px}.pg3e select{min-width:0;font-size:15px;padding:10px 6px}
@@ -296,7 +297,7 @@
     <div style="background:#F3F4F6;border-radius:10px;padding:8px 10px;margin:0 0 6px"><div id="ownBank" style="background:#fff;border-radius:6px;padding:8px 10px;font-size:11.5px;line-height:1.75;color:#222"></div></div>
     <div class="row" style="margin-top:8px"><button class="pri" onclick="openIssuer(true)">自社情報とロゴを直す</button></div>
   </div>
-  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新173</b>（2026-10-12）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
+  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新174</b>（2026-10-12）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
   <div class="sec" style="margin-top:12px"><h2>備考の定型文（5つ設定可能）</h2>
     <div id="memoEdit"></div>
     <div class="row" style="margin-top:8px"><button class="pri" onclick="saveMemo()">定型文を保存</button></div>
@@ -370,7 +371,7 @@ function bootTimeText(){ const m = LIFFD.ms || {}; const s = k => m[k] == null ?
   return `起動 ${s('render')}（画面 ${s('load')}／前回の内容で表示 ${s('cache')}／本人確認 ${s('auth')}／台帳 ${s('data')}）` + (calls ? `<br>最近の呼び出し：${calls}` : '') + `<br>しらべ：LIFF起動 ${esc(LIFFD.init || '未')}／LINEの中 ${esc(LIFFD.client || '?')}／カード機能 ${esc(LIFFD.api || '?')}`; }
 // ② 前回の台帳をスマホに覚えさせ、まず前回の内容で画面を出す（外の置き場だけ。Google側は uid を信じる作りなので使わない）2026-10-11
 let STALE = false, FRESH_PENDING = null, CUR_TAB = 'cases';
-const PAGE_VER = '173';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
+const PAGE_VER = '174';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
 function cacheKey(){ return 'inv_cache_p' + PAGE_VER; }
 function cacheRead(){ try { const o = JSON.parse(localStorage.getItem(cacheKey()) || 'null'); return o && o.uid && o.S && o.S.labels ? o : null; } catch (e) { return null; } }
 function cacheWrite(uid, data){ try { const s = JSON.stringify({ uid, at: Date.now(), S: data }); if (s.length < 4000000) localStorage.setItem(cacheKey(), s); } catch (e) { /* 入らなければ覚えない */ } }
@@ -1652,7 +1653,7 @@ function caseGroup(c){
   if (c.status === '取りやめ' || c.status === L.statuses[3] || c.status === '中断') return '済・過去';
   const ds = docsOf(c.id).filter(live), inv = ds.filter(d => d.kind === '請求'), est = ds.filter(d => d.kind === '見積');
   if (inv.some(d => bal(d) > 0)) return '請求中';
-  if (c.status === L.done) return inv.length ? '済・過去' : '請求中';
+  if (c.status === L.done) return inv.some(d => !d.stage) ? '済・過去' : '請求中';   // 着手金・中間金の請求書だけでは済にしない（2026-10-12 完成日を入れると書類が消えて見えた不具合）
   if (c.status === L.start || inv.length || ds.some(d => d.kind === '注文') || est.some(d => d.result === '受注')) return '工事中';
   if (est.some(d => d.result !== '失注')) return '見積中';
   return est.length ? '済・過去' : '相談中'; }
@@ -1908,17 +1909,27 @@ function editCaseMemo(id){ const c = S.cases.find(x => x.id === id) || {};
 let OKB = null;
 /** 「電話 2026-10-12 奥様から電話で」→「電話で承認をもらった（2026/10/12）奥様から電話で」 */
 function okByText(s){ const a = String(s || '').split(' '); const m = a[0] || '', d = (a[1] || '').replace(/-/g, '/'), memo = a.slice(2).join(' '); return `親方の記録：${esc(m)}で承認をもらった${d ? '（' + esc(d) + '）' : ''}${memo ? '　' + esc(memo) : ''}`; }
-function okByAsk(estId){ const d = S.docs.find(x => x.id === estId); if (!d) return; const cur = String(d.okBy || ''); const m0 = (cur.split(' ')[0] || '口頭'), d0 = (cur.split(' ')[1] || ymdStr(new Date())), memo0 = cur.split(' ').slice(2).join(' ');
-  OKB = { id: estId, method: ['口頭', '電話', '対面', 'メール', '紙にサイン', 'その他'].includes(m0) ? m0 : '口頭' };
-  const ch = m => `<button class="${OKB.method === m ? 'on' : ''}" onclick="OKB.method='${m}';document.querySelectorAll('#okbM button').forEach(b=>b.classList.toggle('on',b.textContent==='${m}'))">${m}</button>`;
-  dialog(`<h3>承認をもらった（親方が記録）</h3><p style="font-size:13px;color:var(--muted);margin:0 0 6px">お客様がLINEのボタンを押せないとき用です。誰が記録したかは履歴に残ります。</p>
-    <div class="ppst">どうやって</div><div class="pchips pch3" id="okbM">${['口頭', '電話', '対面', 'メール', '紙にサイン', 'その他'].map(ch).join('')}</div>
-    <div class="ppst">いつ</div><input type="date" id="okbD" value="${d0}" max="${ymdStr(new Date())}">
+const OKB_METHODS = ['LINE', '電話', '対面', 'メール', '紙にサイン', 'その他'];
+function okByAsk(estId, next){ const d = S.docs.find(x => x.id === estId); if (!d) return; const cur = String(d.okBy || ''); const hasLine = !!d.okAt;
+  const m0 = cur.split(' ')[0] || (hasLine ? 'LINE' : '電話'), d0 = cur.split(' ')[1] || '', memo0 = cur.split(' ').slice(2).join(' ');
+  OKB = { id: estId, next: next || '', method: OKB_METHODS.includes(m0) ? m0 : (hasLine ? 'LINE' : '電話'), lineAt: d.okAt || '' };
+  const ch = m => `<button class="${OKB.method === m ? 'on' : ''}" ${m === 'LINE' && !hasLine ? 'disabled style="opacity:.45"' : ''} onclick="OKB.method='${m}';okByDraw()">${m}</button>`;
+  dialog(`<h3>承認の記録</h3><p style="font-size:13px;color:var(--muted);margin:0 0 6px">どうやって承認をもらったかを残します（誰が記録したかは履歴に残ります）。${hasLine ? '' : 'LINEのボタンはまだ押されていません。'}</p>
+    <div class="ppst">どうやって</div><div class="pchips pch3" id="okbM">${OKB_METHODS.map(ch).join('')}</div>
+    <div class="ppst">いつ</div><div id="okbDate"></div>
     <div class="ppst">メモ（任意）</div><input id="okbN" maxlength="60" value="${esc(memo0)}" placeholder="例：奥様から電話で「お願いします」">
-    <div class="row" style="margin-top:10px"><button onclick="closeDlg()">やめる</button>${cur ? `<button class="warn" onclick="closeDlg();okByGo(true)">記録を消す</button>` : ''}<button class="pri" onclick="okByGo(false)">記録する</button></div>`); }
-function okByGo(clear){ const o = OKB; if (!o) return; const date = (document.getElementById('okbD') || {}).value || '', memo = (document.getElementById('okbN') || {}).value || '';
-  if (!clear && !date) { toast('日付を入れてください'); return; } closeDlg(); if (DEMO) { toast('お試し中は記録できません'); return; } spin(true);
-  run('liffEstOkByOwner', [UID, o.id, { method: o.method, date, memo, clear }], res => { spin(false); if (res.docs) S.docs = res.docs; renderCases(); try { bsSet(caseSheetHtml(docCases(S.docs.find(x => x.id === o.id))[0])); } catch (e) {} toast(clear ? '承認の記録を消しました' : '承認を記録しました'); }); }
+    <div class="row" style="margin-top:10px"><button onclick="closeDlg()">やめる</button>${cur ? `<button class="warn" onclick="closeDlg();okByGo(true)">記録を消す</button>` : ''}<button class="pri" onclick="okByGo(false)">${next ? '記録して受注へ' : '記録する'}</button></div>`);
+  OKB.d0 = d0; okByDraw(); }
+function okByDraw(){ const o = OKB; if (!o) return; document.querySelectorAll('#okbM button').forEach(b => b.classList.toggle('on', b.textContent === o.method));
+  const box = document.getElementById('okbDate'); if (!box) return;
+  if (o.method === 'LINE') box.innerHTML = `<div style="font-size:15px;font-weight:800;padding:6px 0">${esc((o.lineAt || '').replace(/-/g, '/'))}<small style="font-weight:400;color:var(--muted)">　お客様がボタンを押した日（自動）</small></div>`;
+  else box.innerHTML = `<input type="date" id="okbD" value="${esc(o.d0 || '')}" max="${ymdStr(new Date())}"><div class="hint" style="margin-top:2px">任意です。トラブル防止のため、なるべく入れましょう</div>`; }
+function okByGo(clear){ const o = OKB; if (!o) return; const date = o.method === 'LINE' ? '' : ((document.getElementById('okbD') || {}).value || ''), memo = (document.getElementById('okbN') || {}).value || '';
+  closeDlg(); if (DEMO) { toast('お試し中は記録できません'); if (o.next) okByNext(o); return; }
+  if (o.method === 'LINE' && !clear) { if (o.next) okByNext(o); return; }   // LINEの承認はお客様の記録そのもの。親方の記録は作らない
+  spin(true);
+  run('liffEstOkByOwner', [UID, o.id, { method: o.method, date, memo, clear }], res => { spin(false); if (res.docs) S.docs = res.docs; if (res.cases) S.cases = res.cases; renderCases(); try { bsSet(caseSheetHtml(docCases(S.docs.find(x => x.id === o.id))[0])); } catch (e) {} toast(clear ? '承認の記録を消しました' : '承認を記録しました'); if (o.next && !clear) okByNext(o); }); }
+function okByNext(o){ if (o.next === 'order') estWinAsk(o.id, 'order'); else if (o.next === 'only') estWinAsk(o.id, 'only'); }
 function estWinAsk(estId, mode){ const d = S.docs.find(x => x.id === estId) || {}; const noOk = !d.okAt && !d.okBy ? `<div class="hint" style="margin:6px 0 0;color:var(--danger)">お客様のLINEの確認も、親方の承認の記録もまだです。電話・口頭でOKをもらったなら、先に「承認をもらった（記録する）」で残してください。</div>` : '';
   if (mode === 'order') dialog(`<h3>注文書を作って受注にする</h3><p style="font-size:13.5px;line-height:1.7">見積の内容をもとに注文書の編集画面を開きます。${L.siteWord}は「受注・工事中」へ移ります。<br>注文書は、作った内容を確かめてから送るので、ここで進んでも送信はまだです。</p>${noOk}<div class="row"><button onclick="closeDlg()">やめる</button><button class="pri" onclick="closeDlg();estWin('${estId}')">📝 注文書を作る</button></div>`);
   else dialog(`<h3>注文書なしで受注にする</h3><p style="font-size:13.5px;line-height:1.7">${L.siteWord}は「受注・工事中」へ移ります。<br><b>一般のお客様や金額の大きい工事では、注文書（契約の書面）を取り交わしておくと、あとの「言った・言わない」を防げます。</b></p>${noOk}<div class="row"><button onclick="closeDlg()">やめる</button><button class="pri" onclick="closeDlg();estWinOnly('${estId}')">✅ 受注にする</button></div>`); }
@@ -1988,9 +1999,9 @@ function caseSheetHtml(id){
   const est = okEst || pendEst, estName = `${esc(cu.name || '')} ${esc(cu.honor || '様')}`;
   // 承認・受注の枠（2026-10-09）：LINEの承認があってもなくても押せる（電話・口頭の承認もあるため）。押すと確認が出て「やめる」で戻れる
   const prevOk = est && !okEst ? all.find(d => d.id === est.origin && d.okAt) : null;   // 作り直す前の番号に承認があった（2026-10-09）
-  const okBand = est ? `<div class="okband${okEst ? '' : ' dim'}">${okEst ? `✓ ${estName}が ${esc(okEst.okAt.slice(5).replace('-', '/'))} に「見積承認」を押しました` : prevOk ? `前の番号 ${esc(prevOk.no)} は ${esc(prevOk.okAt.slice(5).replace('-', '/'))} に承認済み。内容を変えたので、改めてお客様の確認が要ります（電話・口頭でもOK）` : est.okBy ? `✓ ${okByText(est.okBy)}` : `お客様の確認はまだです（電話・口頭でOKをもらったら、下の「承認をもらった」で記録してから進めてください）`}</div>${!okEst ? `<div class="row" style="margin:0 0 6px"><button style="flex:1;font-size:13.5px;padding:10px 6px;color:var(--blue)" onclick="okByAsk('${est.id}')">${est.okBy ? '✏️ 承認の記録を直す' : '📞 口頭・電話で承認をもらった（記録する）'}</button></div>` : ''}<div class="csb">${orderPlanned(id, cu.id)
-    ? `<button style="flex:1 1 48%;font-size:14px;padding:12px 6px" onclick="estWinAsk('${est.id}','only')">✅ 注文書なしで<br>受注にする</button><button class="pri" style="flex:1 1 48%;font-size:14px;padding:12px 6px" onclick="estWinAsk('${est.id}','order')">📝 注文書を作って<br>受注にする</button>`
-    : `<button class="pri" style="flex:1 1 48%;font-size:14px;padding:12px 6px" onclick="estWinAsk('${est.id}','only')">✅ 注文書なしで<br>受注にする</button><button style="flex:1 1 48%;font-size:14px;padding:12px 6px" onclick="estWinAsk('${est.id}','order')">📝 注文書を作って<br>受注にする</button>`}</div>` : '';
+  const okBand = est ? `<div class="okband${okEst ? '' : ' dim'}">${okEst ? `✓ ${estName}が ${esc(okEst.okAt.slice(5).replace('-', '/'))} に「見積承認」を押しました` : prevOk ? `前の番号 ${esc(prevOk.no)} は ${esc(prevOk.okAt.slice(5).replace('-', '/'))} に承認済み。内容を変えたので、改めてお客様の確認が要ります（電話・口頭でもOK）` : est.okBy ? `✓ ${okByText(est.okBy)}` : `お客様の確認はまだです（電話・口頭でOKをもらったら、下の「承認をもらった」で記録してから進めてください）`}</div><div class="csb">${orderPlanned(id, cu.id)
+    ? `<button style="flex:1 1 48%;font-size:13.5px;padding:12px 6px" onclick="okByAsk('${est.id}','only')">✅ 承認を記録して<br>受注（注文書なし）</button><button class="pri" style="flex:1 1 48%;font-size:13.5px;padding:12px 6px" onclick="okByAsk('${est.id}','order')">📝 承認を記録して<br>受注（注文書あり）</button>`
+    : `<button class="pri" style="flex:1 1 48%;font-size:13.5px;padding:12px 6px" onclick="okByAsk('${est.id}','only')">✅ 承認を記録して<br>受注（注文書なし）</button><button style="flex:1 1 48%;font-size:13.5px;padding:12px 6px" onclick="okByAsk('${est.id}','order')">📝 承認を記録して<br>受注（注文書あり）</button>`}</div>` : '';
   // 受注・工事中（2026-10-10）：注文書の有無・見積変更・完成予定日を「現場のこと」の先頭に。請求書への変換は別枠
   const ords = all.filter(d => live(d) && d.kind === '注文'), chgs = all.filter(d => vis(d) && d.kind === '見積' && d.sub === '追加変更' && d.ver < 2);   // 古い形の追加分だけ（第2版以上は版として扱う 2026-10-10）
   const wonEst = caseGroup(c) === '工事中' ? all.filter(d => live(d) && d.kind === '見積' && d.sub !== '追加変更' && d.result === '受注').sort((a, b) => b.id.localeCompare(a.id))[0] : null;
@@ -2122,8 +2133,11 @@ function newDoc(kind, prep){
   window.__newGo = go;
   dialog(`<h3>新しい${kind}書を作る</h3><p>編集中の下書きは消えます。よろしいですか？</p><div class="row"><button onclick="closeDlg()">やめる</button><button class="pri" onclick="window.__newGo()">新しく作る</button></div>`);
 }
-function newDocForCase(caseId, kind, items){
+function newDocForCase(caseId, kind, items, force){
   const c = S.cases.find(x => x.id === caseId); if (!c) return; const cu = S.customers.find(x => x.id === c.custId) || {};
+  // 見積書の承認・注文書をとばして請求書を作る道（2026-10-12 三浦さん：できるようにしておくが、トラブル時のリスクは注意喚起）
+  if (kind === '請求' && !force && cu.kubun !== '元請') { const ds = docsOf(caseId).filter(live); const okd = ds.some(d => d.kind === '注文' || (d.kind === '見積' && (d.okAt || d.okBy || d.result === '受注')));
+    if (!okd) { dialog(`<h3>見積書の承認なしで請求書を作ります</h3><p style="font-size:13px;line-height:1.7">この${L.siteWord}には、承認された見積書も注文書もありません。<br>このまま請求書を作ることはできますが、金額の「言った・言わない」になったとき、親方に不利です。<br><b>おすすめ：</b>先に見積書を作って、承認を記録してから請求書へ。</p><div class="row"><button onclick="closeDlg()">やめる</button><button onclick="closeDlg();newDocForCase('${caseId}','請求',null,true)">このまま作る</button></div>`); return; } }
   newDoc(kind, () => { MODE = cu.kubun === '元請' ? '元請' : '施主'; D.customer = { id: cu.id || '', name: cu.name || '', kubun: MODE };
     D.sites = [{ case_id: c.id, owner: c.owner || cu.name || '', name: c.name, items: items && items.length ? items : [{ item_id: '', name: '', qty: 1, unit: '式', unit_price: 0, note: '' }] }];
     if (MODE === '施主') D.subject = c.name;
@@ -2407,17 +2421,19 @@ let IP_SEL = '';
 function invPick(caseId){ const vs = estVers(caseId); if (!vs.length) { newDocForCase(caseId, '請求'); return; }
   const ad = adoptedEst(caseId), ok = lastOkEst(caseId), st = lastSentEst(caseId);
   const cands = [], add = (d, why) => { if (!d) return; const h = cands.find(x => x.d === d); if (h) h.why.push(why); else cands.push({ d, why: [why] }); };
-  add(ok, '最終承認'); add(st, '最終送信'); add(ad, '打ち合わせで決めた版（採用中）');
-  IP_SEL = (ad && ad.adopt ? ad : (ok || st || ad)).id;   // 親方が採用を選んでいればそれ。なければ 最終承認 → 最終送信 → 新しい版
-  const row = (d, why) => `<label class="pck"><input type="radio" name="ipV" value="${d.id}" ${IP_SEL === d.id ? 'checked' : ''} onchange="IP_SEL=this.value"><span style="flex:1"><b>第${d.ver || 1}版</b>　${yen(d.total)}${why ? `<br><small style="color:#1F7A33">${esc(why)}</small>` : ''}<br><small style="color:var(--muted)">${d.sentAt ? '送信 ' + esc(d.sentAt.slice(5).replace('-', '/')) : '未送信'}${d.okAt ? '・承認 ' + esc(d.okAt.slice(5).replace('-', '/')) : ''}　${esc(d.no)}</small></span></label>`;
+  add(ad, '採用中（この版が主役）'); add(ok, 'お客様がLINEで承認'); add(st, '最終送信');   // 採用版を一番上に（2026-10-12 三浦さん：新しい版を上、旧版は下に埋もれる）
+  IP_SEL = (ad || ok || st).id;   // 初期選択は採用版（採用の印がなければ、いちばん新しい版）
+  cands.sort((a, b) => (a.d === ad ? -1 : b.d === ad ? 1 : ((b.d.ver || 1) - (a.d.ver || 1))));
+  const row = (d, why) => `<label class="pck"><input type="radio" name="ipV" value="${d.id}" ${IP_SEL === d.id ? 'checked' : ''} onchange="IP_SEL=this.value"><span style="flex:1"><b>第${d.ver || 1}版</b>　${yen(d.total)}${why ? `<br><small style="color:#1F7A33">${esc(why)}</small>` : ''}<br><small style="color:var(--muted)">${d.sentAt ? '送信 ' + esc(d.sentAt.slice(5).replace('-', '/')) : '未送信'}${d.okAt ? '・LINE承認 ' + esc(d.okAt.slice(5).replace('-', '/')) : d.okBy ? '・承認の記録あり' : ''}　${esc(d.no)}</small></span>${d.pdf ? `<button class="pvbtn" onclick="event.preventDefault();previewDoc('${d.id}')" aria-label="見積書を見る">📄</button>` : ''}</label>`;
   const others = vs.filter(d => !cands.some(x => x.d === d));
   dialog(`<h3>どの見積書から請求しますか</h3>${cands.map(x => row(x.d, x.why.join('・'))).join('')}${others.length ? `<details style="margin-top:6px"><summary style="font-size:13px;color:var(--muted)">ほかの版から選ぶ（${others.length}）</summary>${others.map(d => row(d, '')).join('')}</details>` : ''}<p class="hint" style="margin:8px 0 0">請求書は、送る直前まで編集できます（追加・値引はそこで直せます）</p><div class="row"><button onclick="closeDlg()">やめる</button><button class="pri" onclick="closeDlg();invConfirm(IP_SEL)">次へ</button></div>`); }
 /** 変換の前の確認（2026-10-12）：選んだ版・金額・承認の状態を大きく出す。承認のない版は赤で注意 */
 function invConfirm(docId){ const d = S.docs.find(x => x.id === docId); if (!d) return; const c = S.cases.find(x => x.id === docCases(d)[0]) || {};
   const okS = d.okAt ? `<b style="color:#1F7A33">✓ お客様がLINEで承認（${esc(d.okAt.slice(5).replace('-', '/'))}）</b>` : d.okBy ? `<b style="color:#1F7A33">✓ ${okByText(d.okBy)}</b>` : d.result === '受注' ? `<b style="color:#1F7A33">✓ 受注（注文書など）</b>` : `<b style="color:var(--danger)">⚠ お客様の承認がありません</b>`;
   const hasOk = !!d.okAt || !!d.okBy || d.result === '受注';
-  dialog(`<h3>この版で請求書を作ります</h3><div class="cinfo2" style="margin:6px 0 8px"><span class="k">現場</span>${esc(c.name || '')}<br><span class="k">見積書</span>第${d.ver || 1}版　${esc(d.no)}<br><span class="k">金額</span><b style="font-size:18px">${yen(d.total)}</b>（税込）<br><span class="k">送信</span>${d.sentAt ? esc(d.sentAt.slice(5).replace('-', '/')) : '未送信'}<br><span class="k">承認</span>${okS}</div>
-    ${hasOk ? '' : '<p style="font-size:13px;color:var(--danger);line-height:1.7">承認のない版から請求書を作ろうとしています。別の版の間違いではないか確かめてください。</p>'}
+  const stg = (d.stg || []).map(x => `${esc(x.name)} ${yen(x.amount)}`).join('・'); const tm = termText(c.term || {});
+  dialog(`<h3>この版で請求書を作ります</h3><div class="cinfo2" style="margin:6px 0 8px"><span class="k">現場</span>${esc(c.name || '')}<br><span class="k">見積書</span>第${d.ver || 1}版　${esc(d.no)}${d.pdf ? ` <button class="pvbtn" style="margin-left:6px" onclick="previewDoc('${d.id}')">📄 見積書を見る</button>` : ''}<br><span class="k">金額</span><b style="font-size:18px">${yen(d.total)}</b>（税込）<br><span class="k">着手・中間</span>${stg || 'なし（完成時に一括）'}<br><span class="k">工期</span>${tm ? esc(tm) : '未定'}<br><span class="k">送信</span>${d.sentAt ? esc(d.sentAt.slice(5).replace('-', '/')) : '未送信'}<br><span class="k">承認</span>${okS}</div>
+    ${hasOk ? '' : '<p style="font-size:13px;color:var(--danger);line-height:1.7">⚠ 承認の記録も注文書もない版から請求書を作ろうとしています。このまま作れますが、「言った・言わない」になったとき不利です。先に現場の画面で「承認を記録して受注」を押すことをおすすめします。</p>'}
     <label class="pck"><input type="checkbox" id="icChk"><span>内容を確かめました。この版で請求書を作ります</span></label>
     <div class="row" style="margin-top:8px"><button onclick="closeDlg();invPick('${docCases(d)[0]}')">版を選び直す</button><button class="pri" onclick="if(!document.getElementById('icChk').checked){toast('チェックを入れてください');return;}closeDlg();toInvoice('${d.id}')">請求書を作る</button></div>`); }
 /** 変更見積を確定（2026-10-10）：注文書を作らない現場（元請など）向け。確定すると、作り直した版は主役に、追加分は見積書の枠に並ぶ */
