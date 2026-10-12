@@ -235,7 +235,9 @@
   .okband{background:#E9F6EC;border:1.5px solid #BFE3C6;border-radius:10px;padding:8px 10px;margin:0 0 8px;font-size:13px;color:#1F5A2B;font-weight:700}
 .pastw{margin:8px 0}.pastw>summary{font-size:15px;padding:10px 12px;background:#fff;border-radius:12px}.pastw.okd>summary{border-left:5px solid var(--ok)}.pastw.lostd>summary{border-left:5px solid #999}.pastw>.cgrp{margin:6px 0 0 6px}
 .stgw{margin:6px 0 2px;border:1px solid var(--line);border-radius:10px;background:#FAFAF7;font-size:13px}.stgw>summary{padding:7px 10px;cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px}.stgw>summary::-webkit-details-marker{display:none}.stgw>summary::after{content:'▸';margin-left:auto;color:var(--muted)}.stgw[open]>summary::after{content:'▾'}.stgw>summary small{color:var(--muted);font-weight:400}.stgp{border-top:1px dashed var(--line);padding:6px 10px 8px}.stgh{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.stgh small{color:var(--muted)}.stgh span{margin-left:auto;font-weight:800}.stgp .pays .p button{font-size:11.5px;padding:2px 8px;min-height:0}
+.dlg.editing{border:3px solid #E08A00;box-shadow:0 0 0 4px rgba(224,138,0,.18);background:#FFFDF7}.editband{margin:-16px -16px 10px;padding:8px 14px;background:#E08A00;color:#fff;font-weight:800;font-size:14px;border-radius:11px 11px 0 0}.editband small{display:block;font-weight:400;font-size:11.5px;opacity:.95;margin-top:2px}.dlg.editing button.pri{background:#E08A00;border-color:#E08A00}
 </style>
+</head>
 <body>
 <div class="top" id="topBar"><div class="av">か</div><div><h1 id="ttl">現場<small id="sub">LINE de 請求書</small></h1></div></div>
 <div class="tabs"><button id="tabC" class="on" onclick="showTab('cases')">現場</button><button id="tabQ" onclick="showTab('search')">検索</button><button id="tabS" onclick="showTab(SET_SUB)">設定</button></div>
@@ -297,7 +299,7 @@
     <div style="background:#F3F4F6;border-radius:10px;padding:8px 10px;margin:0 0 6px"><div id="ownBank" style="background:#fff;border-radius:6px;padding:8px 10px;font-size:11.5px;line-height:1.75;color:#222"></div></div>
     <div class="row" style="margin-top:8px"><button class="pri" onclick="openIssuer(true)">自社情報とロゴを直す</button></div>
   </div>
-  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新184</b>（2026-10-12）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
+  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新185</b>（2026-10-12）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
   <div class="sec" style="margin-top:12px"><h2>備考の定型文（5つ設定可能）</h2>
     <div id="memoEdit"></div>
     <div class="row" style="margin-top:8px"><button class="pri" onclick="saveMemo()">定型文を保存</button></div>
@@ -379,7 +381,7 @@ function bootTimeText(){ const m = LIFFD.ms || {}; const s = k => m[k] == null ?
   return `起動 ${s('render')}（画面 ${s('load')}／前回の内容で表示 ${s('cache')}／本人確認 ${s('auth')}／台帳 ${s('data')}）` + (calls ? `<br>最近の呼び出し：${calls}` : '') + `<br>しらべ：LIFF起動 ${esc(LIFFD.init || '未')}／LINEの中 ${esc(LIFFD.client || '?')}／カード機能 ${esc(LIFFD.api || '?')}`; }
 // ② 前回の台帳をスマホに覚えさせ、まず前回の内容で画面を出す（外の置き場だけ。Google側は uid を信じる作りなので使わない）2026-10-11
 let STALE = false, FRESH_PENDING = null, CUR_TAB = 'cases';
-const PAGE_VER = '184';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
+const PAGE_VER = '185';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
 function cacheKey(){ return 'inv_cache_p' + PAGE_VER; }
 function cacheRead(){ try { const o = JSON.parse(localStorage.getItem(cacheKey()) || 'null'); return o && o.uid && o.S && o.S.labels ? o : null; } catch (e) { return null; } }
 function cacheWrite(uid, data){ try { const s = JSON.stringify({ uid, at: Date.now(), S: data }); if (s.length < 4000000) localStorage.setItem(cacheKey(), s); } catch (e) { /* 入らなければ覚えない */ } }
@@ -3018,13 +3020,14 @@ function payDialog(docId, payId){
   const b = bal(d); PAY_M = '振込'; PAY_W = ''; PAY_A = '全額'; PAY_DUE = d.due && d.due <= ymdStr(new Date()) ? d.due : ''; PAY_O = 'でんさい'; PAY_C = '按分'; PAY_B = '先方の指定';
   const ids = docCases(d), multi = ids.length > 1 && (Number(d.subt) || 0) > 0;
   const chip = (grp, v, lbl) => `<button data-g="${grp}" data-v="${v}" onclick="payPick('${grp}','${v}',${b})">${lbl || v}</button>`;
-  dialog(`<h3>${old ? '入金を直す' : '入金を記録'}</h3><p style="font-size:12px;color:var(--muted)">請求書 ${esc(d.no)}　残り <b style="color:var(--danger)">${yen(b)}</b>${d.due ? '　お支払期限 ' + esc(d.due.replace(/-/g, '/')) : ''}</p>${old || d.stage ? '' : stagePaysHtml([d])}
+  const what = d.stage ? d.stage + 'の入金' : '入金';   // 着手金・中間金は名前で呼ぶ（2026-10-12）
+  dialog(`${old ? `<div class="editband">✏️ 修正モード<small>記録ずみの入金を置き換えます。元の記録は履歴に残ります</small></div>` : ''}<h3>${old ? what + 'を直す' : what + 'を記録'}</h3><p style="font-size:12px;color:var(--muted)">請求書 ${esc(d.no)}${d.stage ? '（' + esc(d.stage) + '）' : ''}　残り <b style="color:var(--danger)">${yen(b)}</b>${d.due ? '　お支払期限 ' + esc(d.due.replace(/-/g, '/')) : ''}${old ? `<br>いまの記録：${jpd(old.date)}　${esc(old.method)}　${yen(PAY_EDIT.a)}` : ''}</p>${old || d.stage ? '' : stagePaysHtml([d])}
     <div class="ppst">① いつ入った？</div><div class="pchips pch3">${chip('W', '通り', '期日どおり')}${chip('W', '前', '期日より前')}${chip('W', '後', '期日より後')}</div>
     <input type="date" id="pyD" max="${ymdStr(new Date())}" style="margin-top:6px" onclick="try{this.showPicker()}catch(e){}"><div class="hint" style="margin-top:2px">入金日（必須）。通帳の日付どおりに。「期日どおり」を押すと期日が入ります</div>
     <div class="pn" style="font-size:11.5px;color:#7A5A00;background:#FFF8E1;border:1px solid #F0D27A;border-radius:8px;padding:5px 8px;margin-top:6px">⚠️ 完成日と入金日は、税務調査・融資審査で最初に確認される記録です</div>
     <div class="ppst">② いくら入った？</div><div class="pchips pch3">${chip('A', '全額', '請求額どおり')}${chip('A', '手数料', '手数料引き')}${chip('A', '一部', '一部だけ')}</div>
     <div id="pyAmtBox" style="display:none;margin-top:6px"><input type="number" inputmode="numeric" id="pyA" value="${b}" placeholder="入った金額" oninput="payCalc(${b})"></div>
-    <div id="pyFeeBox" style="display:none;margin-top:6px"><input type="number" inputmode="numeric" id="pyF" placeholder="引かれた手数料（あれば。例：660）" oninput="payCalc(${b})"></div>
+    <div id="pyFeeBox" style="display:none;margin-top:6px"><div class="hint" style="margin:0">振込手数料の金額は記録しません（帳簿側で支払手数料に起こします）。請求額どおり入金済にして、メモに「振込手数料引き」の印を残します</div><input type="hidden" id="pyF" value="0"></div>
     <div id="pyCBox" style="display:none">${multi ? `
       <div class="ppst" style="margin-top:10px">どの${L.siteWord}の分？</div><div class="pchips">${chip('C', '按分', 'おまかせ（金額で按分）')}${chip('C', '選ぶ', L.siteWord + 'を選ぶ')}</div>
       <div id="pyCSel" style="display:none;margin-top:6px">${ids.map((id, i) => { const c = S.cases.find(x => x.id === id) || {}; const due = caseDue(d, id);
@@ -3044,19 +3047,19 @@ let PAY_C = '按分', PAY_B = '先方の指定', PAY_DUE = '';
 /** 直すとき：前の内容を入れておく */
 function payPrefill(d, b){ const e = PAY_EDIT, $ = id => document.getElementById(id);
   if (e.date) $('pyD').value = e.date;
-  if (e.f > 0 && e.a + e.f === b) { PAY_A = '手数料'; $('pyF').value = e.f; } else if (e.a === b && !e.f) PAY_A = '全額'; else { PAY_A = '一部'; $('pyA').value = e.a; if (e.f) $('pyF').value = e.f; }
+  if (/振込手数料引き/.test(String(e.memo || '')) && e.a === b) PAY_A = '手数料'; else if (e.a === b && !e.f) PAY_A = '全額'; else if (e.f > 0 && e.a + e.f === b) { PAY_A = '一部'; $('pyA').value = e.a; } else { PAY_A = '一部'; $('pyA').value = e.a; }   // 古い記録（手数料の金額あり）は一部入金として開く（2026-10-12）
   if (['振込', '現金'].includes(e.method)) PAY_M = e.method; else { PAY_M = 'その他'; PAY_O = e.method === '手形・でんさい' ? 'でんさい' : e.method === '相殺' ? '相殺' : '他'; }
-  $('pyN').value = String(e.memo || '').split('／').filter(x => x && x !== 'でんさい' && !/^入金日はおおよそ/.test(x)).join('／');
+  $('pyN').value = String(e.memo || '').split('／').filter(x => x && x !== 'でんさい' && !/^入金日はおおよそ/.test(x) && !/^振込手数料引き/.test(x)).join('／');
   if (e.alloc && e.alloc.cases && $('pyCSel')) { PAY_C = '選ぶ'; PAY_B = e.alloc.by || PAY_B; document.querySelectorAll('#pyCSel input[data-id]').forEach(x => { x.value = e.alloc.cases[x.dataset.id] || ''; }); } }
 function payPick(g, v, b){ if (g === 'C') PAY_C = v; if (g === 'B') PAY_B = v; if (g === 'W') { PAY_W = v; const el = document.getElementById('pyD'); if (el && v === '通り' && PAY_DUE) el.value = PAY_DUE; if (el && v !== '通り' && el.value === PAY_DUE) el.value = ''; } if (g === 'A') PAY_A = v; if (g === 'M') PAY_M = v; if (g === 'O') PAY_O = v; payPaint(b); }   // 期日どおり → 期限の日を入れる（2026-10-10）
 function payPaint(b){ const cur = { W: PAY_W, A: PAY_A, M: PAY_M, O: PAY_O, C: PAY_C, B: PAY_B };
   const cs = document.getElementById('pyCSel'); if (cs) cs.style.display = PAY_C === '選ぶ' ? 'block' : 'none';
   document.querySelectorAll('#dlg button[data-g]').forEach(x => x.classList.toggle('on', cur[x.dataset.g] === x.dataset.v));
-  document.getElementById('pyFeeBox').style.display = PAY_A === '手数料' || PAY_A === '一部' ? 'block' : 'none';
+  document.getElementById('pyFeeBox').style.display = PAY_A === '手数料' ? 'block' : 'none';
   document.getElementById('pyAmtBox').style.display = PAY_A === '一部' ? 'block' : 'none'; document.getElementById('pyCBox').style.display = PAY_A === '一部' ? 'block' : 'none';
   document.getElementById('pyOBox').style.display = PAY_M === 'その他' ? 'block' : 'none';
   payCalc(b); }
-function payAmt(b){ const f = PAY_A === '手数料' || PAY_A === '一部' ? (+document.getElementById('pyF').value || 0) : 0; const a = PAY_A === '一部' ? (+document.getElementById('pyA').value || 0) : b - f; return { a, f }; }
+function payAmt(b){ const a = PAY_A === '一部' ? (+document.getElementById('pyA').value || 0) : b; return { a, f: 0 }; }   // 手数料の金額は記録しない（印だけ 2026-10-12）
 function payAlloc(){ if (PAY_A !== '一部' || PAY_C !== '選ぶ' || !document.getElementById('pyCSel')) return null;
   const cases = {}; let sum = 0, over = ''; document.querySelectorAll('#pyCSel input[data-id]').forEach(x => { const v = Math.round(+x.value || 0); if (v > 0) { cases[x.dataset.id] = v; sum += v; if (v > +x.dataset.due) over = x.closest('.pyc').querySelector('b').textContent; } });
   return { cases, sum, over, by: PAY_B }; }
@@ -3070,7 +3073,7 @@ function payDate(d){ const v = document.getElementById('pyD').value; if (v) retu
 function doPay(docId, b){ const d = S.docs.find(x => x.id === docId) || {};
   const { a, f } = payAmt(b), dt = payDate(d); if (!dt) return;   // 入金日が空なら止める（2026-10-10）
   const method = PAY_M === 'その他' ? (PAY_O === 'でんさい' ? '手形・でんさい' : PAY_O === '相殺' ? '相殺' : 'その他') : PAY_M;
-  const memo = [PAY_M === 'その他' && PAY_O === 'でんさい' ? 'でんさい' : '', dt.rough, document.getElementById('pyN').value.trim()].filter(String).join('／');
+  const memo = [PAY_M === 'その他' && PAY_O === 'でんさい' ? 'でんさい' : '', dt.rough, PAY_A === '手数料' ? '振込手数料引き（金額は未記録）' : '', document.getElementById('pyN').value.trim()].filter(String).join('／');
   const p = { docId, date: dt.date, amount: a, fee: f, method, memo }; if (PAY_EDIT) p.replaceId = PAY_EDIT.id;
   if (PAY_M === 'その他' && PAY_O === '他' && !document.getElementById('pyN').value.trim()) { toast('「他」のときは、メモに方法を書いてください'); return; }
   if (p.amount + p.fee <= 0) { toast('入金額を入れてください'); return; }
@@ -3213,7 +3216,7 @@ function doPayCancel(payId){ const r = document.getElementById('pcR').value.trim
     toast('取り消しました' + (res.reopened && res.reopened.length ? '。' + res.reopened.join('・') + 'を「' + L.done + '」に戻しました' : '')); renderLedger(); renderCases(); renderLists(); }); }
 
 // ---------- 小道具
-function dialog(html){ document.getElementById('dlg').innerHTML = html; document.getElementById('ov').classList.add('on'); }
+function dialog(html){ const el = document.getElementById('dlg'); el.innerHTML = html; el.classList.toggle('editing', /class="editband"/.test(html.slice(0, 40))); document.getElementById('ov').classList.add('on'); }
 function closeDlg(){ document.getElementById('ov').classList.remove('on'); }
 function spin(on, msg, sub){ const el = document.getElementById('spin'); if (on) { document.getElementById('spMsg').textContent = msg || '読み込み中…'; document.getElementById('spSub').textContent = sub || ''; } el.classList.toggle('on', !!on); }
 let tt; function toast(m){ alog('msg', m); const t = document.getElementById('toast'); t.textContent = m; t.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('on'), 3000); }
