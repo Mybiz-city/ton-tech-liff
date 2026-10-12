@@ -301,7 +301,7 @@
     <div style="background:#F3F4F6;border-radius:10px;padding:8px 10px;margin:0 0 6px"><div id="ownBank" style="background:#fff;border-radius:6px;padding:8px 10px;font-size:11.5px;line-height:1.75;color:#222"></div></div>
     <div class="row" style="margin-top:8px"><button class="pri" onclick="openIssuer(true)">自社情報とロゴを直す</button></div>
   </div>
-  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新190</b>（2026-10-12）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
+  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新191</b>（2026-10-12）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
   <div class="sec" style="margin-top:12px"><h2>備考の定型文（5つ設定可能）</h2>
     <div id="memoEdit"></div>
     <div class="row" style="margin-top:8px"><button class="pri" onclick="saveMemo()">定型文を保存</button></div>
@@ -383,7 +383,7 @@ function bootTimeText(){ const m = LIFFD.ms || {}; const s = k => m[k] == null ?
   return `起動 ${s('render')}（画面 ${s('load')}／前回の内容で表示 ${s('cache')}／本人確認 ${s('auth')}／台帳 ${s('data')}）` + (calls ? `<br>最近の呼び出し：${calls}` : '') + `<br>しらべ：LIFF起動 ${esc(LIFFD.init || '未')}／LINEの中 ${esc(LIFFD.client || '?')}／カード機能 ${esc(LIFFD.api || '?')}`; }
 // ② 前回の台帳をスマホに覚えさせ、まず前回の内容で画面を出す（外の置き場だけ。Google側は uid を信じる作りなので使わない）2026-10-11
 let STALE = false, FRESH_PENDING = null, CUR_TAB = 'cases';
-const PAGE_VER = '190';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
+const PAGE_VER = '191';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
 function cacheKey(){ return 'inv_cache_p' + PAGE_VER; }
 function cacheRead(){ try { const o = JSON.parse(localStorage.getItem(cacheKey()) || 'null'); return o && o.uid && o.S && o.S.labels ? o : null; } catch (e) { return null; } }
 function cacheWrite(uid, data){ try { const s = JSON.stringify({ uid, at: Date.now(), S: data }); if (s.length < 4000000) localStorage.setItem(cacheKey(), s); } catch (e) { /* 入らなければ覚えない */ } }
@@ -492,7 +492,10 @@ function viewerAct(ok){ const w = document.createElement('div'); w.className = '
 function run(fn, args, ok, ng){
   if (DEMO) { demoRun(fn, args, ok, ng); return; }
   const t0 = performance.now(); LIFFD.calls = LIFFD.calls || [];
-  srvReal(fn, args).then(r => { LIFFD.calls.push({ fn, ms: Math.round(performance.now() - t0), srv: LIFFD.lastSrvMs || 0, sa: LIFFD.lastSrvAuth || 0, t: r && r._t }); if (LIFFD.calls.length > 8) LIFFD.calls.shift(); return r; }).then(ok).catch(err => { spin(false); FINALIZING = false; alog('err', fn + '：' + ((err && err.message) || String(err))); toast((err && err.message) || String(err)); if (ng) ng(err); });
+  srvReal(fn, args).then(r => { LIFFD.calls.push({ fn, ms: Math.round(performance.now() - t0), srv: LIFFD.lastSrvMs || 0, sa: LIFFD.lastSrvAuth || 0, t: r && r._t }); if (LIFFD.calls.length > 8) LIFFD.calls.shift();
+    // 起動時の「最新の台帳」がまだ差し替え待ちのまま、書き込みの返事（新しい書類・現場）が来たら、古い差し替え待ちは捨てる。あとから古い台帳で上書きして、取り消した注文書が生き返って見えた（2026-10-12 花田様邸）
+    if (FRESH_PENDING && r && (r.docs || r.cases || r.payments)) { FRESH_PENDING = null; STALE = false; staleBar(false); }
+    return r; }).then(ok).catch(err => { spin(false); FINALIZING = false; alog('err', fn + '：' + ((err && err.message) || String(err))); toast((err && err.message) || String(err)); if (ng) ng(err); });
 }
 let DRAFT_ASKED = false;
 /** 途中の書類（前にアプリを閉じたときの下書き）があれば、開くか聞く */
