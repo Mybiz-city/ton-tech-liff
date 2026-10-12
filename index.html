@@ -301,7 +301,7 @@
     <div style="background:#F3F4F6;border-radius:10px;padding:8px 10px;margin:0 0 6px"><div id="ownBank" style="background:#fff;border-radius:6px;padding:8px 10px;font-size:11.5px;line-height:1.75;color:#222"></div></div>
     <div class="row" style="margin-top:8px"><button class="pri" onclick="openIssuer(true)">自社情報とロゴを直す</button></div>
   </div>
-  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新189</b>（2026-10-12）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
+  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新190</b>（2026-10-12）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
   <div class="sec" style="margin-top:12px"><h2>備考の定型文（5つ設定可能）</h2>
     <div id="memoEdit"></div>
     <div class="row" style="margin-top:8px"><button class="pri" onclick="saveMemo()">定型文を保存</button></div>
@@ -383,7 +383,7 @@ function bootTimeText(){ const m = LIFFD.ms || {}; const s = k => m[k] == null ?
   return `起動 ${s('render')}（画面 ${s('load')}／前回の内容で表示 ${s('cache')}／本人確認 ${s('auth')}／台帳 ${s('data')}）` + (calls ? `<br>最近の呼び出し：${calls}` : '') + `<br>しらべ：LIFF起動 ${esc(LIFFD.init || '未')}／LINEの中 ${esc(LIFFD.client || '?')}／カード機能 ${esc(LIFFD.api || '?')}`; }
 // ② 前回の台帳をスマホに覚えさせ、まず前回の内容で画面を出す（外の置き場だけ。Google側は uid を信じる作りなので使わない）2026-10-11
 let STALE = false, FRESH_PENDING = null, CUR_TAB = 'cases';
-const PAGE_VER = '189';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
+const PAGE_VER = '190';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
 function cacheKey(){ return 'inv_cache_p' + PAGE_VER; }
 function cacheRead(){ try { const o = JSON.parse(localStorage.getItem(cacheKey()) || 'null'); return o && o.uid && o.S && o.S.labels ? o : null; } catch (e) { return null; } }
 function cacheWrite(uid, data){ try { const s = JSON.stringify({ uid, at: Date.now(), S: data }); if (s.length < 4000000) localStorage.setItem(cacheKey(), s); } catch (e) { /* 入らなければ覚えない */ } }
@@ -1832,14 +1832,14 @@ function motoBilling(box2, cid, cu, cl, inv, rest, bk, show, pinHtml){
 function bulkCands(custId){ return S.cases.filter(c => c.custId === custId && !['取りやめ', '中断', L.statuses[3]].includes(c.status)).map(c => { const g = caseGroup(c), ds = docsOf(c.id).filter(live), inv = ds.some(d => d.kind === '請求');
   const est = S.docs.find(d => d.id === invSrcOf(c.id)); if (!est) return null;   // 見積書のない現場は入れない
   const ord = ds.filter(d => d.kind === '注文' && d.sub !== '変更').sort((a, b) => a.id < b.id ? 1 : -1)[0];
-  const ok = g === '見積中' || g === '工事中' || (g === '請求中' && c.status === L.done && !inv);
+  const ok = g === '見積中' || g === '工事中' || (g === '請求中' && c.status === L.done && !hasFinalInv(c.id));   // 着手金・中間金の請求書しかない完成現場も入れる（2026-10-12）
   return ok ? { c, done: c.status === L.done, doc: ord || est, est, st: c.status === L.done ? L.done : est.result === '受注' || ord ? '受注' : '見積中' } : null; }).filter(Boolean); }
 function bulkOpen(custId){ const cu = S.customers.find(x => x.id === custId) || {}, list = bulkCands(custId), today = ymdStr(new Date());
   const tag = x => `<span class="tag ${x.st === '見積中' ? '' : 'ok'}" style="margin-left:4px">${x.st}${x.done && x.c.done ? ' ' + esc(x.c.done.slice(5).replace('-', '/')) : ''}</span>`;
   const row = x => `<div class="bkr"><label class="bkc"><input type="checkbox" data-c="${x.c.id}" data-d="${x.done ? 1 : 0}" ${x.done ? 'checked' : ''} onchange="bulkUi()"><span><b>${esc(kindName(x.doc))}書${x.doc.kind === '見積' && estVers(x.c.id).length > 1 ? ' 第' + (x.doc.ver || 1) + '版（採用）' : ''} ${esc(x.doc.no)}</b>${tag(x)}<small>${esc(x.c.name)}${x.doc.kind === '見積' && estVers(x.c.id).length > 1 ? '　※版を替えるには現場の「版を選ぶ」から' : ''}</small></span><span style="flex:none;font-weight:800">${yen(x.doc.total)}</span></label>`
     + (x.done ? '' : `<div class="drow bkd" id="bkd_${x.c.id}" style="display:none"><span style="flex:none;font-size:12.5px">${L.done}日</span><input type="date" id="bkD_${x.c.id}" value="${today}" max="${today}" onclick="try{this.showPicker()}catch(e){}"></div>`) + `</div>`;
   // 一緒にまとめる請求書：入金のない、未入金の請求書（チェックすると1枚に作り直す）
-  const open = S.docs.filter(d => live(d) && d.kind === '請求' && d.custId === custId && bal(d) > 0 && !((d.paid || 0) + (d.adj || 0))).sort((a, b) => a.id < b.id ? 1 : -1);
+  const open = S.docs.filter(d => live(d) && d.kind === '請求' && !d.stage && d.custId === custId && bal(d) > 0 && !((d.paid || 0) + (d.adj || 0))).sort((a, b) => a.id < b.id ? 1 : -1);   // 着手金・中間金の請求書は合流させない（お預かり分として差し引く 2026-10-12）
   const mrow = d => `<label class="bkc"><input type="checkbox" data-m="${d.id}" onchange="bulkUi()"><span><b>請求書 ${esc(d.no)}</b><small>${esc(d.period || d.subject || '')}</small></span><span style="flex:none;font-weight:800">${yen(d.total)}</span></label>`;
   bsOpen(bsHead('まとめて請求書へ変換：' + esc(cu.name || '')) + `<div class="ppst" style="margin-top:0">① 請求する書類</div>` + (list.map(row).join('') || '<div class="hint">ありません</div>')
     + (open.length ? `<div class="ppst">② 一緒にまとめる請求書<small style="font-weight:400;color:var(--muted)">（任意）</small></div>` + open.map(mrow).join('') : '')
