@@ -297,7 +297,7 @@
     <div style="background:#F3F4F6;border-radius:10px;padding:8px 10px;margin:0 0 6px"><div id="ownBank" style="background:#fff;border-radius:6px;padding:8px 10px;font-size:11.5px;line-height:1.75;color:#222"></div></div>
     <div class="row" style="margin-top:8px"><button class="pri" onclick="openIssuer(true)">自社情報とロゴを直す</button></div>
   </div>
-  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新179</b>（2026-10-12）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
+  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新180</b>（2026-10-12）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
   <div class="sec" style="margin-top:12px"><h2>備考の定型文（5つ設定可能）</h2>
     <div id="memoEdit"></div>
     <div class="row" style="margin-top:8px"><button class="pri" onclick="saveMemo()">定型文を保存</button></div>
@@ -363,7 +363,15 @@ window.addEventListener('resize', stickyTop);
 /** 外側のページ（Googleの枠の外）のURLを読む。LINEが付けた本人の印（#access_token など）は枠の外にしか残らない（2026-10-10） */
 function outerLoc(){ return new Promise(res => { let done = false; const fin = v => { if (!done) { done = true; res(v || null); } }; try { google.script.url.getLocation(fin); } catch (e) { fin(null); } setTimeout(() => fin(null), 3000); }); }
 function withTimeout(p, ms, what){ return Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error(what + 'が' + Math.round(ms / 1000) + '秒たっても終わりません')), ms))]); }
-let STEP = '', LIFFD = { hash: '', init: '', client: '', api: '', ms: {} };   // 起動の記録（カードで送れないときの原因しらべ 2026-10-10／秒数 2026-10-11）
+let STEP = '', LIFFD = { hash: '', init: '', client: '', api: '', ms: {} };
+// 親方の作業ログ（保守用 2026-10-12）：ボタン・開いた画面・画面側のエラーを足あととしてためる。サーバーへの次の書き込みに同乗させ、シート「作業ログ」に残す
+const ALOG = []; let ALOG_LAST = '';
+function alog(k, s){ try { s = String(s || '').replace(/\s+/g, ' ').trim().slice(0, 200); if (!s) return; const key = k + ':' + s; if (key === ALOG_LAST && k !== 'err') return; ALOG_LAST = key; ALOG.push({ t: Date.now(), k: k, s: s }); if (ALOG.length > 80) ALOG.shift(); localStorage.setItem('inv_alog', JSON.stringify(ALOG)); } catch (e) { /* ためられなくても続ける */ } }
+function alogTake(){ let a = []; try { const saved = JSON.parse(localStorage.getItem('inv_alog') || '[]'); a = (Array.isArray(saved) && saved.length > ALOG.length ? saved : ALOG).slice(); ALOG.length = 0; ALOG_LAST = ''; localStorage.removeItem('inv_alog'); } catch (e) { a = ALOG.splice(0); } return a; }
+try { const saved0 = JSON.parse(localStorage.getItem('inv_alog') || '[]'); if (Array.isArray(saved0)) saved0.slice(-80).forEach(x => ALOG.push(x)); } catch (e) { /* なければ空 */ }   // 前回、送る前に閉じた分
+window.addEventListener('error', e => alog('err', (e && e.message || '') + ' @' + ((e && e.filename || '').split('/').pop()) + ':' + (e && e.lineno || '')));
+window.addEventListener('unhandledrejection', e => alog('err', '約束の失敗：' + ((e && e.reason && (e.reason.message || e.reason)) || '')));
+document.addEventListener('click', e => { const b = e.target && e.target.closest ? e.target.closest('button,a,.card,.tab,.chip,.row') : null; if (!b) return; const t = (b.getAttribute('aria-label') || b.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 40); if (t) alog('tap', '[' + (typeof CUR_TAB !== 'undefined' ? CUR_TAB : '') + '] ' + t); }, true);   // 起動の記録（カードで送れないときの原因しらべ 2026-10-10／秒数 2026-10-11）
 const T0 = performance.now(); const tmark = k => { LIFFD.ms[k] = Math.round(performance.now() - T0); };
 /** 起動の秒数を文にする（設定の一番下）。画面＝HTMLが出るまで、本人確認＝LINE、台帳＝Googleの読み込み */
 function bootTimeText(){ const m = LIFFD.ms || {}; const s = k => m[k] == null ? '–' : (m[k] / 1000).toFixed(1) + '秒';
@@ -371,7 +379,7 @@ function bootTimeText(){ const m = LIFFD.ms || {}; const s = k => m[k] == null ?
   return `起動 ${s('render')}（画面 ${s('load')}／前回の内容で表示 ${s('cache')}／本人確認 ${s('auth')}／台帳 ${s('data')}）` + (calls ? `<br>最近の呼び出し：${calls}` : '') + `<br>しらべ：LIFF起動 ${esc(LIFFD.init || '未')}／LINEの中 ${esc(LIFFD.client || '?')}／カード機能 ${esc(LIFFD.api || '?')}`; }
 // ② 前回の台帳をスマホに覚えさせ、まず前回の内容で画面を出す（外の置き場だけ。Google側は uid を信じる作りなので使わない）2026-10-11
 let STALE = false, FRESH_PENDING = null, CUR_TAB = 'cases';
-const PAGE_VER = '179';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
+const PAGE_VER = '180';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
 function cacheKey(){ return 'inv_cache_p' + PAGE_VER; }
 function cacheRead(){ try { const o = JSON.parse(localStorage.getItem(cacheKey()) || 'null'); return o && o.uid && o.S && o.S.labels ? o : null; } catch (e) { return null; } }
 function cacheWrite(uid, data){ try { const s = JSON.stringify({ uid, at: Date.now(), S: data }); if (s.length < 4000000) localStorage.setItem(cacheKey(), s); } catch (e) { /* 入らなければ覚えない */ } }
@@ -438,7 +446,7 @@ const SERVER_MODE = 'api';   // 外の置き場（静的な置き場）
 function sessRead(){ try { const o = JSON.parse(localStorage.getItem('inv_sess') || 'null'); return o && o.uid === UID && o.at > Date.now() - 5 * 3600 * 1000 ? o.sess : ''; } catch (e) { return ''; } }   // 合言葉（本人確認の時短 2026-10-12）。5時間で捨てる（サーバーは6時間）
 function sessWrite(s){ try { if (s && UID) localStorage.setItem('inv_sess', JSON.stringify({ uid: UID, sess: s, at: Date.now() })); } catch (e) {} }
 function srvReal(fn, args){ let tok = ''; try { tok = (typeof liff !== 'undefined' && liff.getIDToken && liff.getIDToken()) || ''; } catch (e) { tok = ''; }
-  return fetch(API_URL, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn, args, idToken: tok, uid: UID, sess: sessRead() }) })
+  return fetch(API_URL, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn, args, idToken: tok, uid: UID, sess: sessRead(), log: (fn === 'liffLoad' || fn === 'liffDraftLast' || typeof alogTake !== 'function') ? undefined : alogTake() }) })
     .then(r => r.text()).then(t => { let j = null; try { j = JSON.parse(t); } catch (e) { throw new Error('サーバーの返事が読めません（' + t.slice(0, 80) + '）'); }
       if (!j || !j.ok) throw new Error((j && j.err) || 'サーバーから返事がありません'); LIFFD.lastSrvMs = j.ms || 0; LIFFD.lastSrvAuth = j.msAuth || 0; if (j.sess) sessWrite(j.sess); return j.r; }); }
 // ============ お客様の閲覧ページ（外の置き場に置いたときだけ動く。Googleの青い帯が出ない）2026-10-11 ============
@@ -480,7 +488,7 @@ function viewerAct(ok){ const w = document.createElement('div'); w.className = '
 function run(fn, args, ok, ng){
   if (DEMO) { demoRun(fn, args, ok, ng); return; }
   const t0 = performance.now(); LIFFD.calls = LIFFD.calls || [];
-  srvReal(fn, args).then(r => { LIFFD.calls.push({ fn, ms: Math.round(performance.now() - t0), srv: LIFFD.lastSrvMs || 0, sa: LIFFD.lastSrvAuth || 0, t: r && r._t }); if (LIFFD.calls.length > 8) LIFFD.calls.shift(); return r; }).then(ok).catch(err => { spin(false); FINALIZING = false; toast((err && err.message) || String(err)); if (ng) ng(err); });
+  srvReal(fn, args).then(r => { LIFFD.calls.push({ fn, ms: Math.round(performance.now() - t0), srv: LIFFD.lastSrvMs || 0, sa: LIFFD.lastSrvAuth || 0, t: r && r._t }); if (LIFFD.calls.length > 8) LIFFD.calls.shift(); return r; }).then(ok).catch(err => { spin(false); FINALIZING = false; alog('err', fn + '：' + ((err && err.message) || String(err))); toast((err && err.message) || String(err)); if (ng) ng(err); });
 }
 let DRAFT_ASKED = false;
 /** 途中の書類（前にアプリを閉じたときの下書き）があれば、開くか聞く */
@@ -1563,6 +1571,7 @@ function closeAll(){ closeDlg(); try { if (!DEV_UID && liff.isInClient()) liff.c
 let SET_SUB = 'items';   // 設定タブの中：品目／お客様・定型文
 function showTab(t){
   if (t === 'items' || t === 'lists' || t === 'own') SET_SUB = t; if (t !== 'edit') CUR_TAB = t;
+  alog('scr', t);
   closeBs(); CASE_OPEN = '';
   if (t === 'edit') { openEd(); return; }   // 古い呼び方（編集タブ）は、編集画面を開く
   ['cases', 'search', 'items', 'lists', 'own'].forEach(k => { document.getElementById(k).style.display = t === k ? 'block' : 'none'; });
@@ -3195,7 +3204,7 @@ function doPayCancel(payId){ const r = document.getElementById('pcR').value.trim
 function dialog(html){ document.getElementById('dlg').innerHTML = html; document.getElementById('ov').classList.add('on'); }
 function closeDlg(){ document.getElementById('ov').classList.remove('on'); }
 function spin(on, msg, sub){ const el = document.getElementById('spin'); if (on) { document.getElementById('spMsg').textContent = msg || '読み込み中…'; document.getElementById('spSub').textContent = sub || ''; } el.classList.toggle('on', !!on); }
-let tt; function toast(m){ const t = document.getElementById('toast'); t.textContent = m; t.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('on'), 3000); }
+let tt; function toast(m){ alog('msg', m); const t = document.getElementById('toast'); t.textContent = m; t.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('on'), 3000); }
 function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 </script>
 </body>
