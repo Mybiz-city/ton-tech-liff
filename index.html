@@ -297,7 +297,7 @@
     <div style="background:#F3F4F6;border-radius:10px;padding:8px 10px;margin:0 0 6px"><div id="ownBank" style="background:#fff;border-radius:6px;padding:8px 10px;font-size:11.5px;line-height:1.75;color:#222"></div></div>
     <div class="row" style="margin-top:8px"><button class="pri" onclick="openIssuer(true)">自社情報とロゴを直す</button></div>
   </div>
-  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新176</b>（2026-10-12）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
+  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新177</b>（2026-10-12）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
   <div class="sec" style="margin-top:12px"><h2>備考の定型文（5つ設定可能）</h2>
     <div id="memoEdit"></div>
     <div class="row" style="margin-top:8px"><button class="pri" onclick="saveMemo()">定型文を保存</button></div>
@@ -371,7 +371,7 @@ function bootTimeText(){ const m = LIFFD.ms || {}; const s = k => m[k] == null ?
   return `起動 ${s('render')}（画面 ${s('load')}／前回の内容で表示 ${s('cache')}／本人確認 ${s('auth')}／台帳 ${s('data')}）` + (calls ? `<br>最近の呼び出し：${calls}` : '') + `<br>しらべ：LIFF起動 ${esc(LIFFD.init || '未')}／LINEの中 ${esc(LIFFD.client || '?')}／カード機能 ${esc(LIFFD.api || '?')}`; }
 // ② 前回の台帳をスマホに覚えさせ、まず前回の内容で画面を出す（外の置き場だけ。Google側は uid を信じる作りなので使わない）2026-10-11
 let STALE = false, FRESH_PENDING = null, CUR_TAB = 'cases';
-const PAGE_VER = '176';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
+const PAGE_VER = '177';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
 function cacheKey(){ return 'inv_cache_p' + PAGE_VER; }
 function cacheRead(){ try { const o = JSON.parse(localStorage.getItem(cacheKey()) || 'null'); return o && o.uid && o.S && o.S.labels ? o : null; } catch (e) { return null; } }
 function cacheWrite(uid, data){ try { const s = JSON.stringify({ uid, at: Date.now(), S: data }); if (s.length < 4000000) localStorage.setItem(cacheKey(), s); } catch (e) { /* 入らなければ覚えない */ } }
@@ -688,7 +688,25 @@ const todoHideKey = k => String(k).split('@')[0];
 const todoHidden = key => (S.todoHide || []).some(k => { const a = String(k).split('@'); return a[0] === key && (!a[1] || a[1] >= ymdStr(new Date())); });
 function todoHideAsk(key, label){ const until = ymdStr(new Date(Date.now() + 7 * 86400000));
   dialog(`<h3>やり残しから外す</h3><p style="font-size:13px;color:var(--muted);margin:0 0 6px">${esc(label || '')}</p><div class="row" style="flex-direction:column;gap:8px"><button onclick="closeDlg();todoHide('${key}','${until}');toast('${until.slice(5).replace('-', '/')} まで隠します')">⏸ 一旦保留（7日間隠す）<small style="display:block;font-weight:400;font-size:11px">${until.slice(5).replace('-', '/')} に戻ってきます</small></button><button onclick="closeDlg();todoHideSure('${key}')">🗑 もう済んだので消す<small style="display:block;font-weight:400;font-size:11px">「外した件を見る」から戻せます</small></button></div><div class="row"><button onclick="closeDlg()">やめる</button></div>`); }
-function todoHideSure(key){ dialog(`<h3>本当に消しますか？</h3><p style="font-size:13.5px;line-height:1.7">この件は、やり残しに出なくなります（書類や現場は消えません）。</p><div class="row"><button onclick="closeDlg()">やめる</button><button class="warn" onclick="closeDlg();todoHide('${key}',true);toast('やり残しから消しました')">消す</button></div>`); }
+function todoHideSure(key){ const cid = todoCaseOf(key); const c = cid ? S.cases.find(x => x.id === cid) : null;
+  if (!c) { dialog(`<h3>本当に消しますか？</h3><p style="font-size:13.5px;line-height:1.7">この件は、やり残しに出なくなります（書類や現場は消えません）。</p><div class="row"><button onclick="closeDlg()">やめる</button><button class="warn" onclick="closeDlg();todoHide('${key}',true);toast('やり残しから消しました')">消す</button></div>`); return; }
+  // 現場に結びつく件（2026-10-12 三浦さん）：外すのではなく、現場そのものを「完成」か「取りやめ」に振り分ける
+  const isDone = c.status === L.done || c.status === L.statuses[3];
+  dialog(`<h3>${esc(c.name)} はどうなりましたか？</h3><p style="font-size:13px;color:var(--muted);margin:0 0 6px">やり残しから消すには、${L.siteWord}の状態を決めます。</p><div class="row" style="flex-direction:column;gap:8px">
+    ${isDone ? '' : `<button class="pri" onclick="closeDlg();todoDoneForm('${c.id}')">✅ 工事は${L.done}している<small style="display:block;font-weight:400;font-size:11px">${L.done}日と入金を記録して、済・過去へ</small></button>`}
+    <button class="warn" onclick="closeDlg();askEnd('case','${c.id}')">⛔ 取りやめになった<small style="display:block;font-weight:400;font-size:11px">理由を記録して、済・過去へ（書類も取消）</small></button>
+    <button onclick="closeDlg();todoHide('${key}',true);toast('やり残しから外しました')">この件だけ外す<small style="display:block;font-weight:400;font-size:11px">${L.siteWord}はそのまま。「外した件を見る」から戻せます</small></button></div><div class="row"><button onclick="closeDlg()">やめる</button></div>`); }
+/** やり残しの行が結びつく現場 */
+function todoCaseOf(key){ const k = String(key || '').replace(/^term_/, '').replace(/:stg$/, ''); if (S.cases.some(c => c.id === k)) return k; const d = S.docs.find(x => x.id === k); return d ? (docCases(d)[0] || '') : ''; }
+/** 完成日を入れて、未入金の請求書があれば入金の記録へ。請求書がなければ請求書を作る案内 */
+function todoDoneForm(cid){ const c = S.cases.find(x => x.id === cid); if (!c) return; const today = ymdStr(new Date());
+  dialog(`<h3>${esc(c.name)}　${L.done}日</h3><input type="date" id="tdD" value="${c.done || today}" max="${today}"><div class="hint">通帳・現場の記録どおりに。次に入金の記録へ進みます</div><div class="row" style="margin-top:10px"><button onclick="closeDlg()">やめる</button><button class="pri" onclick="todoDoneGo('${cid}')">記録して次へ</button></div>`); }
+function todoDoneGo(cid){ const v = (document.getElementById('tdD') || {}).value || ''; if (!v) { toast(L.done + '日を入れてください'); return; } closeDlg(); spin(true);
+  run('liffSetDoneDate', [UID, cid, v], res => { spin(false); if (res.cases) S.cases = res.cases; renderCases();
+    const unpaid = docsOf(cid).filter(live).filter(d => d.kind === '請求' && !d.stage && bal(d) > 0); const anyFinal = docsOf(cid).some(d => live(d) && d.kind === '請求' && !d.stage);
+    if (unpaid.length) { payDialog(unpaid[0].id); return; }
+    if (!anyFinal) { dialog(`<h3>${L.done}日を記録しました</h3><p style="font-size:13.5px;line-height:1.7">この${L.siteWord}には最後の請求書がありません。請求書を作って入金を記録すると、済・過去へ移ります。</p><div class="row"><button onclick="closeDlg()">あとで</button><button class="pri" onclick="closeDlg();invPick('${cid}')">🧾 請求書を作る</button></div>`); return; }
+    toast(L.done + '日を記録しました'); }); }
 function todoRows(){ const today = ymdStr(new Date()), rows = [];
   { const n = (S.customers || []).filter(c => !c.del && !c.kana && c.kanaSug && c.kanaSug !== '-').length; if (n) rows.push({ key: 'kana', cls: '', tag: '読みがな', t: `お客様の読みがなを確かめる　${n}件`, s: '自動で出した候補が合っているか。検索に使います（書類には出ません）', b: '✓ 確かめる', fn: 'kanaCheck()' }); }
   const cuOf = id => S.customers.find(x => x.id === id) || {};
@@ -696,7 +714,7 @@ function todoRows(){ const today = ymdStr(new Date()), rows = [];
   const grp = d => { const c = S.cases.find(x => x.id === docCases(d)[0]); return c ? caseGroup(c) : ''; };
   S.docs.filter(d => live(d) && d.kind === '請求' && bal(d) > 0 && d.paidReport).forEach(d => rows.push({ key: d.id, cls: 'ok', tag: '振込の報告', t: `${nm(d)}が「振り込みました」`, s: `${d.no}　${yen(bal(d))}　${d.paidReport.slice(5, 16).replace('-', '/')}`, b: '💴 入金を記録', fn: `custPay('${d.custId}')` }));
   S.docs.filter(d => live(d) && d.kind === '請求' && bal(d) > 0 && d.due && d.due < today && !d.paidReport).forEach(d => rows.push({ key: d.id, cls: 'red', tag: '期限超え', t: `${nm(d)}　${yen(bal(d))}`, s: `${d.no}　期限 ${d.due.slice(5).replace('-', '/')}`, b: '📨 お願い', fn: `remindDoc('${d.id}')` }));
-  S.cases.filter(c => caseGroup(c) === '工事中' && !(c.term && (c.term.start || c.term.days)) && c.status !== L.done).forEach(c => rows.push({ key: 'term_' + c.id, cls: 'blue', tag: '工事予定日', t: `${esc(c.name)}　工事の予定日がまだです`, s: 'お客様が確認した現場。いつ始めるか入れておくと、やり残しから消えます', b: '📅 予定を入れる', fn: `schedOpen('${c.id}')` }));   // 受注のあとの不意打ちを防ぐ（2026-10-12）
+  S.cases.filter(c => caseGroup(c) === '工事中' && !(c.term && (c.term.start || c.term.days)) && c.status !== L.done).forEach(c => rows.push({ key: 'term_' + c.id, cls: 'blue', tag: '工事予定日', t: `${esc(c.name)}　工事の予定日がまだです`, s: 'お客様が確認した現場。いつ始めるか入れておくと、やり残しから消えます', b: '📅 予定を入れる', fn: `editCase('${c.id}',4)` }));   // 受注のあとの不意打ちを防ぐ（2026-10-12）
   S.docs.filter(d => live(d) && d.kind === '見積' && d.sub !== '追加変更' && d.okAt && !d.result && grp(d) === '見積中').forEach(d => rows.push({ key: d.id, cls: 'ok', tag: '確認済', t: `${nm(d)}が見積を確認`, s: `${d.no}　${d.okAt.slice(5).replace('-', '/')}`, b: '✅ 受注へ', fn: `openCase('${docCases(d)[0]}')` }));
   const done = S.cases.filter(c => c.status === L.done && caseGroup(c) === '請求中' && !docsOf(c.id).some(d => live(d) && d.kind === '請求')), byC = {};
   done.forEach(c => (byC[c.custId] = byC[c.custId] || []).push(c));
@@ -1668,7 +1686,7 @@ const groupsDef = () => [
 function caseGroup(c){
   if (c.status === '取りやめ' || c.status === L.statuses[3] || c.status === '中断') return '済・過去';
   const ds = docsOf(c.id).filter(live), inv = ds.filter(d => d.kind === '請求'), est = ds.filter(d => d.kind === '見積');
-  if (inv.some(d => bal(d) > 0)) return '請求中';
+  if (inv.some(d => bal(d) > 0 && !d.stage)) return '請求中';   // 着手金・中間金の請求書は受注・工事中の枠の中で扱う（2026-10-12 三浦さん）
   if (c.status === L.done) return inv.some(d => !d.stage) ? '済・過去' : '請求中';   // 着手金・中間金の請求書だけでは済にしない（2026-10-12 完成日を入れると書類が消えて見えた不具合）
   if (c.status === L.start || inv.length || ds.some(d => d.kind === '注文') || est.some(d => d.result === '受注')) return '工事中';
   if (est.some(d => d.result !== '失注')) return '見積中';
@@ -2356,7 +2374,7 @@ function drawOrd(){ const ch = OI.change, e = OI.est; const r = OD.rules; const 
       ${ch ? '' : ed('off', '工事をしない日・時間', esc([r.offdays, r.hours ? '作業時間 ' + r.hours : ''].filter(String).join('／')), '定めなし')}
       ${ch ? '' : ed('supply', '支給する材料・機械', esc(r.supply))}${ch ? '' : ed('inspect', '完成の確認と引渡し', esc(r.inspect))}
       ${ed('note', '特記事項', esc(OD.note), 'なし（任意）')}
-      ${ed('delivery', '請書の渡し方', (OD.delivery === 'paper' ? '📄 紙で渡す（収入印紙の欄あり）' : '📱 LINE・メールでPDFを送る（収入印紙の欄なし）') + ((OD.signBox == null ? OD.delivery === 'paper' : !!OD.signBox) ? '・署名欄あり' : '・署名欄なし'))}
+      ${ed('delivery', '請書の渡し方', OD.delivery === 'paper' ? '📄 紙で渡す（署名・住所・収入印紙の欄あり' + (OD.seal ? '・押印欄あり' : '') + '）' : '📱 LINE・メールでPDFを送る（署名・印紙の欄なし）')}
       ${ch || !nSvc ? '' : `<tr class="ed" onclick="ordSheet('rules')"><th>当社からのお約束</th><td>本工事に限り、次のとおりといたします。<br>${ordSvcLines().map(x => '・' + esc(x)).join('<br>')}</td></tr>`}
       ${ch ? '' : ed('rules', 'そのほかの約束（約款）', `別紙の約款 ${ORD_CL.filter(c => (r.lv[c[0]] || 'std') !== 'off' || c[0] === 'price').length}項目　${nSoft ? `<b style="color:#B26A00">ゆずった条項 ${nSoft}つ</b>${nSvc ? `（書き出し ${nSvc}つ）` : ''}` : '<b style="color:var(--ok)">すべて標準（有利）</b>'}`)}</table>
 </div></div>
@@ -2373,7 +2391,7 @@ function ordSheet(k){ const r = OD.rules; let body = '';
   if (k === 'content') body = bsHead(OI.change ? '変更の内容' : '工事内容') + ((OI.items || []).length ? `<div class="hint" style="margin:0 0 4px">見積書の品目から選ぶ</div><div class="pchips" style="margin-bottom:8px">${OI.items.map((it, i) => `<button class="${(OD.picks || []).includes(it.name) ? 'on' : ''}" onclick="ordPick(${i})">${esc(it.name)}<small> ${yen(it.amount)}</small></button>`).join('')}</div>` : '') + `<textarea id="odCt" rows="6" maxlength="400" oninput="OD.content=this.value;cntUp(this,'odCc',400)">${esc(OD.content)}</textarea><div class="cnt2" id="odCc">${OD.content.length} / 400文字</div><div class="hint">選んだ品目が入ります。文は自由に直せます。</div>` + save;
   if (k === 'delivery') body = bsHead('請書の渡し方') + `<div class="pchips"><button class="${OD.delivery !== 'paper' ? 'on' : ''}" onclick="OD.delivery='digital';ordSheet('delivery')">📱 LINE・メールでPDFを送る</button><button class="${OD.delivery === 'paper' ? 'on' : ''}" onclick="OD.delivery='paper';ordSheet('delivery')">📄 紙に印刷して渡す</button></div>
     <div class="hint">請書を紙で印刷して署名・押印した紙を渡すときは、金額に応じた収入印紙を貼ります。<u onclick="stampTable()">🧾 収入印紙一覧はこちら</u></div>
-    <label class="pck" style="margin-top:8px"><input type="checkbox" ${(OD.signBox == null ? OD.delivery === 'paper' : !!OD.signBox) ? 'checked' : ''} onchange="OD.signBox=this.checked"><span><b>署名・住所・押印の欄を入れる</b><small style="display:block;color:var(--muted)">紙に書いてもらうとき用（コンビニで印刷して記入）。LINE・メール・電話の承認で進めるなら不要です。お名前はフルネームで印字します</small></span></label>` + save;
+    ${OD.delivery === 'paper' ? `<div class="hint" style="margin-top:6px">紙のときは、ご住所・お名前（自筆）の欄と収入印紙の欄が入ります。</div><label class="pck" style="margin-top:6px"><input type="checkbox" ${OD.seal ? 'checked' : ''} onchange="OD.seal=this.checked"><span><b>押印の欄（㊞）も入れる</b><small style="display:block;color:var(--muted)">自筆の署名があれば押印は不要なので、ふだんは入れません</small></span></label>` : `<div class="hint" style="margin-top:6px">LINE・メールのときは、署名・住所・押印の欄は入りません（LINEのボタン、メール・電話・対面の承認で確認します）。</div>`}` + save;
   if (k === 'note') body = bsHead('特記事項') + `<textarea rows="3" maxlength="200" placeholder="例：近隣へのご挨拶は着工前に当社で行います" oninput="OD.note=this.value">${esc(OD.note)}</textarea>` + save;
   if (k === 'off') body = bsHead('工事をしない日・時間') + `<div class="pchips">${['日曜・祝日', '土日・祝日', ''].map(v => `<button class="${r.offdays === v ? 'on' : ''}" onclick="OD.rules.offdays='${v}';ordSheet('off')">${v || '定めなし'}</button>`).join('')}</div>${lb('作業時間（任意）')}<input value="${esc(r.hours)}" placeholder="例：8時〜18時" oninput="OD.rules.hours=this.value">` + save;
   if (k === 'supply') body = bsHead('支給する材料・機械') + `<div class="hint" style="margin:0 0 6px">お客様が材料を用意したり、機械を貸したりするときだけ書きます。</div><input value="${esc(r.supply)}" oninput="OD.rules.supply=this.value"><div class="pchips" style="margin-top:6px"><button onclick="OD.rules.supply='なし';ordSheet('supply')">なし</button></div>` + save;
@@ -2393,7 +2411,7 @@ function ordSheet(k){ const r = OD.rules; let body = '';
   if (k === 'pay') { const s2 = document.getElementById('odSum'); if (s2) s2.textContent = '書類には：' + ordPayText(); } }
 function ordPayOk(){ const st = ppStages(OD.plan, OI.total); if (st.some(x => !x.amount)) { toast('金額か割合を入れてください（使わないものはチェックを外す）'); return; }
   if (st.reduce((a, x) => a + x.amount, 0) >= OI.total && st.length) { toast('着手金・中間金が工事の金額（税込）以上になっています'); return; } closeBs(); drawOrd(); }
-function ordPayload(){ return { delivery: OD.delivery === 'paper' ? 'paper' : 'digital', signBox: OD.signBox == null ? OD.delivery === 'paper' : !!OD.signBox, subject: OD.subject, content: OD.content, place: OD.place, term: OD.term, method: [], done_method: OD.plan.done.method, note: OD.note, rules: OD.rules, stages: ordStages(), pay: OI.change ? '' : ordPayText(), originId: OD.originId }; }
+function ordPayload(){ return { delivery: OD.delivery === 'paper' ? 'paper' : 'digital', seal: OD.delivery === 'paper' && !!OD.seal, subject: OD.subject, content: OD.content, place: OD.place, term: OD.term, method: [], done_method: OD.plan.done.method, note: OD.note, rules: OD.rules, stages: ordStages(), pay: OI.change ? '' : ordPayText(), originId: OD.originId }; }
 function ordPreview(send){ if (PV_BUSY) return; PV_BUSY = true; PV_ORD = !!send; spin(true, '✍ プレビューを作っています…', '数秒かかります');
   run('liffOrderPreviewPdf', [UID, OD.estId, ordPayload()], b64 => { showPdf(b64).then(() => { PV_BUSY = false; spin(false); pvMode(send ? 'send' : ''); document.getElementById('pv').classList.add('on'); })
     .catch(e => { PV_BUSY = false; spin(false); toast('PDFを表示できませんでした：' + ((e && e.message) || e)); }); }, () => { PV_BUSY = false; }); }
