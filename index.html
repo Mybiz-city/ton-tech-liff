@@ -296,7 +296,7 @@
     <div style="background:#F3F4F6;border-radius:10px;padding:8px 10px;margin:0 0 6px"><div id="ownBank" style="background:#fff;border-radius:6px;padding:8px 10px;font-size:11.5px;line-height:1.75;color:#222"></div></div>
     <div class="row" style="margin-top:8px"><button class="pri" onclick="openIssuer(true)">自社情報とロゴを直す</button></div>
   </div>
-  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新171</b>（2026-10-12）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
+  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新172</b>（2026-10-12）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
   <div class="sec" style="margin-top:12px"><h2>備考の定型文（5つ設定可能）</h2>
     <div id="memoEdit"></div>
     <div class="row" style="margin-top:8px"><button class="pri" onclick="saveMemo()">定型文を保存</button></div>
@@ -370,7 +370,7 @@ function bootTimeText(){ const m = LIFFD.ms || {}; const s = k => m[k] == null ?
   return `起動 ${s('render')}（画面 ${s('load')}／前回の内容で表示 ${s('cache')}／本人確認 ${s('auth')}／台帳 ${s('data')}）` + (calls ? `<br>最近の呼び出し：${calls}` : '') + `<br>しらべ：LIFF起動 ${esc(LIFFD.init || '未')}／LINEの中 ${esc(LIFFD.client || '?')}／カード機能 ${esc(LIFFD.api || '?')}`; }
 // ② 前回の台帳をスマホに覚えさせ、まず前回の内容で画面を出す（外の置き場だけ。Google側は uid を信じる作りなので使わない）2026-10-11
 let STALE = false, FRESH_PENDING = null, CUR_TAB = 'cases';
-const PAGE_VER = '171';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
+const PAGE_VER = '172';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
 function cacheKey(){ return 'inv_cache_p' + PAGE_VER; }
 function cacheRead(){ try { const o = JSON.parse(localStorage.getItem(cacheKey()) || 'null'); return o && o.uid && o.S && o.S.labels ? o : null; } catch (e) { return null; } }
 function cacheWrite(uid, data){ try { const s = JSON.stringify({ uid, at: Date.now(), S: data }); if (s.length < 4000000) localStorage.setItem(cacheKey(), s); } catch (e) { /* 入らなければ覚えない */ } }
@@ -496,6 +496,7 @@ function boot(){
   if (L.docs.includes('納品')) { const b = document.createElement('button'); b.className = 'lnk'; b.textContent = '納品書として保存'; b.onclick = () => finalize('納品'); document.querySelector('#edv .ordf').appendChild(b); }
   showTab('cases');
   if (!STALE) tmark('render');
+  setTimeout(kanaFillLater, 4000);
   setTimeout(monthNote, 900);
 }
 
@@ -966,6 +967,10 @@ const sec = (n, title, body, sub) => `<div class="nsec c${n}"><div class="nsh"><
 // お客様さがし（文字で絞り込み＋新規）。CS = { list, sel, neu, pick(id), add(name), word }
 let CS = null;
 const normQ = s => String(s || '').normalize('NFKC').replace(/[\s　・様殿]/g, '').replace(/[ァ-ヶ]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60)).toLowerCase();
+const kanaOf = c => c && c.kana && c.kana !== '-' ? normQ(c.kana) : '';   // 読みがな検索（2026-10-12）
+/** 読みがなが空のお客様がいれば、起動のあとに裏で付けてもらう（1日1回） */
+function kanaFillLater(){ try { if (DEMO || !UID || SERVER_MODE !== 'api') return; const miss = (S.customers || []).some(c => !c.del && !c.kana); if (!miss) return; const k = 'inv_kana_' + ymdStr(new Date()); if (localStorage.getItem(k)) return; localStorage.setItem(k, '1');
+  srvReal('liffKanaFill', [UID]).then(r => { if (r && r.customers) S.customers = r.customers; }).catch(() => {}); } catch (e) {} }
 function csHtml(o){ CS = o; return `<input class="csq" id="csQ" type="search" autocomplete="off" placeholder="🔍 ${o.word}の名前を打つ（新しい名前もここに）" value="${esc(o.q || '')}" oninput="CS.q=this.value;csDraw()"><div class="cslist" id="csL"></div><div id="csN"></div>`; }
 /** 最近使った相手（最大5件・この端末だけ） */
 function recentCusts(list){ const ids = lsGet('rcust') || []; return ids.map(id => list.find(c => c.id === id)).filter(Boolean).slice(0, 5); }
@@ -975,7 +980,7 @@ function csDraw(){ const box = document.getElementById('csL'); if (!box || !CS) 
   const sel = CS.list.find(c => c.id === CS.sel); let h = '';
   if (!q) { const rec = recentCusts(CS.list); const top = rec.length ? rec : CS.list.slice(0, 5); if (sel && !top.includes(sel)) top.unshift(sel);
     h = (top.length ? `<span class="wg">${rec.length ? '🕒 最近使った' : '登録している' + CS.word}</span>` + top.map(row).join('') : '') + (CS.list.length > top.length ? `<span class="csmore">ほか${CS.list.length - top.length}件は、名前を打つと出ます</span>` : '') + (!CS.list.length ? '<span class="hint">まだ登録がありません。上に名前を打ってください</span>' : ''); }
-  else { const hit = CS.list.filter(c => normQ(c.name).includes(q) || normQ(c.call).includes(q)).slice(0, 12); h = hit.map(row).join('') + (!hit.length ? `<span class="hint">登録に一致する${CS.word}がいません</span>` : ''); }
+  else { const hit = CS.list.filter(c => normQ(c.name).includes(q) || normQ(c.call).includes(q) || kanaOf(c).includes(q)).slice(0, 12); h = hit.map(row).join('') + (!hit.length ? `<span class="hint">登録に一致する${CS.word}がいません</span>` : ''); }
   box.innerHTML = h;
   const exact = CS.list.some(c => normQ(c.name) === q);
   document.getElementById('csN').innerHTML = raw && !exact ? `<button class="csn ${CS.neu && CS.neu === raw ? 'on' : ''}" onclick="CS.add(CS.q.trim())">${CS.neu && CS.neu === raw ? '✓ ' : '➕ '}「${esc(raw)}」${CS.neu && CS.neu === raw ? 'で登録します（確定したとき一覧に入ります）' : 'を新しい' + CS.word + 'として使う'}</button>` : ''; }
@@ -1836,7 +1841,7 @@ function sqPlace(w, el){ const i = SQ.place.indexOf(w); if (i >= 0) SQ.place.spl
 function renderSearch(){ const f = document.getElementById('sqForm'); if (!f) return;
   const v = id => document.getElementById(id) ? document.getElementById(id).value : '';
   const G = groupsDef();
-  f.innerHTML = sec(1, '誰の・何の', `${lb('お客様・元請の名前')}<input id="sq_cust" value="${esc(SQ.cust)}" placeholder="名前の一部でOK">${lb('件名')}<input id="sq_subj" value="${esc(SQ.subj)}" placeholder="書類の件名の一部">${lb('品名（書類の明細）')}<input id="sq_item" value="${esc(SQ.item)}" placeholder="例：外壁塗装（🔍のとき照会します）">`)
+  f.innerHTML = sec(1, '誰の・何の', `${lb('お客様・元請の名前')}<input id="sq_cust" value="${esc(SQ.cust)}" placeholder="名前の一部・読みがなでもOK">${lb('件名')}<input id="sq_subj" value="${esc(SQ.subj)}" placeholder="書類の件名の一部">${lb('品名（書類の明細）')}<input id="sq_item" value="${esc(SQ.item)}" placeholder="例：外壁塗装（🔍のとき照会します）">`)
     + sec(2, '日付', sqDateRow('date', '書類の発行日') + sqDateRow('done', L.done + '日') + sqDateRow('due', '振込期限'))
     + sec(3, L.siteWord + '・場所', `${lb(L.siteWord + '名')}<input id="sq_site" value="${esc(SQ.site)}" placeholder="${L.siteWord}名の一部（${L.ownerWord}名でも）">${sqPlaceHtml()}`)
     + sec(4, '金額（書類の合計・税込）', `<div class="dprange"><input type="number" inputmode="numeric" id="sq_amin" value="${esc(SQ.amin)}" placeholder="円以上"><span>〜</span><input type="number" inputmode="numeric" id="sq_amax" value="${esc(SQ.amax)}" placeholder="円以下"></div>`)
@@ -1854,7 +1859,8 @@ function sqDraw(){ const qc = normQ(SQ.cust), qs = normQ(SQ.subj), qt = normQ(SQ
   const custNm = id => (S.customers.find(x => x.id === id) || {}).name || '';
   const docOk = d => vis(d) && (!qs || normQ(d.subject).includes(qs)) && sqDateOk(SQ.date, d.date) && sqDateOk(SQ.due, d.due)
     && (!amin || (d.amount || d.total) >= amin) && (!amax || (d.amount || d.total) <= amax) && (!SQ_IDS || SQ_IDS.has(d.id));
-  const caseOk = c => (!qc || normQ(custNm(c.custId)).includes(qc) || normQ(c.owner).includes(qc) || docsOf(c.id).some(d => normQ(d.custName).includes(qc)))
+  const custKana = id => kanaOf(S.customers.find(x => x.id === id));
+  const caseOk = c => (!qc || normQ(custNm(c.custId)).includes(qc) || custKana(c.custId).includes(qc) || normQ(c.owner).includes(qc) || docsOf(c.id).some(d => normQ(d.custName).includes(qc)))
     && sqDateOk(SQ.done, c.done) && (!qt || normQ(c.name).includes(qt) || normQ(c.owner).includes(qt))
     && (!SQ.place.length || SQ.place.some(w => String(c.name || '').includes(w))) && (!sts.length || sts.includes(caseGroup(c)));
   const rows = S.cases.filter(caseOk).map(c => ({ c, ds: docsOf(c.id).filter(docOk) })).filter(x => !dcond || x.ds.length);
@@ -2789,7 +2795,7 @@ function renderLists(){
       const k = (window.__csKubun || c.kubun) === '元請' ? '元請' : '施主';
       d.innerHTML = `<div class="ed">
         <select id="ce_k" onchange="window.__csKubun=this.value;renderLists()"><option value="元請" ${k === '元請' ? 'selected' : ''}>下請け（元請）</option><option value="施主" ${k === '施主' ? 'selected' : ''}>自社請け（自請）</option></select>
-        <input id="ce_n" value="${esc(c.name)}" placeholder="名前">
+        <input id="ce_n" value="${esc(c.name)}" placeholder="名前"><input id="ce_k2" value="${esc(c.kana && c.kana !== '-' ? c.kana : '')}" placeholder="読みがな（検索用・空なら自動で付けます）" style="margin-top:4px">
         ${k === '元請' ? `<div class="hint" style="margin-top:6px">締め・支払</div><div class="g3"><select id="ce_c">${opts(CLOSE_OPTS, c.close || '末日')}</select><select id="ce_pm">${opts(PAYM_OPTS, c.payMonth || '翌月')}</select><select id="ce_pd">${opts(PAYD_OPTS, c.payDay || '末日')}</select></div>
         <select id="ce_d" style="display:none"><option value="税込" ${c.disp !== '税抜' ? 'selected' : ''}>税込表示</option><option value="税抜" ${c.disp === '税抜' ? 'selected' : ''}>税抜表示</option></select>` : ''}
         <input id="ce_a" value="${esc(c.address || '')}" placeholder="住所（任意）例：〇〇市△△町1-2-3"><input id="ce_m" type="email" value="${esc(c.mail || '')}" placeholder="メール（完成報告をメールで送るとき）"></div>
@@ -2833,7 +2839,7 @@ function saveCust(){
 function saveEditCust(id){
   const name = document.getElementById('ce_n').value.trim(); if (!name) { toast('名前を入れてください'); return; }
   const k = document.getElementById('ce_k').value; const moto = k === '元請';
-  const c = { id, name, kubun: k, address: document.getElementById('ce_a').value, mail: document.getElementById('ce_m').value, disp: moto ? document.getElementById('ce_d').value : '税込',
+  const c = { id, name, kubun: k, kana: (document.getElementById('ce_k2') || {}).value || '', address: document.getElementById('ce_a').value, mail: document.getElementById('ce_m').value, disp: moto ? document.getElementById('ce_d').value : '税込',
     close: moto ? document.getElementById('ce_c').value : '', payMonth: moto ? document.getElementById('ce_pm').value : '', payDay: moto ? document.getElementById('ce_pd').value : '' };
   spin(true);
   run('liffCustomerSave', [UID, c], list => { spin(false); S.customers = list; CS_EDIT = ''; window.__csKubun = ''; renderLists(); toast('保存しました'); });
