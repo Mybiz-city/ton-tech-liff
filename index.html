@@ -297,7 +297,7 @@
     <div style="background:#F3F4F6;border-radius:10px;padding:8px 10px;margin:0 0 6px"><div id="ownBank" style="background:#fff;border-radius:6px;padding:8px 10px;font-size:11.5px;line-height:1.75;color:#222"></div></div>
     <div class="row" style="margin-top:8px"><button class="pri" onclick="openIssuer(true)">自社情報とロゴを直す</button></div>
   </div>
-  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新180</b>（2026-10-12）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
+  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新181</b>（2026-10-12）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
   <div class="sec" style="margin-top:12px"><h2>備考の定型文（5つ設定可能）</h2>
     <div id="memoEdit"></div>
     <div class="row" style="margin-top:8px"><button class="pri" onclick="saveMemo()">定型文を保存</button></div>
@@ -379,7 +379,7 @@ function bootTimeText(){ const m = LIFFD.ms || {}; const s = k => m[k] == null ?
   return `起動 ${s('render')}（画面 ${s('load')}／前回の内容で表示 ${s('cache')}／本人確認 ${s('auth')}／台帳 ${s('data')}）` + (calls ? `<br>最近の呼び出し：${calls}` : '') + `<br>しらべ：LIFF起動 ${esc(LIFFD.init || '未')}／LINEの中 ${esc(LIFFD.client || '?')}／カード機能 ${esc(LIFFD.api || '?')}`; }
 // ② 前回の台帳をスマホに覚えさせ、まず前回の内容で画面を出す（外の置き場だけ。Google側は uid を信じる作りなので使わない）2026-10-11
 let STALE = false, FRESH_PENDING = null, CUR_TAB = 'cases';
-const PAGE_VER = '180';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
+const PAGE_VER = '181';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
 function cacheKey(){ return 'inv_cache_p' + PAGE_VER; }
 function cacheRead(){ try { const o = JSON.parse(localStorage.getItem(cacheKey()) || 'null'); return o && o.uid && o.S && o.S.labels ? o : null; } catch (e) { return null; } }
 function cacheWrite(uid, data){ try { const s = JSON.stringify({ uid, at: Date.now(), S: data }); if (s.length < 4000000) localStorage.setItem(cacheKey(), s); } catch (e) { /* 入らなければ覚えない */ } }
@@ -2057,6 +2057,8 @@ function caseSheetHtml(id){
   const stat = caseGroup(c) === '工事中' ? `<div class="cinfo2" style="border-radius:12px;margin-bottom:8px">${rr('注文書', ords.length ? `✓ あり（${esc(ords.map(d => d.no).join('・'))}）` : '<span style="color:var(--muted)">なし</span>')}${rr('見積の版', vers.length > 1 ? `${vers.length}版（採用：第${adopted ? adopted.ver || 1 : 1}版）` : '<span style="color:var(--muted)">1版</span>', vers.length > 1 ? `verPick('${id}')` : '')}${rr(L.done + '予定日', (c.term || {}).end ? esc(jpd(c.term.end)) : (c.term || {}).start ? '着工 ' + esc(jpd(c.term.start)) + '（終わりは未定）' : '<span style="color:var(--muted)">未定（タップで入力）</span>', `editCase('${id}',4)`)}</div>` : '';
   const toInv2 = caseGroup(c) === '工事中' && adopted ? `<div class="csb"><button class="pri" style="background:var(--blue);border-color:var(--blue);flex:1 1 100%" onclick="invPick('${id}')">🔄 見積書を請求書に変換<small style="display:block;font-weight:400;font-size:11px">${L.done}したら、ここから（どの版から作るか選べます）</small></button></div>` : '';
   const toInv = est ? `<div class="csb"><button class="pri" style="background:var(--blue);border-color:var(--blue);flex:1 1 100%" onclick="invPick('${id}')">🔄 見積書を請求書に変換<small style="display:block;font-weight:400;font-size:11px">注文書を作らずに、完成したらここから</small></button></div>` : '';
+  // 完成して本請求書（着手金・中間金ではない請求書）がまだない現場：ここから残金の請求書を作れる。元請は締め日にまとめてもよい（2026-10-12）
+  const toInv3 = caseGroup(c) === '請求中' && c.status === L.done && !hasFinalInv(id) && adopted ? `<div class="csb"><button class="pri" style="background:var(--blue);border-color:var(--blue);flex:1 1 100%" onclick="invPick('${id}')">🧾 残金（本請求）の請求書を作る<small style="display:block;font-weight:400;font-size:11px">${cu.kubun === '元請' ? '締め日にまとめて1枚にしてもよいし、今すぐ作ってもよい' : '着手金・中間金のお預かり分は差し引かれます'}</small></button></div>` : '';
   // 枠の順：①今の書類 → ②現場のこと（今後の流れ・完成前メモ・写真・完成後メモ）→ ③承認・受注（見積中だけ）→ 履歴（三浦さんの図 2026-10-09）
   // 受注・工事中は書類の枠を固定の形に：見積書の段 → 注文書の段（なしでも段を出す）→ 着手金の請求書があればその段（認知負荷を下げる 2026-10-10）
   const lastOrd = ords.slice().sort((a, b) => b.id.localeCompare(a.id))[0];
@@ -2072,7 +2074,7 @@ function caseSheetHtml(id){
   const hist2 = all.filter(d => !shownSet.includes(d));
   return head + fr(`<div class="dlist">${fixedDocs || main.map(d => docCard(d)).join('') || '<div class="nodata">書類なし</div>'}</div>`)
     + fr(stat + info + after + photos + edit + (past ? copy : '') + refund)
-    + fr(okBand) + fr(toInv || toInv2)
+    + fr(okBand) + fr(toInv || toInv2 || toInv3)
     + (hist2.length ? `<details class="dhist"${HIST_OPEN ? ' open' : ''} ontoggle="HIST_OPEN=this.open"><summary>📜 過去の書類・編集履歴を見る（${hist2.length}件）</summary><div class="dlist">${hist2.map(d => docCard(d)).join('')}</div></details>` : '');
 }
 /** 請求中の現場の中身：相談メモ・施主・施工内容・請負代金額だけ */
