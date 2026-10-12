@@ -300,8 +300,9 @@
     <div class="ipv" style="position:static;box-shadow:none"><div class="piss" id="ownPv"></div></div>
     <div style="background:#F3F4F6;border-radius:10px;padding:8px 10px;margin:0 0 6px"><div id="ownBank" style="background:#fff;border-radius:6px;padding:8px 10px;font-size:11.5px;line-height:1.75;color:#222"></div></div>
     <div class="row" style="margin-top:8px"><button class="pri" onclick="openIssuer(true)">自社情報とロゴを直す</button></div>
+    <div class="row" style="margin-top:6px"><button onclick="termsShow()">📖 利用規約を読む</button></div>
   </div>
-  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新194</b>（2026-10-12）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
+  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新195</b>（2026-10-12）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
   <div class="sec" style="margin-top:12px"><h2>備考の定型文（5つ設定可能）</h2>
     <div id="memoEdit"></div>
     <div class="row" style="margin-top:8px"><button class="pri" onclick="saveMemo()">定型文を保存</button></div>
@@ -383,7 +384,7 @@ function bootTimeText(){ const m = LIFFD.ms || {}; const s = k => m[k] == null ?
   return `起動 ${s('render')}（画面 ${s('load')}／前回の内容で表示 ${s('cache')}／本人確認 ${s('auth')}／台帳 ${s('data')}）` + (calls ? `<br>最近の呼び出し：${calls}` : '') + `<br>しらべ：LIFF起動 ${esc(LIFFD.init || '未')}／LINEの中 ${esc(LIFFD.client || '?')}／カード機能 ${esc(LIFFD.api || '?')}`; }
 // ② 前回の台帳をスマホに覚えさせ、まず前回の内容で画面を出す（外の置き場だけ。Google側は uid を信じる作りなので使わない）2026-10-11
 let STALE = false, FRESH_PENDING = null, CUR_TAB = 'cases';
-const PAGE_VER = '194';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
+const PAGE_VER = '195';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
 function cacheKey(){ return 'inv_cache_p' + PAGE_VER; }
 function cacheRead(){ try { const o = JSON.parse(localStorage.getItem(cacheKey()) || 'null'); return o && o.uid && o.S && o.S.labels ? o : null; } catch (e) { return null; } }
 function cacheWrite(uid, data){ try { const s = JSON.stringify({ uid, at: Date.now(), S: data }); if (s.length < 4000000) localStorage.setItem(cacheKey(), s); } catch (e) { /* 入らなければ覚えない */ } }
@@ -499,8 +500,20 @@ function run(fn, args, ok, ng){
 }
 let DRAFT_ASKED = false;
 /** 途中の書類（前にアプリを閉じたときの下書き）があれば、開くか聞く */
-function bootDraft(dr){ D = dr; if ((!D.sites || !D.sites.length) && D.items && D.items.length) D.sites = [{ case_id: '', owner: (D.customer || {}).name || '', name: D.subject || '', items: D.items }]; if (!D.sites || !D.sites.length) D = emptyDraft();
+let TERMS_DRAFT = null;
+function bootDraft(dr){ if (!DEMO && UID && String(S.termsAgreed || '') !== TERMS_VER) { TERMS_DRAFT = dr; return; }   // 規約の同意が先（2026-10-12）
+  D = dr; if ((!D.sites || !D.sites.length) && D.items && D.items.length) D.sites = [{ case_id: '', owner: (D.customer || {}).name || '', name: D.subject || '', items: D.items }]; if (!D.sites || !D.sites.length) D = emptyDraft();
   if (D.sites.some(x => x.items.some(r => r.name))) setTimeout(() => dialog(`<h3>途中の書類があります</h3><p>前にアプリを閉じたときの${D.doc_type || ''}書です${D.customer && D.customer.name ? '（' + esc(D.customer.name) + '）' : ''}。</p><div class="row"><button class="warn" onclick="closeDlg();discardEd()">🗑 破棄</button><button class="pri" onclick="closeDlg();afterLoadDraft();openEd()">開く</button></div>`), 300); }
+const TERMS_TEXT = "「LINE de 請求書」利用規約（2026年10月12日版）\n\n提供者：未来クリエイティブマネジメント合同会社（サービスブランド：Ton-Tech／トン・テック）\n\n第1条（この規約について）\n1. この規約は、未来クリエイティブマネジメント合同会社（以下「当社」）が提供するLINE上の見積書・注文書・請求書・領収書の作成サービス「LINE de 請求書」（以下「本サービス」）の利用条件を定めます。\n2. 利用者は、本サービスの画面で「同意して始める」を押した時点で、この規約に同意したものとします。同意できない場合は、本サービスを利用できません。\n3. 当社は、必要に応じてこの規約を変更できます。変更後の規約は、本サービスの画面またはLINEで知らせた時点から効力を持ちます。\n\n第2条（本サービスの内容）\n1. 本サービスは、利用者が入力した内容をもとに、見積書・注文書・請求書・領収書などの書類（PDF）を作り、LINEで送るための道具です。\n2. 利用者の取引先（お客様）が「この内容で進めてください」「この内容で発注します」などのボタンを押した事実と日時を記録する機能は、やり取りの記録を残すものです。当社は、その記録が法律上の契約書面・電子契約の要件を満たすことを保証しません。\n3. 本サービスは、税務・法務・会計の助言を行うものではありません。書類の記載内容（消費税・インボイス番号・契約条件など）の適法性・正確性は、利用者自身が確認してください。\n\n第3条（利用者の責任）\n1. 利用者は、自分の責任と判断で本サービスを使い、作った書類の内容、送り先、送った結果について、すべての責任を負います。\n2. 利用者は、建設業法、下請法、消費税法（インボイス制度）、特定商取引法、個人情報保護法など、自分の事業に関係する法令を自分で守ってください。当社は法令の遵守を代行しません。\n3. 利用者は、自分のLINEアカウントとスマートフォンを、他人に使われないように管理してください。利用者のアカウントで行われた操作は、利用者本人が行ったものとみなします。\n4. 利用者は、お客様の氏名・住所・連絡先などの情報を本サービスに入力するにあたり、必要な範囲で、お客様の了解を得てください。\n\n第4条（禁止事項）\n次の行為を禁止します。\n・法令または公序良俗に反する行為、犯罪行為に関わる行為\n・事実と異なる書類（架空の請求書・領収書など）を作る行為\n・他人になりすます行為、他人の情報を無断で入力する行為\n・本サービスの仕組み（プログラム・スプレッドシート・自動更新）を無断で解析・改変・複製する行為\n・本サービスのサーバーや他の利用者に過大な負荷をかける行為\n・その他、当社が不適切と判断する行為\n\n第5条（利用者のデータの取り扱い）\n1. 利用者が入力した情報（屋号・口座・料金表・お客様の情報・現場の情報・書類・写真など。以下「利用者データ」）は、利用者のものです。\n2. 当社は、利用者データを、本サービスの提供・運用・保守・改善・障害対応の目的以外には使いません。他の事業、広告の配信、第三者への提供・販売には使いません。\n3. 当社は、利用者データを、本サービスの運用に必要な範囲でのみ閲覧することがあります（障害対応、利用者からの問い合わせへの対応など）。\n4. 利用者データは、Google（Googleスプレッドシート・Googleドライブ）およびLINE（LINEヤフー株式会社）のサービス上に保存・送信されます。これらの会社の利用規約・プライバシーポリシーが別途適用されます。\n5. 当社は、サービスの改善のために、個人や取引先を特定できない形に加工した統計情報（利用件数、機能の利用状況など）を使うことがあります。\n6. 利用者が本サービスの利用をやめたときは、利用者の求めに応じて、合理的な期間内に利用者データを削除します。ただし、法令で保存が求められるもの、および紛争対応のために必要なものは、その必要な期間、保存することがあります。\n\n第6条（免責）\n1. 当社は、本サービスに誤りがないこと、中断しないこと、利用者の目的に合うこと、作った書類が法令の要件を満たすことを保証しません。\n2. 当社は、本サービスの利用または利用できなかったことによって利用者や第三者に生じた損害（取引先との紛争、入金の遅れ、税務上の不利益、データの消失を含む）について、当社に故意または重大な過失がある場合を除き、責任を負いません。\n3. 当社が責任を負う場合でも、その範囲は、利用者が当社に支払った直近12か月分の利用料金の合計額（無料の場合は1万円）を上限とします。\n4. Google・LINEのサービスの仕様変更・停止・障害によって本サービスが使えなくなった場合、当社は責任を負いません。\n\n第7条（サービスの変更・停止・終了）\n1. 当社は、利用者への事前の知らせなしに、本サービスの内容を変更・追加・削除することがあります。\n2. 当社は、保守、障害、Google・LINE側の事情、その他やむを得ない理由があるときは、本サービスを一時的に止めることがあります。\n3. 当社は、本サービスを終了することがあります。終了するときは、原則として1か月前までにLINEまたは画面で知らせ、利用者が自分のデータ（スプレッドシート・PDF）を取り出せる期間を設けます。\n\n第8条（利用の停止・解除）\n利用者がこの規約に違反したとき、または当社が本サービスの利用を続けることが不適切と判断したときは、当社は、事前の知らせなしに、利用者の利用を停止し、または利用契約を解除することがあります。\n\n第9条（情報の開示）\n1. 当社は、次の場合を除き、利用者データを第三者に開示しません。\n・利用者の同意があるとき\n・法令に基づくとき（裁判所の命令・令状、法令上の義務に基づく照会など）\n・人の生命・身体・財産を守るために必要で、利用者の同意を得ることが難しいとき\n・本サービスの運用を委託する相手に、必要な範囲で預けるとき（守秘義務を負わせます）\n2. 警察などの捜査機関、裁判所、弁護士会からの照会については、法令上の義務がある場合（令状、裁判所の文書提出命令など）には応じます。法令上の義務がない任意の照会については、犯罪の防止・解決や人の安全のために必要と当社が判断した場合に限り、必要最小限の範囲で応じることがあります。\n3. 当社は、開示を行ったときは、法令で禁じられている場合を除き、利用者に知らせるよう努めます。\n\n第10条（知的財産）\n本サービスのプログラム、画面、文章、キャラクター（木葉かんな など）の権利は当社に帰属します。利用者が作った書類の内容の権利は、利用者に帰属します。\n\n第11条（広告の表示）\n1. 当社は、本サービスの画面（読み込み中・送信中の待ち時間の表示など）に、当社または第三者の広告を表示することがあります。\n2. 広告の表示にあたり、当社は、利用者のLINEアカウント情報および利用者データを広告の配信に使いません。\n3. 広告先の商品・サービスについては、広告主と利用者の間の取引であり、当社は責任を負いません。\n\n第12条（料金）\n本サービスの料金は、別に定める料金表によります。無料で提供している機能は、当社の判断で有料に変更することがあります（変更前に知らせます）。\n\n第13条（準拠法・裁判所）\nこの規約は日本法に従います。本サービスに関する紛争は、大阪地方裁判所を第一審の専属的合意管轄裁判所とします。\n\n第14条（連絡先）\n本サービスに関する問い合わせは、LINE公式アカウント「LINE de 請求書」のトークからお願いします。";
+const TERMS_VER = '2026-10-12';
+const TERMS_POINTS = ['書類の中身と送り先の責任は、親方ご自身にあります（税務・法務の助言はしません）', '入力した情報（お客様・現場・書類）は親方のもの。このサービスの運用以外には使いません。広告にも使いません', 'お客様が押したボタンの記録は「やり取りの記録」です。契約書の代わりになることを保証するものではありません', '法令に基づく照会（令状など）があれば開示することがあります', 'サービスの内容は変わることがあります。やめるときは1か月前にお知らせします'];
+function termsGate(){ if (DEMO || VIEW_MODE || !UID) return; if (String(S.termsAgreed || '') === TERMS_VER) return;
+  dialog(`<h3>はじめに：利用のきまり</h3><p style="font-size:12.5px;color:var(--muted);margin:0 0 6px">「LINE de 請求書」（運営：未来クリエイティブマネジメント合同会社）を使う前に、次の5つをご確認ください。</p>
+    <ol style="font-size:13.5px;line-height:1.7;padding-left:20px;margin:0">${TERMS_POINTS.map(t => '<li>' + esc(t) + '</li>').join('')}</ol>
+    <details style="margin-top:8px"><summary style="font-size:13px;color:var(--blue)">📖 利用規約の全文を読む</summary><div style="font-size:12.5px;line-height:1.7;max-height:40vh;overflow:auto;background:#F7F7F4;border-radius:8px;padding:8px;margin-top:6px;white-space:pre-wrap">${esc(TERMS_TEXT)}</div></details>
+    <div class="row" style="margin-top:10px"><button class="pri" style="flex:1" onclick="termsAgree()">同意して始める</button></div>`); document.getElementById('dlg').classList.remove('editing'); }
+function termsAgree(){ closeDlg(); spin(true); run('liffTermsAgree', [UID, TERMS_VER], res => { spin(false); S.termsAgreed = res.termsAgreed || TERMS_VER; cacheWrite(UID, S); toast('ありがとうございます。始めましょう'); if (TERMS_DRAFT) { const d0 = TERMS_DRAFT; TERMS_DRAFT = null; bootDraft(d0); } }, () => { setTimeout(termsGate, 1500); }); }
+function termsShow(){ dialog(`<h3>利用規約</h3><div style="font-size:12.5px;line-height:1.7;max-height:60vh;overflow:auto;background:#F7F7F4;border-radius:8px;padding:8px;white-space:pre-wrap">${esc(TERMS_TEXT)}</div><p style="font-size:12px;color:var(--muted)">同意した版：${esc(S.termsAgreed || '未同意')}</p><div class="row"><button class="pri" onclick="closeDlg()">閉じる</button></div>`); }
 function boot(){
   document.getElementById('sub').textContent = 'LINE de 請求書 ／ ' + (S.issuer || '');
   if (S.draft && S.draft._link && S.draft._link.originId && !(S.docs || []).some(d => d.id === S.draft._link.originId && live(d))) S.draft = null;   // 作り直し済みの版の書きかけは捨てる（二重書類の防止）
@@ -512,6 +525,7 @@ function boot(){
   if (L.docs.includes('納品')) { const b = document.createElement('button'); b.className = 'lnk'; b.textContent = '納品書として保存'; b.onclick = () => finalize('納品'); document.querySelector('#edv .ordf').appendChild(b); }
   showTab('cases');
   if (!STALE) tmark('render');
+  if (!STALE) setTimeout(termsGate, 300);   // 利用規約の同意（初回・版が上がったとき）
 }
 
 // ---------- お試しモード（2026-10-07）：見本のデータを画面の中だけで動かす。サーバーには何も書かない（PDFの表示だけ本物を使う）
@@ -1559,7 +1573,7 @@ function closeEd(done){
   if (!done && (draftDirty() || originId)) { dialog(`<h3>編集を終わる</h3><div class="row" style="flex-direction:column;gap:8px"><button class="warn" onclick="closeDlg();discardEd()">🗑 編集を破棄して戻る</button><button class="pri" onclick="closeDlg();finalize(VIEW)">💾 番号を付けて下書き保存</button><button onclick="closeDlg()">編集を続ける</button></div>`); return; }
   document.getElementById('edv').classList.remove('on'); renderCases(); if (!done && ED_CASE && S.cases.some(c => c.id === ED_CASE)) openCase(ED_CASE); }
 function discardEd(){ originId = ''; originNo = ''; FROM_ID = ''; D = emptyDraft(); initMemo(''); run('liffSaveDraft', [UID, emptyDraft()], () => {}); closeEd(true); if (ED_CASE && S.cases.some(c => c.id === ED_CASE)) openCase(ED_CASE); toast('編集を破棄しました'); }
-function statusTag(s){ const cls = s === L.statuses[3] || s === '受注' ? 'ok' : (s === '中断' || s === '取りやめ' || s === '取消' || s === '失注') ? 'bad' : ''; return `<span class="tag ${cls}">${esc(s)}</span>`; }
+function statusTag(s){ const cls = s === L.statuses[3] || s === '受注' ? 'ok' : (s === '中断' || s === '取りやめ' || s === '取消' || s === '失注' || s === '中止') ? 'bad' : ''; return `<span class="tag ${cls}">${esc(s)}</span>`; }
 let SHOW_DEAD = false, HIST_OPEN = false;
 const ST_LABEL = s => s === '取りやめ' ? '取消' : s;
 const caseSt = c => c.status === '相談' && docsOf(c.id).some(d => live(d) && (d.kind === '注文' || d.result === '受注')) ? '受注' : c.status;
@@ -1663,6 +1677,7 @@ const groupsDef = () => [
 function caseGroup(c){
   if (c.status === '取りやめ' || c.status === L.statuses[3] || c.status === '中断') return '済・過去';
   const ds = docsOf(c.id).filter(live), inv = ds.filter(d => d.kind === '請求'), est = ds.filter(d => d.kind === '見積');
+  if (c.status === '中止') return inv.some(d => bal(d) > 0) ? '請求中' : '済・過去';   // 中止して精算（2026-10-12）：精算の請求書が未入金なら請求中、なければ済・過去
   if (inv.some(d => bal(d) > 0 && !d.stage)) return '請求中';   // 着手金・中間金の請求書は受注・工事中の枠の中で扱う（2026-10-12 三浦さん）
   if (c.status === L.done) return inv.some(d => !d.stage) ? '済・過去' : '請求中';   // 着手金・中間金の請求書だけでは済にしない（2026-10-12 完成日を入れると書類が消えて見えた不具合）
   if (c.status === L.start || inv.length || ds.some(d => d.kind === '注文') || est.some(d => d.result === '受注')) return '工事中';
@@ -1792,7 +1807,7 @@ function motoBilling(box2, cid, cu, cl, inv, rest, bk, show, pinHtml){
     bucket(`次の締め（${nextClose(cu)}）`, wait.length ? `${wait.length}${L.siteWord}${sum ? ' ' + yen(sum) : ''}` : `${bk.length}件`, [], wait, `<div class="hint" style="margin:0 8px 6px">${wait.length ? '完成して、まだ請求書のない' + L.siteWord + '。' : ''}締め日が来たら、まとめて1枚の請求書に。</div>` + (bk.length ? `<button class="cbbulk" onclick="bulkOpen('${cid}')">🔄 見積書・注文書 → まとめて請求書へ変換</button>` : ''), !open.length, 'wait'); }
   box2.appendChild(body); }
 /** 元請の「今月分をまとめて請求」（2026-10-06）：完成して請求待ちの現場と、受注・工事中の現場 */
-function bulkCands(custId){ return S.cases.filter(c => c.custId === custId && !['取りやめ', '中断', L.statuses[3]].includes(c.status)).map(c => { const g = caseGroup(c), ds = docsOf(c.id).filter(live), inv = ds.some(d => d.kind === '請求');
+function bulkCands(custId){ return S.cases.filter(c => c.custId === custId && !['取りやめ', '中断', '中止', L.statuses[3]].includes(c.status)).map(c => { const g = caseGroup(c), ds = docsOf(c.id).filter(live), inv = ds.some(d => d.kind === '請求');
   const est = S.docs.find(d => d.id === invSrcOf(c.id)); if (!est) return null;   // 見積書のない現場は入れない
   const ord = ds.filter(d => d.kind === '注文' && d.sub !== '変更').sort((a, b) => a.id < b.id ? 1 : -1)[0];
   const ok = g === '見積中' || g === '工事中' || (g === '請求中' && c.status === L.done && !hasFinalInv(c.id));   // 着手金・中間金の請求書しかない完成現場も入れる（2026-10-12）
@@ -1977,7 +1992,7 @@ function caseSheetHtml(id){
   const info0 = `<div class="cinfo${gone ? '' : ' tap'}"${ed}>${gone ? '' : '<span class="cpen">✏️ メモ編集</span>'}${row(1, cu.kubun === '元請' ? '元請' : 'お客様', esc((cu.name || '') + ' ' + (cu.honor || '')))}${row(2, L.siteWord, esc(c.name) + (c.owner && cu.kubun === '元請' ? '（' + L.ownerWord + '：' + esc(c.owner) + '）' : ''))}${row(3, '品目', (c.items || []).length ? esc(c.items.map(ciName).join('・')) : '<span style="color:var(--muted)">（未選択）</span>')}${row(4, '現場住所', c.address ? esc(c.address) : '<span style="color:var(--muted)">（未定）</span>')}${termText(c.term) ? row(4, '工期（見込・予定）', esc(termText(c.term))) : ''}${row(5, '内容メモ', c.memo ? esc(c.memo).replace(/\n/g, '<br>') : '<span style="color:var(--muted)">（まだありません）</span>')}${payMemoText(c.pay) ? row(5, '支払の希望', esc(payMemoText(c.pay))) : ''}</div>`;
   const info = cdet(id, 'memo', '📝 完成前メモ', c.memo ? esc(c.memo).slice(0, 24) : '相談内容・品目・住所・工期', info0);   // 開閉（2026-10-09）
   const head = `<h3>${esc(c.name)} ${statusTag(past && c.status === '相談' ? '失注' : ST_LABEL(caseSt(c)))}<button class="more" onclick="caseMore('${id}')" aria-label="その他">︙</button><button class="x" onclick="closeBs()">×</button></h3>
-    ${c.done ? `<div class="hint" style="margin-top:0">${L.done} ${jpd(c.done)}</div>` : ''}`;
+    ${c.done ? `<div class="hint" style="margin-top:0">${c.status === '中止' ? '中止' : L.done} ${jpd(c.done)}</div>` : ''}`;
   const edit = '';   // 2026-10-05 「相談内容を直す」ボタンをやめ、上の枠をタップで直す
   const photos = gone ? '' : cdet(id, 'photo', '📷 現場の写真', (c.photos || []).length ? (c.photos || []).length + '枚' : 'なし', photoBox(c));
   const after = (past || c.status === L.done || c.status === L.statuses[3]) && !gone ? cdet(id, 'after', '📝 完成後メモ', c.after ? esc(c.after).slice(0, 24) : '手直し・トラブル・やり取り', afterBox(c)) : '';   // 完成後メモ（2026-10-09）
@@ -2084,11 +2099,38 @@ function photoPickDone(){ const memos = {}; document.querySelectorAll('#bsh .phm
   const chg = []; S.cases.forEach(c => (c.photos || []).forEach(p => { if (memos[p.id] !== undefined && memos[p.id] !== (p.memo || '')) { p.memo = memos[p.id]; chg.push([c.id, p.id, p.memo]); } }));
   closeBs(); render(); if (chg.length) run('liffPhotoMemo', [UID, chg], res => { S.cases = res.cases; }); }
 /** 現場の「︙」：めったに使わない操作（2026-10-05 着工・完成・中断・現場ごと取消をここへ） */
+/** 中止して精算（2026-10-12 三浦さん A案）：理由・中止日・出来高（税込）・実費（税込）→ お預かりとの差額を請求（下書きを開く）か返金 */
+let ST = null;
+function settleAsk(caseId){ const c = S.cases.find(x => x.id === caseId); if (!c) return; const today = ymdStr(new Date());
+  const stg = docsOf(caseId).filter(d => live(d) && d.kind === '請求' && d.stage); const deposit = stg.reduce((a, d) => a + (d.paid || 0), 0); const unpaid = stg.filter(d => bal(d) > 0);
+  ST = { caseId, reason: 'お客様都合', deposit };
+  const chip = (v, lbl) => `<button data-g="R" data-v="${v}" onclick="ST.reason='${v}';settlePaint()">${lbl}</button>`;
+  closeDlg(); dialog(`<div class="editband">⛔ 中止して精算<small>工事が止まった${L.siteWord}を、出来高とお預かりの差額で締めます。記録は履歴に残ります</small></div><h3>${esc(c.name)}</h3>
+    <div class="ppst">① 中止の理由</div><div class="pchips pch3">${chip('お客様都合', 'お客様都合')}${chip('当方都合', '当方都合')}${chip('その他', 'その他')}</div>
+    <div class="ppst">② 中止日</div><input type="date" id="stD" value="${today}" max="${today}" onclick="try{this.showPicker()}catch(e){}">
+    <div class="ppst">③ ここまでの出来高（税込）</div><input type="number" inputmode="numeric" id="stW" placeholder="例：330000" oninput="settlePaint()">
+    <div class="ppst">④ 手配済みの実費（税込・あれば）</div><input type="number" inputmode="numeric" id="stC" placeholder="材料など。なければ空" oninput="settlePaint()">
+    <div class="cinfo2" style="margin-top:8px"><div class="r"><span>お預かり済</span><b>${yen(deposit)}</b></div>${stg.length ? `<div class="hint" style="margin:2px 0 0">${stg.map(d => esc(d.stage) + ' ' + esc(d.no) + (bal(d) > 0 ? '（未入金 → 取消）' : '（入金済）')).join('<br>')}</div>` : ''}<div class="r" style="margin-top:4px"><span>差額</span><b id="stDiff">—</b></div></div>
+    <div id="stNote" class="hint" style="margin-top:6px"></div>
+    <input type="text" id="stM" placeholder="メモ（任意）例：施主の事情で中断" maxlength="100" style="margin-top:6px">
+    <div class="row"><button onclick="closeDlg()">やめる</button><button class="pri" onclick="settleGo()">精算する</button></div>`); settlePaint(); }
+function settlePaint(){ if (!ST) return; document.querySelectorAll('#dlg button[data-g="R"]').forEach(b => b.classList.toggle('on', b.dataset.v === ST.reason));
+  const w = Math.round(+document.getElementById('stW').value || 0), cst = Math.round(+document.getElementById('stC').value || 0), diff = w + cst - ST.deposit;
+  const el = document.getElementById('stDiff'), nt = document.getElementById('stNote');
+  el.textContent = diff > 0 ? yen(diff) + '（請求）' : diff < 0 ? '▲' + yen(-diff) + '（返金）' : '¥0'; el.style.color = diff > 0 ? 'var(--danger)' : diff < 0 ? 'var(--blue)' : 'var(--ok)';
+  nt.innerHTML = diff > 0 ? '「精算する」を押すと、精算の請求書の下書きが開きます。確かめてから送ってください' : diff < 0 ? '「精算する」を押すと、差額を返金として記録します（通帳で返金したあとに押してください）' : '差額なし。中止の記録だけ残します'; }
+function settleGo(){ const o = { date: document.getElementById('stD').value, reason: ST.reason, memo: document.getElementById('stM').value.trim(), workDone: +document.getElementById('stW').value || 0, cost: +document.getElementById('stC').value || 0 };
+  if (!o.date) { toast('中止日を入れてください'); return; } if (!o.workDone && !o.cost && !ST.deposit) { toast('出来高を入れてください（0でよければそのまま）'); }
+  const cid = ST.caseId; closeDlg(); spin(true, '⛔ 中止の記録をしています…');
+  run('liffCancelSettle', [UID, cid, o], res => { spin(false); S.docs = res.docs; S.cases = res.cases; S.payments = res.payments; closeBs(); ST = null;
+    if (res.draft) { D = res.draft; originId = ''; originNo = ''; FROM_ID = ''; swapNotes('請求'); VIEW = '請求'; afterLoadDraft(); openEd(); toast('中止を記録しました。精算の請求書の下書きを開きました。確かめて「📄 請求PDFプレビュー・送る」へ'); return; }
+    GSEL = '済・過去'; renderCases(); toast(res.refund ? '中止を記録し、返金 ' + yen(res.refund.amount) + ' を記録しました' : '中止を記録しました（差額なし）'); }); }
 function caseMore(id){ const c = S.cases.find(x => x.id === id); if (!c) return; const B = [];
   const live2 = docsOf(id).filter(live), paid = live2.some(d => d.kind === '請求' && ((d.paid || 0) + (d.adj || 0)) > 0);
   if (c.status !== L.done && c.status !== L.statuses[3] && c.status !== '取りやめ') {
     if (live2.length) B.push(`<button onclick="askDone('${id}','')">🏁 ${L.done}日を記録する<small>ふだんは請求書を作るときに聞きます</small></button>`);
   }
+  if ((caseGroup(c) === '工事中' || (caseGroup(c) === '請求中' && !hasFinalInv(id))) && c.status !== '中止' && live2.some(d => d.kind === '見積' && d.result === '受注')) B.push(`<button onclick="settleAsk('${id}')">⛔ 中止して精算<small>工事が止まったとき。出来高とお預かり（着手金など）の差額を請求か返金に</small></button>`);   // 2026-10-12 三浦さん A案
   const sp = stepPlan(id); B.unshift(`<button onclick="askStepBack('${id}')"${sp.err ? ' style="opacity:.55"' : ''}>↩ 一つ前に戻す<small>${esc(sp.err ? sp.err : sp.short)}</small></button>`);
   if (c.status !== L.done && c.status !== L.statuses[3] && c.status !== '取りやめ' && !paid) B.push(`<button class="w" onclick="askCancelCase('${id}')">🗑 ${L.siteWord}ごと取消<small>書類もまとめて取消。しばらく止めるときも（理由「保留」）。再開は「複製」で</small></button>`);
   bsSet(bsHead('その他の操作：' + esc(c.name)) + `<div class="cmore">${B.join('')}</div><div class="bsb"><button onclick="bsSet(caseSheetHtml('${id}'))">戻る</button></div>`); }
@@ -2098,9 +2140,9 @@ function stepBackGuide(caseId, why){ const c = S.cases.find(x => x.id === caseId
   dialog(`<h3>一つ前には戻せません</h3><p style="font-size:13.5px;line-height:1.7">${esc(why)}</p><p style="font-size:13.5px;line-height:1.7"><b>直したいときは「作り直し」で進めます：</b><br>・請求書を直す → 請求書カードの「🔁 作り直す（入金は引き継ぐ）」。古い請求書は「訂正前」として過去の書類に残ります<br>・追加の工事がある → ${L.siteWord}の画面から追加の請求書を作る<br>・入金そのものが間違い → 入金の行の「直す」で取り消してから戻す</p><div class="row">${paid.length ? `<button class="pri" onclick="closeDlg();redoDoc('${paid[paid.length - 1].id}')">🔁 ${esc(paid[paid.length - 1].no)} を作り直す</button>` : ''}<button onclick="closeDlg();openCase('${caseId}')">${L.siteWord}の画面を開く</button></div><div class="row"><button onclick="closeDlg()">閉じる</button></div>`); }
 function stepPlan(caseId){ const c = S.cases.find(x => x.id === caseId); if (!c) return { err: '見つかりません' };
   const mine = docsOf(caseId).filter(d => live(d) && ['見積', '注文', '請求'].includes(d.kind)).sort((a, b) => a.id < b.id ? 1 : -1);
-  const invs = mine.filter(d => d.kind === '請求'), isDone = c.status === L.done || c.status === L.statuses[3];
+  const invs = mine.filter(d => d.kind === '請求'), isDone = c.status === L.done || c.status === L.statuses[3] || c.status === '中止';
   if (invs.some(d => (d.paid || 0) + (d.adj || 0) > 0)) return { err: '入金のある請求書は戻せません（先に入金の行の「直す」で取り消す）' };
-  if (!invs.length && isDone) return { act: 'undone', short: `「${L.done}」を外す`, text: `「${L.done}」を外して、受注・工事中に戻します（${L.done}日は残ります）。` };
+  if (!invs.length && isDone) return { act: 'undone', short: `「${c.status === '中止' ? '中止' : L.done}」を外す`, text: `「${c.status === '中止' ? '中止' : L.done}」を外して、受注・工事中に戻します（${c.status === '中止' ? '中止日・精算の内訳は残ります' : L.done + '日は残ります'}）。` };
   const t = mine[0]; if (!t) return { err: 'これ以上は戻せません' };
   if (t.kind === '請求' && docCases(t).length > 1) return { err: `まとめた請求書（${t.no}）は、カードの「取消」で` };
   const nm = `${kindName(t)}書 ${t.no}`;
