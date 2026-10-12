@@ -296,7 +296,7 @@
     <div style="background:#F3F4F6;border-radius:10px;padding:8px 10px;margin:0 0 6px"><div id="ownBank" style="background:#fff;border-radius:6px;padding:8px 10px;font-size:11.5px;line-height:1.75;color:#222"></div></div>
     <div class="row" style="margin-top:8px"><button class="pri" onclick="openIssuer(true)">自社情報とロゴを直す</button></div>
   </div>
-  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新169</b>（2026-10-12）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
+  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新170</b>（2026-10-12）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
   <div class="sec" style="margin-top:12px"><h2>備考の定型文（5つ設定可能）</h2>
     <div id="memoEdit"></div>
     <div class="row" style="margin-top:8px"><button class="pri" onclick="saveMemo()">定型文を保存</button></div>
@@ -370,7 +370,7 @@ function bootTimeText(){ const m = LIFFD.ms || {}; const s = k => m[k] == null ?
   return `起動 ${s('render')}（画面 ${s('load')}／前回の内容で表示 ${s('cache')}／本人確認 ${s('auth')}／台帳 ${s('data')}）` + (calls ? `<br>最近の呼び出し：${calls}` : '') + `<br>しらべ：LIFF起動 ${esc(LIFFD.init || '未')}／LINEの中 ${esc(LIFFD.client || '?')}／カード機能 ${esc(LIFFD.api || '?')}`; }
 // ② 前回の台帳をスマホに覚えさせ、まず前回の内容で画面を出す（外の置き場だけ。Google側は uid を信じる作りなので使わない）2026-10-11
 let STALE = false, FRESH_PENDING = null, CUR_TAB = 'cases';
-const PAGE_VER = '169';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
+const PAGE_VER = '170';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
 function cacheKey(){ return 'inv_cache_p' + PAGE_VER; }
 function cacheRead(){ try { const o = JSON.parse(localStorage.getItem(cacheKey()) || 'null'); return o && o.uid && o.S && o.S.labels ? o : null; } catch (e) { return null; } }
 function cacheWrite(uid, data){ try { const s = JSON.stringify({ uid, at: Date.now(), S: data }); if (s.length < 4000000) localStorage.setItem(cacheKey(), s); } catch (e) { /* 入らなければ覚えない */ } }
@@ -434,10 +434,12 @@ window.addEventListener('load', async () => { stickyTop();
 });
 /** サーバーの窓口（2026-10-11）。Googleの枠の中では google.script.run。外の置き場（静的な置き場）では fetch に差し替える（make_static.py） */
 const SERVER_MODE = 'api';   // 外の置き場（静的な置き場）
+function sessRead(){ try { const o = JSON.parse(localStorage.getItem('inv_sess') || 'null'); return o && o.uid === UID && o.at > Date.now() - 5 * 3600 * 1000 ? o.sess : ''; } catch (e) { return ''; } }   // 合言葉（本人確認の時短 2026-10-12）。5時間で捨てる（サーバーは6時間）
+function sessWrite(s){ try { if (s && UID) localStorage.setItem('inv_sess', JSON.stringify({ uid: UID, sess: s, at: Date.now() })); } catch (e) {} }
 function srvReal(fn, args){ let tok = ''; try { tok = (typeof liff !== 'undefined' && liff.getIDToken && liff.getIDToken()) || ''; } catch (e) { tok = ''; }
-  return fetch(API_URL, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn, args, idToken: tok, uid: UID }) })
+  return fetch(API_URL, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn, args, idToken: tok, uid: UID, sess: sessRead() }) })
     .then(r => r.text()).then(t => { let j = null; try { j = JSON.parse(t); } catch (e) { throw new Error('サーバーの返事が読めません（' + t.slice(0, 80) + '）'); }
-      if (!j || !j.ok) throw new Error((j && j.err) || 'サーバーから返事がありません'); LIFFD.lastSrvMs = j.ms || 0; LIFFD.lastSrvAuth = j.msAuth || 0; return j.r; }); }
+      if (!j || !j.ok) throw new Error((j && j.err) || 'サーバーから返事がありません'); LIFFD.lastSrvMs = j.ms || 0; LIFFD.lastSrvAuth = j.msAuth || 0; if (j.sess) sessWrite(j.sess); return j.r; }); }
 // ============ お客様の閲覧ページ（外の置き場に置いたときだけ動く。Googleの青い帯が出ない）2026-10-11 ============
 const VIEW_Q = new URLSearchParams(location.search);
 const VIEW_MODE = SERVER_MODE === 'api' && !!(VIEW_Q.get('v') || VIEW_Q.get('page') === 'guide');
