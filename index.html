@@ -237,7 +237,7 @@
 .stgw{margin:6px 0 2px;border:1px solid var(--line);border-radius:10px;background:#FAFAF7;font-size:13px}.stgw>summary{padding:7px 10px;cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px}.stgw>summary::-webkit-details-marker{display:none}.stgw>summary::after{content:'▸';margin-left:auto;color:var(--muted)}.stgw[open]>summary::after{content:'▾'}.stgw>summary small{color:var(--muted);font-weight:400}.stgp{border-top:1px dashed var(--line);padding:6px 10px 8px}.stgh{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.stgh small{color:var(--muted)}.stgh span{margin-left:auto;font-weight:800}.stgp .pays .p button{font-size:11.5px;padding:2px 8px;min-height:0}
 .dlg.editing{border:3px solid #E08A00;box-shadow:0 0 0 4px rgba(224,138,0,.18);background:#FFFDF7}.editband{margin:-16px -16px 10px;padding:8px 14px;background:#E08A00;color:#fff;font-weight:800;font-size:14px;border-radius:11px 11px 0 0}.editband small{display:block;font-weight:400;font-size:11.5px;opacity:.95;margin-top:2px}.dlg.editing button.pri{background:#E08A00;border-color:#E08A00}
 .cbbulk.editbtn{margin-top:6px;background:#E08A00;color:#fff;border:2px solid #C57600;box-shadow:0 0 0 3px rgba(224,138,0,.18)}.cbbulk.editbtn small{color:#FFF3DF}
-.pchips.pch2 button.stnone,.pchips.pch2 button.stnone:disabled{background:#E5E7EB;color:#9AA0A6;border-color:#D7DADF;opacity:1}.pchips.pch2 button.stnone small{color:#9AA0A6}
+.pchips.pch2 button.full{grid-column:1 / -1}.pchips.pch2 button.stnone,.pchips.pch2 button.stnone:disabled{background:#E5E7EB;color:#9AA0A6;border-color:#D7DADF;opacity:1}.pchips.pch2 button.stnone small{color:#9AA0A6}
 </style>
 </head>
 <body>
@@ -301,7 +301,7 @@
     <div style="background:#F3F4F6;border-radius:10px;padding:8px 10px;margin:0 0 6px"><div id="ownBank" style="background:#fff;border-radius:6px;padding:8px 10px;font-size:11.5px;line-height:1.75;color:#222"></div></div>
     <div class="row" style="margin-top:8px"><button class="pri" onclick="openIssuer(true)">自社情報とロゴを直す</button></div>
   </div>
-  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新188</b>（2026-10-12）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
+  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新189</b>（2026-10-12）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
   <div class="sec" style="margin-top:12px"><h2>備考の定型文（5つ設定可能）</h2>
     <div id="memoEdit"></div>
     <div class="row" style="margin-top:8px"><button class="pri" onclick="saveMemo()">定型文を保存</button></div>
@@ -383,7 +383,7 @@ function bootTimeText(){ const m = LIFFD.ms || {}; const s = k => m[k] == null ?
   return `起動 ${s('render')}（画面 ${s('load')}／前回の内容で表示 ${s('cache')}／本人確認 ${s('auth')}／台帳 ${s('data')}）` + (calls ? `<br>最近の呼び出し：${calls}` : '') + `<br>しらべ：LIFF起動 ${esc(LIFFD.init || '未')}／LINEの中 ${esc(LIFFD.client || '?')}／カード機能 ${esc(LIFFD.api || '?')}`; }
 // ② 前回の台帳をスマホに覚えさせ、まず前回の内容で画面を出す（外の置き場だけ。Google側は uid を信じる作りなので使わない）2026-10-11
 let STALE = false, FRESH_PENDING = null, CUR_TAB = 'cases';
-const PAGE_VER = '188';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
+const PAGE_VER = '189';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
 function cacheKey(){ return 'inv_cache_p' + PAGE_VER; }
 function cacheRead(){ try { const o = JSON.parse(localStorage.getItem(cacheKey()) || 'null'); return o && o.uid && o.S && o.S.labels ? o : null; } catch (e) { return null; } }
 function cacheWrite(uid, data){ try { const s = JSON.stringify({ uid, at: Date.now(), S: data }); if (s.length < 4000000) localStorage.setItem(cacheKey(), s); } catch (e) { /* 入らなければ覚えない */ } }
@@ -2497,11 +2497,12 @@ function invConfirmBtns(d, c){ const cid = docCases(d)[0]; const stInv = name =>
     if (bal(inv) > 0) return `<button onclick="closeDlg();payDialog('${inv.id}')">💴 ${esc(x.name)}の入金を記録<small>${esc(inv.no)}・残り ${yen(bal(inv))}</small></button>`;
     return `<button disabled style="opacity:.6" onclick="">✓ ${esc(x.name)} 入金済<small>${esc(inv.no)}</small></button>`; };
   const stg = (d.stg || []).slice(0, 2);
-  // 段が1つだけのとき、ない方（中間金／着手金）はグレーの飾りボタンで形をそろえる（2026-10-12 三浦さん：ボタンが欠けると不恰好）
+  // 3行の形（2026-10-12 三浦さん）：①版を選び直す ②着手金｜中間金（ない段はグレーの飾りボタン。両方ないときは両方グレー）③未入金（残金）の請求書を作る。横幅はそろえる
   const none = name => `<button disabled class="stnone">🧾 ${name}<small>この見積にはありません</small></button>`;
-  let mid = stg.map(stBtn).join('');
-  if (stg.length === 1) mid = stg[0].name === '中間金' ? none('着手金') + mid : mid + none('中間金');
-  return `<button onclick="closeDlg();invPick('${cid}')">版を選び直す</button>` + mid + `<button class="pri" onclick="${CHK}toInvoice('${d.id}','rest')">🧾 ${stg.length ? '未入金（残金）' : '請求書'}を作る</button>`; }
+  const slot = name => { const x = stg.find(s => s.name === name); return x ? stBtn(x) : none(name); };
+  const named = stg.every(s => s.name === '着手金' || s.name === '中間金');
+  const mid = named ? slot('着手金') + slot('中間金') : stg.map(stBtn).join('') + (stg.length === 1 ? none('中間金') : '');
+  return `<button class="full" onclick="closeDlg();invPick('${cid}')">版を選び直す</button>` + mid + `<button class="pri full" onclick="${CHK}toInvoice('${d.id}','rest')">🧾 ${stg.length ? '未入金（残金）' : ''}の請求書を作る</button>`.replace('🧾 の請求書', '🧾 請求書'); }
 /** 変更見積を確定（2026-10-10）：注文書を作らない現場（元請など）向け。確定すると、作り直した版は主役に、追加分は見積書の枠に並ぶ */
 function chgOkAsk(docId){ const d = S.docs.find(x => x.id === docId); if (!d) return;
   dialog(`<h3>変更の見積を確定</h3><p style="font-size:13px;line-height:1.7">${esc(docTitle(d))}（${yen(d.total)}）を、お客様の承認済みにします。${d.ver >= 2 ? '<br>前の版は履歴に移り、請求書はこの版の内容で作られます。' : '<br>追加分として、請求のときに元の見積と合わせて入ります。'}${!d.okAt ? '<br><span style="color:var(--danger)">LINEの確認ボタンはまだ押されていません。電話・口頭でOKをもらった場合だけ進めてください。</span>' : ''}</p><div class="row"><button onclick="closeDlg()">やめる</button><button class="pri" onclick="closeDlg();chgOk('${docId}')">✅ 確定する</button></div>`); }
