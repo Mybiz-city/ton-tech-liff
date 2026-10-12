@@ -234,8 +234,8 @@
   .pbd{width:62%;margin:6px 0 0 auto;border-collapse:collapse;font-size:9.5px}.pbd td{border:1px solid #999;padding:3px 5px;background:#fff}.pbd small{display:block;color:#666;font-size:8.5px}.pbd td.pph{color:#1F7A33;border-style:dashed;cursor:pointer}
   .okband{background:#E9F6EC;border:1.5px solid #BFE3C6;border-radius:10px;padding:8px 10px;margin:0 0 8px;font-size:13px;color:#1F5A2B;font-weight:700}
 .pastw{margin:8px 0}.pastw>summary{font-size:15px;padding:10px 12px;background:#fff;border-radius:12px}.pastw.okd>summary{border-left:5px solid var(--ok)}.pastw.lostd>summary{border-left:5px solid #999}.pastw>.cgrp{margin:6px 0 0 6px}
+.stgw{margin:6px 0 2px;border:1px solid var(--line);border-radius:10px;background:#FAFAF7;font-size:13px}.stgw>summary{padding:7px 10px;cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px}.stgw>summary::-webkit-details-marker{display:none}.stgw>summary::after{content:'▸';margin-left:auto;color:var(--muted)}.stgw[open]>summary::after{content:'▾'}.stgw>summary small{color:var(--muted);font-weight:400}.stgp{border-top:1px dashed var(--line);padding:6px 10px 8px}.stgh{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.stgh small{color:var(--muted)}.stgh span{margin-left:auto;font-weight:800}.stgp .pays .p button{font-size:11.5px;padding:2px 8px;min-height:0}
 </style>
-</head>
 <body>
 <div class="top" id="topBar"><div class="av">か</div><div><h1 id="ttl">現場<small id="sub">LINE de 請求書</small></h1></div></div>
 <div class="tabs"><button id="tabC" class="on" onclick="showTab('cases')">現場</button><button id="tabQ" onclick="showTab('search')">検索</button><button id="tabS" onclick="showTab(SET_SUB)">設定</button></div>
@@ -297,7 +297,7 @@
     <div style="background:#F3F4F6;border-radius:10px;padding:8px 10px;margin:0 0 6px"><div id="ownBank" style="background:#fff;border-radius:6px;padding:8px 10px;font-size:11.5px;line-height:1.75;color:#222"></div></div>
     <div class="row" style="margin-top:8px"><button class="pri" onclick="openIssuer(true)">自社情報とロゴを直す</button></div>
   </div>
-  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新183</b>（2026-10-12）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
+  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新184</b>（2026-10-12）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
   <div class="sec" style="margin-top:12px"><h2>備考の定型文（5つ設定可能）</h2>
     <div id="memoEdit"></div>
     <div class="row" style="margin-top:8px"><button class="pri" onclick="saveMemo()">定型文を保存</button></div>
@@ -379,7 +379,7 @@ function bootTimeText(){ const m = LIFFD.ms || {}; const s = k => m[k] == null ?
   return `起動 ${s('render')}（画面 ${s('load')}／前回の内容で表示 ${s('cache')}／本人確認 ${s('auth')}／台帳 ${s('data')}）` + (calls ? `<br>最近の呼び出し：${calls}` : '') + `<br>しらべ：LIFF起動 ${esc(LIFFD.init || '未')}／LINEの中 ${esc(LIFFD.client || '?')}／カード機能 ${esc(LIFFD.api || '?')}`; }
 // ② 前回の台帳をスマホに覚えさせ、まず前回の内容で画面を出す（外の置き場だけ。Google側は uid を信じる作りなので使わない）2026-10-11
 let STALE = false, FRESH_PENDING = null, CUR_TAB = 'cases';
-const PAGE_VER = '183';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
+const PAGE_VER = '184';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
 function cacheKey(){ return 'inv_cache_p' + PAGE_VER; }
 function cacheRead(){ try { const o = JSON.parse(localStorage.getItem(cacheKey()) || 'null'); return o && o.uid && o.S && o.S.labels ? o : null; } catch (e) { return null; } }
 function cacheWrite(uid, data){ try { const s = JSON.stringify({ uid, at: Date.now(), S: data }); if (s.length < 4000000) localStorage.setItem(cacheKey(), s); } catch (e) { /* 入らなければ覚えない */ } }
@@ -2955,6 +2955,16 @@ const bankLines = t => { const m = String(t).match(/^(.*?(?:支店|出張所|営
 const bal = d => (d.amount || d.total) - (d.paid || 0) - (d.adj || 0);
 /** 最後の請求書（着手金・中間金以外）があるか */
 const hasFinalInv = cid => docsOf(cid).some(d => live(d) && d.kind === '請求' && !d.stage);
+/** 入金の記録の画面に出す「着手金・中間金のお預かり」（2026-10-12 三浦さん）：対象の請求書と同じ現場の前受請求書。標準は閉じて合計だけ。開くと入金の記録・直す・プレビュー */
+function stagePaysHtml(docs){ const cids = {}; docs.forEach(d => docCases(d).forEach(id => { cids[id] = 1; }));
+  const stg = S.docs.filter(d => live(d) && d.kind === '請求' && d.stage && !docs.includes(d) && docCases(d).some(id => cids[id])).sort((a, b) => a.id.localeCompare(b.id));
+  if (!stg.length) return '';
+  const paid = stg.reduce((a, d) => a + (d.paid || 0), 0), unpaid = stg.filter(d => bal(d) > 0).length;
+  const one = d => { const ps = (S.payments || []).filter(p => p.docId === d.id && !p.cancel);
+    return `<div class="stgp"><div class="stgh"><b>${esc(d.stage || '前受')}</b><small>${esc(d.no)}</small><span>${yen(d.amount || d.total)}</span><i class="tag ${bal(d) > 0 ? '' : 'ok'}">${bal(d) > 0 ? '未入金 ' + yen(bal(d)) : '入金済'}</i></div>
+      ${ps.length ? `<div class="pays">${ps.map(p => `<div class="p"><span>${jpd(p.date)}　${esc(p.kind === '入金' ? p.method : p.kind)}　${yen(Math.abs(p.amount))}</span>${p.kind === '入金' ? `<button onclick="closeDlg();payDialog('${d.id}','${p.id}')">✏️ 直す</button>` : ''}</div>`).join('')}</div>` : '<div class="hint" style="margin:2px 0 0">入金の記録はまだありません</div>'}
+      <div class="btns" style="margin-top:4px">${bal(d) > 0 ? `<button class="pri" onclick="closeDlg();payDialog('${d.id}')">💴 入金を記録</button>` : ''}<button onclick="previewDoc('${d.id}')">📄 ${esc(d.stage || '前受')}の請求書</button></div></div>`; };
+  return `<details class="stgw"><summary>🧾 着手金・中間金 お預かり <b>${yen(paid)}</b><small>（${stg.length}枚${unpaid ? '・未入金' + unpaid + '枚' : ''}）</small></summary>${stg.map(one).join('')}</details>`; }
 /** 入金の記録の行（現場の請求書カードと台帳で共通。2026-10-06「直す」は現場の請求書から） */
 const payRows = (d, withDead) => { const ps = (S.payments || []).filter(p => p.docId === d.id && (withDead || !p.cancel)); if (!ps.length) return '';
   return `<div class="pays">${ps.map(p => `<div class="p ${p.cancel ? 'dead' : ''}"><span>${jpd(p.date)}　${esc(p.kind === '入金' ? p.method : p.kind === '手数料' ? '振込手数料（差引）' : p.kind === '値引' ? (p.method === '返金' ? '値引き（返金分）' : '値引き') : p.kind === '免除' ? '免除' : p.kind === '返金' ? '返金（' + p.method + '）' : p.kind)}　${yen(Math.abs(p.amount))}${(p.kind === '値引' || p.kind === '免除') && p.memo ? '<br><small>' + esc(p.memo.replace(/https?:\/\/\S+/g, '').trim()) + (/https?:\/\//.test(p.memo) ? ` ${(() => { const nd = S.docs.filter(x => (x.kind === '値引通知' || x.kind === '免除通知') && x.origin === p.docId && x.date === p.date).sort((a, b) => b.id.localeCompare(a.id))[0]; return nd ? `<u style="color:var(--blue)" onclick="event.stopPropagation();previewDoc('${nd.id}')">📄 通知書</u>` : `<a href="${esc((p.memo.match(/https?:\/\/\S+/) || [''])[0])}" target="_blank" rel="noopener">📄 通知書</a>`; })()}` : '') + '</small>' : ''}${p.alloc && p.alloc.cases ? '<br><small>' + Object.keys(p.alloc.cases).map(id => esc((S.cases.find(x => x.id === id) || {}).name || id) + ' ' + yen(p.alloc.cases[id])).join('・') + '（' + esc(p.alloc.by || '') + '）</small>' : ''}${p.memo && p.kind === '入金' ? '<br><small>' + esc(p.memo) + '</small>' : ''}${p.cancel ? '（取消）' : ''}</span>${p.cancel || !['入金', '手数料'].includes(p.kind) ? '' : `<button class="pfix" onclick="payDialog('${d.id}','${p.id}')">直す</button>`}${!p.cancel && p.kind === '入金' ? `<button class="pfix" onclick="receiptDialog('${d.id}')">領収書</button>` : ''}${!p.cancel && (p.kind === '値引' || p.kind === '免除') && p.method !== '返金' ? `<button class="pfix" onclick="askPayCancel('${p.id}')">取消</button>` : ''}</div>`).join('')}</div>`; };
@@ -3008,7 +3018,7 @@ function payDialog(docId, payId){
   const b = bal(d); PAY_M = '振込'; PAY_W = ''; PAY_A = '全額'; PAY_DUE = d.due && d.due <= ymdStr(new Date()) ? d.due : ''; PAY_O = 'でんさい'; PAY_C = '按分'; PAY_B = '先方の指定';
   const ids = docCases(d), multi = ids.length > 1 && (Number(d.subt) || 0) > 0;
   const chip = (grp, v, lbl) => `<button data-g="${grp}" data-v="${v}" onclick="payPick('${grp}','${v}',${b})">${lbl || v}</button>`;
-  dialog(`<h3>${old ? '入金を直す' : '入金を記録'}</h3><p style="font-size:12px;color:var(--muted)">請求書 ${esc(d.no)}　残り <b style="color:var(--danger)">${yen(b)}</b>${d.due ? '　お支払期限 ' + esc(d.due.replace(/-/g, '/')) : ''}</p>
+  dialog(`<h3>${old ? '入金を直す' : '入金を記録'}</h3><p style="font-size:12px;color:var(--muted)">請求書 ${esc(d.no)}　残り <b style="color:var(--danger)">${yen(b)}</b>${d.due ? '　お支払期限 ' + esc(d.due.replace(/-/g, '/')) : ''}</p>${old || d.stage ? '' : stagePaysHtml([d])}
     <div class="ppst">① いつ入った？</div><div class="pchips pch3">${chip('W', '通り', '期日どおり')}${chip('W', '前', '期日より前')}${chip('W', '後', '期日より後')}</div>
     <input type="date" id="pyD" max="${ymdStr(new Date())}" style="margin-top:6px" onclick="try{this.showPicker()}catch(e){}"><div class="hint" style="margin-top:2px">入金日（必須）。通帳の日付どおりに。「期日どおり」を押すと期日が入ります</div>
     <div class="pn" style="font-size:11.5px;color:#7A5A00;background:#FFF8E1;border:1px solid #F0D27A;border-radius:8px;padding:5px 8px;margin-top:6px">⚠️ 完成日と入金日は、税務調査・融資審査で最初に確認される記録です</div>
@@ -3113,7 +3123,7 @@ function custPay(custId){ const cu = S.customers.find(x => x.id === custId) || {
   const chip = (g, v, lbl, dis) => `<button data-g="${g}" data-v="${v}" ${dis ? 'disabled style="opacity:.45"' : ''} onclick="cpPick('${g}','${v}')">${lbl}</button>`;
   const row = (d, i) => { const cs = docCases(d).map(id => (S.cases.find(c => c.id === id) || {}).name).filter(Boolean);
     return `<div class="pyc"><span><b>${esc(cs.length > 1 ? '締め請求（' + cs.length + L.siteWord + '）' : (cs[0] || d.subject || ''))}</b><small>${esc(d.no)}${d.due ? '・期限 ' + esc(d.due.slice(5).replace('-', '/')) : ''}・残り ${yen(bal(d))}</small></span><input type="number" inputmode="numeric" id="cpR${i}" data-max="${bal(d)}" placeholder="0" oninput="CP.manual=true;cpSum()"><button onclick="cpRowFill(${i},'all')">全部</button><button onclick="cpRowFill(${i},'rest')">余り全部</button></div>`; };
-  dialog(`<h3>💴 入金を記録</h3><p style="font-size:12.5px;color:var(--muted);margin:0">${esc(cu.name || '')}　未入金 ${list.length}件　<b style="color:var(--danger)">${yen(total)}</b>${list.length > 1 ? `<br>${list.map(d => esc(d.no) + (d.due ? '（期限 ' + esc(d.due.slice(5).replace('-', '/')) + '）' : '')).join('・')}` : ''}</p>
+  dialog(`<h3>💴 入金を記録</h3><p style="font-size:12.5px;color:var(--muted);margin:0">${esc(cu.name || '')}　未入金 ${list.length}件　<b style="color:var(--danger)">${yen(total)}</b>${list.length > 1 ? `<br>${list.map(d => esc(d.no) + (d.due ? '（期限 ' + esc(d.due.slice(5).replace('-', '/')) + '）' : '')).join('・')}` : ''}</p>${stagePaysHtml(list)}
     <div class="ppst">① 方法</div><div class="pchips pch3">${chip('M', '振込', '口座振込')}${chip('M', '現金', '現金')}${chip('M', 'その他', 'その他')}</div>
     <div id="cpOw" style="display:none;margin-top:4px"><input type="text" id="cpO" placeholder="方法（例：でんさい・相殺）" maxlength="20"></div>
     <div class="ppst">② 入金日</div><div class="pchips" style="flex-direction:column;align-items:stretch">${chip('W', '期日', '請求期日に入金' + (list.length > 1 ? '（請求書ごと）' : list[0].due ? '（' + esc(list[0].due.slice(5).replace('-', '/')) + '）' : ''), !allDue)}${chip('W', '今日', '今日入金（' + today.slice(5).replace('-', '/') + '）')}${chip('W', '別', '別日入金（日付を選ぶ）')}</div><input type="date" id="cpD" max="${today}" style="margin-top:6px;display:none" onclick="try{this.showPicker()}catch(e){}">
