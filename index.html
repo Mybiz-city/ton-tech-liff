@@ -301,7 +301,7 @@
     <div style="background:#F3F4F6;border-radius:10px;padding:8px 10px;margin:0 0 6px"><div id="ownBank" style="background:#fff;border-radius:6px;padding:8px 10px;font-size:11.5px;line-height:1.75;color:#222"></div></div>
     <div class="row" style="margin-top:8px"><button class="pri" onclick="openIssuer(true)">自社情報とロゴを直す</button></div>
   </div>
-  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新193</b>（2026-10-12）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
+  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新194</b>（2026-10-12）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
   <div class="sec" style="margin-top:12px"><h2>備考の定型文（5つ設定可能）</h2>
     <div id="memoEdit"></div>
     <div class="row" style="margin-top:8px"><button class="pri" onclick="saveMemo()">定型文を保存</button></div>
@@ -383,7 +383,7 @@ function bootTimeText(){ const m = LIFFD.ms || {}; const s = k => m[k] == null ?
   return `起動 ${s('render')}（画面 ${s('load')}／前回の内容で表示 ${s('cache')}／本人確認 ${s('auth')}／台帳 ${s('data')}）` + (calls ? `<br>最近の呼び出し：${calls}` : '') + `<br>しらべ：LIFF起動 ${esc(LIFFD.init || '未')}／LINEの中 ${esc(LIFFD.client || '?')}／カード機能 ${esc(LIFFD.api || '?')}`; }
 // ② 前回の台帳をスマホに覚えさせ、まず前回の内容で画面を出す（外の置き場だけ。Google側は uid を信じる作りなので使わない）2026-10-11
 let STALE = false, FRESH_PENDING = null, CUR_TAB = 'cases';
-const PAGE_VER = '193';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
+const PAGE_VER = '194';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
 function cacheKey(){ return 'inv_cache_p' + PAGE_VER; }
 function cacheRead(){ try { const o = JSON.parse(localStorage.getItem(cacheKey()) || 'null'); return o && o.uid && o.S && o.S.labels ? o : null; } catch (e) { return null; } }
 function cacheWrite(uid, data){ try { const s = JSON.stringify({ uid, at: Date.now(), S: data }); if (s.length < 4000000) localStorage.setItem(cacheKey(), s); } catch (e) { /* 入らなければ覚えない */ } }
@@ -829,8 +829,11 @@ function cust(){ return S.customers.find(c => c.id === D.customer.id) || null; }
 let MODE = '元請';   // 自社請け＝施主、下請け＝元請（2026-10-06 下請けから始める）
 let VIEW = '見積';   // 書類の種類（見積書／請求書）。開く入口で決まる（2026-10-05 切替ボタンをやめた）
 let ZOOM = false;
+/** 書類が現場に結びついているか（見積→請求・作り直し・書類のある現場）。結びついていれば、元請⇄施主の切替とお客様の変更はできない（全面チェック 2026-10-12） */
+function tiedToCase(){ if (FROM_ID || originId) return true; return (D.sites || []).some(s => s.case_id && docsOf(s.case_id).some(live)); }
 function setMode(m){
   if (MODE === m) return;
+  if (tiedToCase()) { toast('この書類は' + L.siteWord + 'に結びついています。元請⇄お客様（自社請け）は変えられません'); render(); return; }
   MODE = m; D.customer = { id: '', name: '', kubun: m }; resetPeriod();
   if (m === '施主' && D.sites.length > 1) { const all = []; D.sites.forEach(s => all.push(...s.items)); D.sites = [{ case_id: D.sites[0].case_id, owner: '', name: D.sites[0].name, items: all }]; }
   render();
@@ -880,6 +883,7 @@ function issuerBlockHtml(iss, edit){
 // ---------- 紙を描く（PDF＝liffPdfHtml_ と同じ並び）
 function render(){
   document.getElementById('segJ').className = MODE === '施主' ? 'on' : ''; document.getElementById('segS').className = MODE === '元請' ? 'on s' : '';
+  { const tied = tiedToCase(); ['segJ', 'segS'].forEach(id => { const b = document.getElementById(id); b.disabled = tied; b.style.opacity = tied ? '.45' : ''; }); }
   edMemo();
   document.getElementById('edGo').textContent = '📄 ' + VIEW + 'PDFプレビュー・送る';
   document.getElementById('edT').textContent = (VIEW === '見積' && D.change_no ? (D.change_full ? '見積書（受注後の変更）' : '追加・変更の見積書') : VIEW + '書') + (originId ? 'の編集（' + originNo + '）' : 'をつくる');
@@ -1052,6 +1056,7 @@ function wordMark(inpId){ const inp = document.getElementById(inpId); if (!inp) 
   document.querySelectorAll('#wc_' + inpId + ' button').forEach(b => b.classList.toggle('on', parts.includes(b.dataset.w))); }
 
 function openCust(){
+  if (tiedToCase() && D.customer && D.customer.id) { toast('この書類は' + L.siteWord + 'に結びついています。お客様は変えられません（相談から作り直してください）'); return; }
   const moto = MODE === '元請'; const word = moto ? '元請' : 'お客様'; const list = S.customers.filter(x => !x.del && (x.kubun === '元請') === moto);
   bsOpen(bsHead(moto ? '元請を選ぶ' : 'お客様を選ぶ') + csHtml({ list, word, sel: D.customer.id, q: !D.customer.id ? (D.customer.name || '') : '', neu: !D.customer.id ? D.customer.name : '', pick: id => pickCust(id), add: nm => pickNewCust(nm) })
     + `<div class="hint">名前を打つと候補が出ます。一覧にない名前は、そのまま使えます（書類を確定したときに一覧に入ります）。${moto ? '締め日・支払日は「設定 → お客様」で決められます。' : ''}</div>`);
