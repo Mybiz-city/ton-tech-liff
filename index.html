@@ -302,7 +302,7 @@
     <div class="row" style="margin-top:8px"><button class="pri" onclick="openIssuer(true)">自社情報とロゴを直す</button></div>
     <div class="row" style="margin-top:6px"><button onclick="termsShow()">📖 利用規約を読む</button></div>
   </div>
-  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新204</b>（2026-10-13）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
+  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新205</b>（2026-10-13）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
   <div class="sec" style="margin-top:12px"><h2>備考の定型文（5つ設定可能）</h2>
     <div id="memoEdit"></div>
     <div class="row" style="margin-top:8px"><button class="pri" onclick="saveMemo()">定型文を保存</button></div>
@@ -384,7 +384,7 @@ function bootTimeText(){ const m = LIFFD.ms || {}; const s = k => m[k] == null ?
   return `起動 ${s('render')}（画面 ${s('load')}／前回の内容で表示 ${s('cache')}／本人確認 ${s('auth')}／台帳 ${s('data')}）` + (calls ? `<br>最近の呼び出し：${calls}` : '') + `<br>しらべ：LIFF起動 ${esc(LIFFD.init || '未')}／LINEの中 ${esc(LIFFD.client || '?')}／カード機能 ${esc(LIFFD.api || '?')}`; }
 // ② 前回の台帳をスマホに覚えさせ、まず前回の内容で画面を出す（外の置き場だけ。Google側は uid を信じる作りなので使わない）2026-10-11
 let STALE = false, FRESH_PENDING = null, CUR_TAB = 'cases';
-const PAGE_VER = '204';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
+const PAGE_VER = '205';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
 function cacheKey(){ return 'inv_cache_p' + PAGE_VER; }
 function cacheRead(){ try { const o = JSON.parse(localStorage.getItem(cacheKey()) || 'null'); return o && o.uid && o.S && o.S.labels ? o : null; } catch (e) { return null; } }
 function cacheWrite(uid, data){ try { const s = JSON.stringify({ uid, at: Date.now(), S: data }); if (s.length < 4000000) localStorage.setItem(cacheKey(), s); } catch (e) { /* 入らなければ覚えない */ } }
@@ -404,7 +404,7 @@ window.addEventListener('load', async () => { stickyTop();
   spin(true);
   if (!LIFF_ID) { STEP = '設定の読み込み'; try { const c = await (await fetch(API_URL + '?page=cfg', { redirect: 'follow' })).json(); LIFF_ID = c.liffId || ''; } catch (e) { LIFFD.api = '設定が読めない：' + (e && e.message || e); } }
   if (SERVER_MODE === 'api' && !DEV_UID) { const C = cacheRead(); if (C) { try { S = C.S; L = S.labels; UID = C.uid; STALE = true; boot(); spin(false); staleBar(true); tmark('cache'); } catch (e) { S = null; L = null; UID = ''; STALE = false; cacheClear(); spin(true); } } }   // 前回の内容で先に出す（2026-10-11）
-  setTimeout(() => { const sp = document.getElementById('spin'); if (sp && sp.classList.contains('on') && !S) { spin(false); dialog(`<h3>起動に時間がかかっています</h3><p>止まった段：${esc(STEP || '起動')}（40秒）</p><p style="font-size:12px;color:#666">LIFF起動 ${esc(LIFFD.init || '未')}／枠の外の印 ${esc(LIFFD.hash || '?')}</p><p>この画面を三浦さんに送ってください。</p><div class="row"><button class="pri" onclick="location.reload()">もう一度</button></div>`); } }, 40000);   // 止まったときに段を見せる（2026-10-10）
+  setTimeout(() => { const sp = document.getElementById('spin'); if (sp && sp.classList.contains('on') && !S && !REGISTERING) { spin(false); dialog(`<h3>起動に時間がかかっています</h3><p>止まった段：${esc(STEP || '起動')}（40秒）</p><p style="font-size:12px;color:#666">LIFF起動 ${esc(LIFFD.init || '未')}／枠の外の印 ${esc(LIFFD.hash || '?')}</p><p>この画面を三浦さんに送ってください。</p><div class="row"><button class="pri" onclick="location.reload()">もう一度</button></div>`); } }, 40000);   // 止まったときに段を見せる（2026-10-10）
   try {
     const inLine = navigator.userAgent.indexOf(' Line/') >= 0;
     let hash = '';
@@ -528,12 +528,12 @@ function consentDialog(reg){
     <div class="row" style="margin-top:10px"><button class="pri" id="consentGo" style="flex:1" disabled onclick="${reg ? 'regGo()' : 'termsAgree()'}">${reg ? '同意して登録する' : '同意して始める'}</button></div>`); document.getElementById('dlg').classList.remove('editing'); }
 function termsAgree(){ closeDlg(); spin(true, '記録しています…'); run('liffTermsAgree', [UID, TERMS_VER, TRIAL_VER], res => { spin(false); S.termsAgreed = res.termsAgreed || TERMS_VER; S.trialAgreed = res.trialAgreed || TRIAL_VER; cacheWrite(UID, S); toast('ありがとうございます。始めましょう'); if (TERMS_DRAFT) { const d0 = TERMS_DRAFT; TERMS_DRAFT = null; bootDraft(d0); } }, () => { setTimeout(termsGate, 1500); }); }
 /** 自己登録（更新204）：台帳にいない人が開いたとき。regInfo＝サーバーの返事（needReg・regMode）、name＝LINEの表示名 */
-let REG_INFO = null;
+let REG_INFO = null, REGISTERING = false;
 function regGate(regInfo, name){ REG_INFO = Object.assign({}, regInfo || {}, { name: name || '' }); consentDialog(REG_INFO); }
 function regGo(){ const name = (document.getElementById('regName') || {}).value || ''; const code = (document.getElementById('regCode') || {}).value || '';
   if (!name.trim()) { toast('屋号（書類に出す名前）を入れてください'); return; }
-  closeDlg(); spin(true, '登録しています…', '表とフォルダを作ります（20秒ほど）');
-  run('liffRegister', [UID, { name: name.trim(), code: code.trim(), termsVer: TERMS_VER, trialVer: TRIAL_VER }], res => { spin(false); cacheClear(); toast('登録しました。' + (res.name || '') + ' として始めます'); setTimeout(() => location.reload(), 900); }, () => { setTimeout(() => regGate(REG_INFO, (REG_INFO || {}).name), 1200); }); }
+  closeDlg(); REGISTERING = true; spin(true, '登録しています…', '表とフォルダを作ります。1分ほどかかります。この画面のままお待ちください');
+  run('liffRegister', [UID, { name: name.trim(), code: code.trim(), termsVer: TERMS_VER, trialVer: TRIAL_VER }], res => { REGISTERING = false; spin(false); cacheClear(); toast('登録しました。' + (res.name || '') + ' として始めます'); setTimeout(() => location.reload(), 900); }, () => { REGISTERING = false; setTimeout(() => regGate(REG_INFO, (REG_INFO || {}).name), 1200); }); }
 function termsShow(){ dialog(`<h3>利用規約</h3><div style="font-size:12.5px;line-height:1.7;max-height:60vh;overflow:auto;background:#F7F7F4;border-radius:8px;padding:8px;white-space:pre-wrap">${esc(TERMS_TEXT)}</div><p style="font-size:12px;color:var(--muted)">同意した版：${esc(S.termsAgreed || '未同意')}／試験提供のお願い：${esc(S.trialAgreed || '未同意')}</p><div class="row"><button class="pri" onclick="closeDlg()">閉じる</button></div>`); }
 function boot(){
   document.getElementById('sub').textContent = 'LINE de 請求書 ／ ' + (S.issuer || '');
