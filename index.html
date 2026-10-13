@@ -44,7 +44,7 @@
   .picks{display:grid;grid-template-columns:1fr 1fr;gap:4px 8px;margin:4px 0 8px}.picks label{display:flex;align-items:center;gap:6px;font-size:13.5px;padding:6px 4px;border-radius:8px;background:var(--paper)}.picks input{width:18px;height:18px;flex-shrink:0}.picks small{color:var(--muted);font-size:11px;margin-left:auto}
   .custom{display:flex;gap:6px;margin-top:4px}.custom input{flex:1}.custom button{padding:0 14px;border-radius:8px;border:1.5px solid var(--y);background:#fff;font-weight:800;font-family:inherit;color:var(--ink)}
 .dlg .seg button{padding:9px 4px;font-size:13px}
-  .spbox{background:#fff;border-radius:14px;padding:18px 22px;box-shadow:0 6px 24px rgba(0,0,0,.12);text-align:center;min-width:220px}.sp{width:34px;height:34px;border:4px solid var(--line);border-top-color:var(--y);border-radius:50%;margin:0 auto 10px;animation:rot .9s linear infinite}@keyframes rot{to{transform:rotate(360deg)}}#spMsg{font-size:15px;color:var(--ink)}.spSub{font-size:12px;color:var(--muted);margin-top:4px;font-weight:400}
+  .spbox{background:#fff;border-radius:14px;padding:18px 22px;box-shadow:0 6px 24px rgba(0,0,0,.12);text-align:center;min-width:220px}.spk{display:none;margin:0 auto 10px}.spk.on{display:block}.spk img{width:112px;height:112px;object-fit:contain}.spk .km{width:72px;height:72px;border-radius:50%;background:var(--y);color:#fff;font-weight:900;font-size:34px;line-height:72px;margin:0 auto}.sp{width:34px;height:34px;border:4px solid var(--line);border-top-color:var(--y);border-radius:50%;margin:0 auto 10px;animation:rot .9s linear infinite}@keyframes rot{to{transform:rotate(360deg)}}#spMsg{font-size:15px;color:var(--ink)}.spSub{font-size:12px;color:var(--muted);margin-top:4px;font-weight:400}
   .colhead{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 9px}.colh{font-size:12px;color:var(--muted);margin:2px 0 6px}
   .grp{border:2px solid var(--line);border-radius:16px;background:#fff;padding:8px;margin-bottom:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
   .grp .card{padding:8px;margin:0 0 6px;border-radius:10px;background:var(--paper);border:1px solid var(--line)}.grp .card:last-child{margin-bottom:0}
@@ -302,7 +302,7 @@
     <div class="row" style="margin-top:8px"><button class="pri" onclick="openIssuer(true)">自社情報とロゴを直す</button></div>
     <div class="row" style="margin-top:6px"><button onclick="termsShow()">📖 利用規約を読む</button></div>
   </div>
-  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新197</b>（2026-10-13）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
+  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新198</b>（2026-10-13）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
   <div class="sec" style="margin-top:12px"><h2>備考の定型文（5つ設定可能）</h2>
     <div id="memoEdit"></div>
     <div class="row" style="margin-top:8px"><button class="pri" onclick="saveMemo()">定型文を保存</button></div>
@@ -341,7 +341,7 @@
 <div class="lg" id="lg"><div class="bar"><b id="lgT" style="font-size:15px"></b><button style="margin-left:auto" onclick="closeLedger()">閉じる</button></div><div id="lgC" class="lgc"></div></div>
 <div class="overlay" id="ov"><div class="dlg" id="dlg"></div></div>
 <div class="overlay dpov" id="dpov" onclick="if(event.target===this)dpClose()"><div class="dlg dpw" id="dpw"></div></div>
-<div class="spin" id="spin"><div class="spbox"><div class="sp"></div><div id="spMsg">読み込み中…</div><div class="spSub" id="spSub"></div></div></div>
+<div class="spin" id="spin"><div class="spbox"><div class="spk" id="spK"></div><div class="sp"></div><div id="spMsg">工事データを読み込み中…</div><div class="spSub" id="spSub"></div></div></div>
 <div class="toast" id="toast"></div>
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
@@ -384,12 +384,12 @@ function bootTimeText(){ const m = LIFFD.ms || {}; const s = k => m[k] == null ?
   return `起動 ${s('render')}（画面 ${s('load')}／前回の内容で表示 ${s('cache')}／本人確認 ${s('auth')}／台帳 ${s('data')}）` + (calls ? `<br>最近の呼び出し：${calls}` : '') + `<br>しらべ：LIFF起動 ${esc(LIFFD.init || '未')}／LINEの中 ${esc(LIFFD.client || '?')}／カード機能 ${esc(LIFFD.api || '?')}`; }
 // ② 前回の台帳をスマホに覚えさせ、まず前回の内容で画面を出す（外の置き場だけ。Google側は uid を信じる作りなので使わない）2026-10-11
 let STALE = false, FRESH_PENDING = null, CUR_TAB = 'cases';
-const PAGE_VER = '197';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
+const PAGE_VER = '198';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
 function cacheKey(){ return 'inv_cache_p' + PAGE_VER; }
 function cacheRead(){ try { const o = JSON.parse(localStorage.getItem(cacheKey()) || 'null'); return o && o.uid && o.S && o.S.labels ? o : null; } catch (e) { return null; } }
 function cacheWrite(uid, data){ try { const s = JSON.stringify({ uid, at: Date.now(), S: data }); if (s.length < 4000000) localStorage.setItem(cacheKey(), s); } catch (e) { /* 入らなければ覚えない */ } }
 function cacheClear(){ try { localStorage.removeItem(cacheKey()); } catch (e) {} }
-function staleBar(on){ let b = document.getElementById('staleBar'); if (!b) { b = document.createElement('div'); b.id = 'staleBar'; b.className = 'stalebar'; b.textContent = '最新を読み込み中…'; document.body.appendChild(b); } b.style.display = on ? 'block' : 'none'; }
+function staleBar(on){ let b = document.getElementById('staleBar'); if (!b) { b = document.createElement('div'); b.id = 'staleBar'; b.className = 'stalebar'; b.textContent = '工事データを読み込み中…'; document.body.appendChild(b); } b.style.display = on ? 'block' : 'none'; }
 /** 最新の台帳が届いたとき：何も開いていなければ差し替えて描き直す。開いていれば、閉じたときに */
 function applyFresh(data){ if (!STALE) { S = data; L = data.labels; return true; }
   FRESH_PENDING = data; tryApplyFresh(); return false; }
@@ -3185,7 +3185,12 @@ function doPayCancel(payId){ const r = document.getElementById('pcR').value.trim
 // ---------- 小道具
 function dialog(html){ const el = document.getElementById('dlg'); el.innerHTML = html; el.classList.toggle('editing', /class="editband"/.test(html.slice(0, 40))); document.getElementById('ov').classList.add('on'); }
 function closeDlg(){ document.getElementById('ov').classList.remove('on'); }
-function spin(on, msg, sub){ const el = document.getElementById('spin'); if (on) { document.getElementById('spMsg').textContent = msg || '読み込み中…'; document.getElementById('spSub').textContent = sub || ''; } el.classList.toggle('on', !!on); }
+let SPK_T = null; const KANNA_IMG = '';   // かんなの絵（data:image/png;base64,…）。空なら「か」の印（2026-10-13 三浦さん：待たせる間にかんなを出す）
+function spin(on, msg, sub){ const el = document.getElementById('spin'); const k = document.getElementById('spK');
+  if (on) { document.getElementById('spMsg').textContent = msg || (S ? '読み込み中…' : '工事データを読み込み中…'); document.getElementById('spSub').textContent = sub || '';
+    if (!el.classList.contains('on')) { k.classList.remove('on'); clearTimeout(SPK_T); SPK_T = setTimeout(() => { if (!k.innerHTML) k.innerHTML = KANNA_IMG ? '<img src="' + KANNA_IMG + '" alt="かんな">' : '<div class="km">か</div>'; k.classList.add('on'); }, 2500); } }   // 3秒近く待つときだけ絵を出す（短い待ちでチラつかない）
+  else { clearTimeout(SPK_T); k.classList.remove('on'); }
+  el.classList.toggle('on', !!on); }
 let tt; function toast(m){ alog('msg', m); const t = document.getElementById('toast'); t.textContent = m; t.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('on'), 3000); }
 function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 </script>
