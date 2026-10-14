@@ -302,7 +302,7 @@
     <div class="row" style="margin-top:8px"><button class="pri" onclick="openIssuer(true)">自社情報とロゴを直す</button></div>
     <div class="row" style="margin-top:6px"><button onclick="termsShow()">📖 利用規約を読む</button></div>
   </div>
-  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新213</b>（2026-10-14）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
+  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新216</b>（2026-10-14）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
   <div class="sec" style="margin-top:12px"><h2>備考の定型文（5つ設定可能）</h2>
     <div id="memoEdit"></div>
     <div class="row" style="margin-top:8px"><button class="pri" onclick="saveMemo()">定型文を保存</button></div>
@@ -385,7 +385,7 @@ function bootTimeText(){ const m = LIFFD.ms || {}; const s = k => m[k] == null ?
   return `起動 ${s('render')}（画面 ${s('load')}／前回の内容で表示 ${s('cache')}／本人確認 ${s('auth')}／台帳 ${s('data')}${lt}）` + (calls ? `<br>最近の呼び出し：${calls}` : '') + `<br>しらべ：LIFF起動 ${esc(LIFFD.init || '未')}／LINEの中 ${esc(LIFFD.client || '?')}／カード機能 ${esc(LIFFD.api || '?')}`; }
 // ② 前回の台帳をスマホに覚えさせ、まず前回の内容で画面を出す（外の置き場だけ。Google側は uid を信じる作りなので使わない）2026-10-11
 let STALE = false, FRESH_PENDING = null, CUR_TAB = 'cases';
-const PAGE_VER = '213';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
+const PAGE_VER = '216';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
 function cacheKey(){ return 'inv_cache_p' + PAGE_VER; }
 function cacheRead(){ try { const o = JSON.parse(localStorage.getItem(cacheKey()) || 'null'); return o && o.uid && o.S && o.S.labels ? o : null; } catch (e) { return null; } }
 function cacheWrite(uid, data){ try { const s = JSON.stringify({ uid, at: Date.now(), S: data }); if (s.length < 4000000) localStorage.setItem(cacheKey(), s); } catch (e) { /* 入らなければ覚えない */ } }
@@ -461,7 +461,7 @@ function srvReal(fn, args){ let tok = ''; try { tok = (typeof liff !== 'undefine
     .then(r => r.text()).then(t => { let j = null; try { j = JSON.parse(t); } catch (e) { throw new Error('サーバーの返事が読めません（' + t.slice(0, 80) + '）'); }
       if (!j || !j.ok) throw new Error((j && j.err) || 'サーバーから返事がありません'); LIFFD.lastSrvMs = j.ms || 0; LIFFD.lastSrvAuth = j.msAuth || 0; if (j.sess) sessWrite(j.sess); return j.r; }); }
 // ============ お客様の閲覧ページ（外の置き場に置いたときだけ動く。Googleの青い帯が出ない）2026-10-11 ============
-const VIEW_Q = new URLSearchParams(location.search);
+const VIEW_Q = new URLSearchParams(location.search); let SEND_Q = VIEW_Q.get('send') || '';
 const VIEW_MODE = SERVER_MODE === 'api' && !!(VIEW_Q.get('v') || VIEW_Q.get('page') === 'guide');
 const VIEW_CSS = 'body{margin:0;font-family:-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;background:#E5E7EB;color:#2B2B2B}.vbar{background:#fff;border-bottom:3px solid #3DAE4A;padding:10px 14px}.vbar b{display:block;font-size:15px}.vbar small{color:#6F7780}.vmsg{background:#fff;margin:16px;padding:20px;border-radius:12px;line-height:1.8;font-size:15px}#vpc{padding:4px}#vpc canvas{display:block;margin:0 auto 8px;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.2);max-width:100%}.vft{position:sticky;bottom:0;background:#fff;border-top:1px solid #DDD;padding:8px 10px;text-align:center}.vft a,.vft button{display:block;width:100%;box-sizing:border-box;background:#3DAE4A;color:#fff;font-weight:800;text-decoration:none;text-align:center;padding:12px;border-radius:12px;font-size:15px;border:none;font-family:inherit;margin:0 0 6px}.vft .okb{background:#1F6FD6}.vft .okg{background:#1F7A33}.vft .sub{background:none;color:#6F7780;font-weight:400;font-size:13px;padding:4px}.vft small{display:block;color:#6F7780;font-size:12px;line-height:1.6;margin:0 0 6px}.okd{background:#E9F6EC;color:#1F7A33;border-radius:10px;padding:10px;font-weight:800;margin:0 0 8px}.vq{background:#F3F8FD;border:1.5px solid #CFE3F7;border-radius:12px;padding:12px;margin:0 0 8px;text-align:left;font-size:14px;line-height:1.7}.vwait{position:fixed;inset:0;background:rgba(255,255,255,.92);z-index:9;display:flex;align-items:center;justify-content:center;flex-direction:column;font-size:16px;font-weight:800;text-align:center;line-height:1.9}.vwait i{width:36px;height:36px;border:4px solid #CFE3F7;border-top-color:#1F6FD6;border-radius:50%;animation:vspin 1s linear infinite;margin-bottom:12px}@keyframes vspin{to{transform:rotate(360deg)}}.vft .vrow{display:flex;gap:6px}.vft .vrow .sm{flex:1;margin:0;padding:9px 6px;font-size:13.5px;border-radius:10px}.vft .vrow a.vguide{background:#fff;color:#1F6FD6;border:1.5px solid #CFE3F7;font-weight:800;text-decoration:none}.vft .vq button{padding:11px;font-size:15px}.vft .vq .sub{padding:4px}';
 let VD = null, VPDF = null;   // 読み込んだ書類／PDFのバイト列
@@ -549,6 +549,7 @@ function boot(){
   document.addEventListener('visibilitychange', () => { if (document.hidden && !FINALIZING && document.getElementById('edv').classList.contains('on') && draftDirty()) run('liffSaveDraft', [UID, currentDraft()], () => {}); });   // アプリを閉じても書きかけを残す
   if (L.docs.includes('納品')) { const b = document.createElement('button'); b.className = 'lnk'; b.textContent = '納品書として保存'; b.onclick = () => finalize('納品'); document.querySelector('#edv .ordf').appendChild(b); }
   showTab('cases');
+  if (SEND_Q && (S.docs || []).some(d => d.id === SEND_Q)) { const sid = SEND_Q; SEND_Q = ''; setTimeout(() => { try { previewDoc(sid, true); } catch (e) { /* 開けなければ一覧のまま */ } }, 500); }   // チャットの「LINEで送る」ボタンから（更新216）
   if (!STALE) tmark('render');
   if (!STALE) setTimeout(termsGate, 300);   // 利用規約の同意（初回・版が上がったとき）
 }
