@@ -156,6 +156,8 @@
   details.itgd{border:1.5px solid var(--line);border-radius:12px;background:#fff;margin:0 0 8px;overflow:hidden}details.itgd>summary{display:flex;align-items:center;gap:8px;padding:11px 12px;cursor:pointer;list-style:none;font-size:14.5px;background:#F7F8F9}details.itgd>summary::-webkit-details-marker{display:none}details.itgd>summary::before{content:'▸';color:var(--muted);font-size:13px}details.itgd[open]>summary::before{content:'▾'}details.itgd>summary b{flex:1;min-width:0;font-weight:800}details.itgd>summary small{color:var(--muted);font-size:11.5px;white-space:nowrap}details.itgd>summary .add{flex:none;border:1.5px solid var(--ok);background:#fff;color:#1F7A33;border-radius:9px;padding:6px 9px;font-size:12px;font-weight:800;font-family:inherit}details.itgd.orig>summary{background:#FFFBEA}details.itgd .itgb{padding:8px 8px 4px}details.itgd .itgb .card{margin-bottom:8px}.itdel{display:block;width:100%;margin:2px 0 6px;border:1px solid #F2C4C4;background:#fff;color:var(--danger);border-radius:9px;padding:8px 0;font-size:12.5px;font-weight:700;font-family:inherit}
   .pvph{padding:6px 10px;border-bottom:1px solid var(--line);background:#FFFDF2}.pvph .pck{font-size:13px}
   #regWait{position:fixed;inset:0;z-index:70;background:#F2F4F5;display:flex;align-items:center;justify-content:center;padding:20px}#regWait .rw{background:#fff;border-radius:16px;padding:20px 18px;max-width:360px;width:100%;box-shadow:0 6px 24px rgba(0,0,0,.12);text-align:center}#regWait .rwpic img{width:120px;height:120px;border-radius:50%;object-fit:cover;object-position:top;background:#fff;animation:stbob 1.6s ease-in-out infinite}#regWait h3{font-size:17px;margin:10px 0 2px}#regWait .rwname{color:var(--muted);font-size:13px;margin:0 0 12px}#regWait .rwsteps{list-style:none;text-align:left;margin:0 auto 12px;max-width:290px}#regWait .rwsteps li{display:flex;align-items:center;gap:10px;padding:7px 0;font-size:14px;color:#9AA3AB;border-bottom:1px dashed #E6E9EC}#regWait .rwsteps li i{width:18px;height:18px;border-radius:50%;border:2px solid #D9DEE3;flex-shrink:0;display:inline-block}#regWait .rwsteps li.now{color:var(--ink);font-weight:800}#regWait .rwsteps li.now i{border-color:var(--y);border-top-color:transparent;animation:vspin 1s linear infinite}#regWait .rwsteps li.done{color:var(--ok)}#regWait .rwsteps li.done i{background:var(--ok);border-color:var(--ok)}#regWait .rwsteps li.done i::after{content:'';display:block;width:5px;height:9px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg);margin:1px auto 0}#regWait .rwt{font-size:12.5px;color:var(--muted);line-height:1.7;text-align:left}@keyframes vspin{to{transform:rotate(360deg)}}
+  .wkbar{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin:0 0 10px;font-size:13px}.wkbar .wkk{color:var(--muted);font-size:11.5px;margin-left:6px}.wkbar .wksel{display:flex;flex-direction:column;align-items:flex-end}.wkbar .wksel label{font-size:10.5px;color:var(--muted)}.wkbar select{font:inherit;font-size:13px;padding:4px 6px;border:1px solid var(--line);border-radius:8px;background:#fff;max-width:200px}.actbar{position:fixed;left:0;right:0;bottom:0;z-index:65;background:#1F3A5F;color:#fff;font-size:12.5px;padding:8px 12px;display:flex;align-items:center;gap:8px;justify-content:center}.actbar button{font:inherit;font-size:12px;border:1px solid #fff;background:none;color:#fff;border-radius:8px;padding:3px 8px}body.acting .body{padding-bottom:180px}.tteam{width:100%;border-collapse:collapse;font-size:12.5px;margin:8px 0}.tteam th,.tteam td{border-bottom:1px solid var(--line);padding:5px 4px;text-align:left;vertical-align:middle}.tteam td select{font:inherit;font-size:12px;padding:3px 4px;border:1px solid var(--line);border-radius:6px;background:#fff}.tteam tr.ret td{color:#9AA3AB}.tteam small{color:var(--muted)}button.sm{font:inherit;font-size:12px;padding:4px 8px;border:1px solid var(--line);border-radius:8px;background:#fff}.tcodes{background:#F3F8FD;border-radius:10px;padding:8px 10px;margin:6px 0}.tcodes>div{display:flex;align-items:center;gap:8px;margin:2px 0}.tcodes .code{font-size:18px;font-weight:800;letter-spacing:.1em;flex:1}.treas,.tdup{margin-top:10px;padding-top:8px;border-top:1px dashed var(--line)}.treas .row{align-items:center;gap:6px;margin-top:6px}.treas select{font:inherit;font-size:12.5px;padding:4px 6px;border:1px solid var(--line);border-radius:8px;background:#fff;flex:1;min-width:0}.dupg{background:#FFF8E6;border-radius:8px;padding:6px 8px;margin:6px 0}.dupc{display:flex;align-items:center;gap:6px;justify-content:space-between;margin:3px 0;font-size:12.5px;color:var(--ink)}body.pw #itNewBtn,body.pw #itNew,body.pw #itemList button,body.pw #own .sec button.pri,body.pw .pset-only{display:none!important}body.pw #own textarea,body.pw #own input,body.pw #own select{pointer-events:none;opacity:.7}body:not(.pset) .pset-only{display:none!important}
+  @media (min-width:900px){.body{max-width:1000px;margin:0 auto;padding-left:24px;padding-right:24px}.top,.tabs{padding-left:calc(50% - 500px + 24px);padding-right:calc(50% - 500px + 24px)}.wkbar select{max-width:340px}.dlg{max-width:720px}.tteam{font-size:13.5px}}
   .stalebar{position:fixed;left:50%;top:6px;transform:translateX(-50%);z-index:60;background:#FFF8DC;color:#8A5A00;font-size:12px;font-weight:700;display:none;align-items:center;gap:8px;padding:3px 12px 3px 3px;border-radius:14px;overflow:hidden;border:1.5px solid #F0D9A0;box-shadow:0 4px 14px rgba(0,0,0,.12);white-space:nowrap}.stalebar.on{display:flex;animation:stbob 1.8s ease-in-out infinite}.stalebar img{width:44px;height:44px;border-radius:10px;object-fit:contain;background:#fff}@keyframes stbob{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,-4px)}}
   .iprec{margin-top:8px}.iprec .wg{display:block;font-size:11px;color:var(--muted);font-weight:700;margin-bottom:4px}
   details.ipb,details.ipg{border:1px solid var(--line);border-radius:10px;background:#fff;margin-top:6px;overflow:hidden}details.ipb>summary,details.ipg>summary{display:flex;align-items:center;gap:6px;padding:9px 10px;font-size:14px;font-weight:800;cursor:pointer;list-style:none}details.ipb>summary::-webkit-details-marker,details.ipg>summary::-webkit-details-marker{display:none}details.ipb>summary::before,details.ipg>summary::before{content:'▸';color:var(--muted);font-size:12px}details.ipb[open]>summary::before,details.ipg[open]>summary::before{content:'▾'}details.ipb>summary{background:#EEF6FF}details.ipg>summary{background:#F7F8F9;font-size:13.5px}details.ipb>details.ipg{margin:0 8px 8px;}details.ipg>summary small,details.ipb>summary small{margin-left:auto;font-weight:700;color:var(--muted);font-size:11.5px}details.ipg>.pchips{padding:8px}
@@ -303,7 +305,10 @@
     <div class="row" style="margin-top:8px"><button class="pri" onclick="openIssuer(true)">自社情報とロゴを直す</button></div>
     <div class="row" style="margin-top:6px"><button onclick="termsShow()">📖 利用規約を読む</button></div>
   </div>
-  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新231</b>（2026-10-17）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
+  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新232</b>（2026-10-17）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
+  <div class="sec pset-only" id="teamSec" style="margin-top:12px"><h2>チーム（1つの台帳を複数人で）</h2>
+    <div id="teamBody" style="font-size:13px;line-height:1.7"></div>
+  </div>
   <div class="sec" style="margin-top:12px"><h2>備考の定型文（5つ設定可能）</h2>
     <div id="memoEdit"></div>
     <div class="row" style="margin-top:8px"><button class="pri" onclick="saveMemo()">定型文を保存</button></div>
@@ -366,7 +371,7 @@ const L_TYPES = {   // 起動時に先出しする型の言葉（GASの INV_LABE
     placeWords: ['サービス／作業', 'サービス／点検', 'サービス／修理', 'サービス／代行', '制作／デザイン', '制作／ページ', '相談／打合せ', '相談／顧問', '月額／顧問料', '月額／保守', '出張／訪問', '出張／講師'],   // 仮。テスト先が決まったら差し替え
     userWord: 'ご利用者', guardian: '恵比寿様', brand: 'Mybiz', color: 'ネイビー', colorHex: '#1E3A5F', colorMid: '#2B4C7E', colorLight: '#EAF0F8', colorLine: '#C5D3E8', colorSoft: '#F4F7FB', chara: '水瀬みお', prepay: false, order: false, breakdown: false, visit: false }
 };
-const TYPE_PRESET = '建設';   // 置き場ごとの業種の型（起動時の先出し 2026-10-15）
+const TYPE_PRESET = '';
 /** この端末に覚える名前の頭（2026-10-15 更新222）：建設と Mybiz を同じドメイン（app.mybiz-city.net）に置いているため、前回の内容・足あと・合言葉が混ざっていた。建設は今までどおり inv_、ほかの型は inv_型名_ */
 const LS_NS = 'inv_' + (L_TYPES[TYPE_PRESET] ? TYPE_PRESET + '_' : '');
 /** 水瀬みお（Biz city）のアイコン（2026-10-14 三浦さんの画像から96px）。かんなはHTMLに直書きのまま */
@@ -413,7 +418,7 @@ function failNote(step, msg){ try { const a = failRead(); a.push({ t: Date.now()
 function snapRebuild(){ spin(true); run('liffSnapRebuild', [UID, true], () => { reload(() => { try { showTab(CUR_TAB); } catch (e) {} toast('台帳を読み直しました'); }); }, () => spin(false)); }
 // ② 前回の台帳をスマホに覚えさせ、まず前回の内容で画面を出す（外の置き場だけ。Google側は uid を信じる作りなので使わない）2026-10-11
 let STALE = false, FRESH_PENDING = null, CUR_TAB = 'cases';
-const PAGE_VER = '231';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
+const PAGE_VER = '232';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
 function cacheKey(){ return LS_NS + 'cache_p' + PAGE_VER; }
 function cacheRead(){ try { const o = JSON.parse(localStorage.getItem(cacheKey()) || 'null'); return o && o.uid && o.S && o.S.labels ? o : null; } catch (e) { return null; } }
 function cacheWrite(uid, data){ try { const s = JSON.stringify({ uid, at: Date.now(), S: data }); if (s.length < 4000000) localStorage.setItem(cacheKey(), s); } catch (e) { /* 入らなければ覚えない */ } }
@@ -433,7 +438,7 @@ function tryApplyFresh(){ if (!FRESH_PENDING) return; const busy = document.getE
 window.addEventListener('load', async () => { stickyTop();
   if (typeof VIEW_MODE !== 'undefined' && VIEW_MODE) { viewerBoot(); return; }   // お客様の閲覧ページ（2026-10-11）
   tmark('load');
-  if (L_TYPES[TYPE_PRESET]) applyStaticLabels();   // 先出しの型の文・色・アイコン（2026-10-15）
+  if (L_TYPES[TYPE_PRESET]) applyStaticLabels();
   spin(true);
   if (!LIFF_ID) { STEP = '設定の読み込み'; try { const c = await (await fetch(API_URL + '?page=cfg', { redirect: 'follow' })).json(); LIFF_ID = c.liffId || ''; } catch (e) { LIFFD.api = '設定が読めない：' + (e && e.message || e); } }
   if (SERVER_MODE === 'api' && !DEV_UID) { const C = cacheRead(); if (C) { try { S = C.S; L = labelsOf(S.labels); UID = C.uid; STALE = true; boot(); spin(false); staleBar(true); tmark('cache'); } catch (e) { S = null; L = labelsOf(L_TYPES[TYPE_PRESET] || null); UID = ''; STALE = false; cacheClear(); spin(true); } } }   // 前回の内容で先に出す（2026-10-11）
@@ -448,10 +453,11 @@ window.addEventListener('load', async () => { stickyTop();
     LIFFD.hash = (hash || '').split('&').map(x => x.split('=')[0]).filter(String).join('・') || 'なし';
     if (DEV_UID) { UID = DEV_UID; if (inLine && LIFF_ID) { try { await withTimeout(liff.init({ liffId: LIFF_ID }), 6000, 'LIFFの起動'); LIFFD.init = 'OK'; } catch (e) { LIFFD.init = '失敗：' + (e && e.message || e); } } }   // uid付きのURLでも、LINEの中ならカードで送れるようにする
     else {
-      if (!inLine) { spin(false); dialog(`<h3>パソコンのブラウザで開いています</h3><p>ブラウザで試すときは、URLの最後に <b>&amp;uid=（自分のLINEユーザーID）</b> を付けて開いてください（設定「係」がテストのときだけ）。</p><p>LINEの中から開くときは、スマホのLINEで <b>https:\/\/liff.line.me/${esc(LIFF_ID)}</b> を開いてください。</p>`); return; }
+      if (!inLine && !LIFF_ID) { spin(false); dialog(`<h3>パソコンのブラウザで開いています</h3><p>設定「LIFF ID」が空のため、LINEのログインができません。LINEの中から開いてください。</p>`); return; }   // パソコンは LINE のログインで入る（更新233）
       STEP = 'LIFFの起動'; let inited = true;
       try { await withTimeout(liff.init({ liffId: LIFF_ID }), 8000, 'LIFFの起動'); LIFFD.init = 'OK'; } catch (e) { inited = false; LIFFD.init = '失敗：' + (e && e.message || e); }
       let logged = false; try { logged = inited && liff.isLoggedIn(); } catch (e) { logged = false; }
+      if (!inLine && inited && !logged) { STEP = 'LINEのログイン'; spin(true, 'LINEのログインへ移ります…', 'パソコンでは、LINEのアカウントでログインして使います（QRコードかメールアドレス）'); try { liff.login({ redirectUri: location.origin + location.pathname + (DEV_UID ? '?uid=' + encodeURIComponent(DEV_UID) : '') }); } catch (e) { spin(false); dialog(`<h3>LINEのログインに移れませんでした</h3><p>${esc(e.message || e)}</p>`); } return; }   // 更新233
       if (logged && SERVER_MODE === 'api') {   // 本人確認（プロフィール）と台帳の読み込みを同時に走らせる。台帳の持ち主はサーバーが id_token で決める（2026-10-11）
         STEP = 'プロフィールと台帳'; let pr = null;
         const tq = performance.now();
@@ -485,11 +491,11 @@ window.addEventListener('load', async () => { stickyTop();
 });
 /** サーバーの窓口（2026-10-11）。Googleの枠の中では google.script.run。外の置き場（静的な置き場）では fetch に差し替える（make_static.py） */
 const SERVER_MODE = 'api';   // 外の置き場（静的な置き場）
-function sessRead(){ try { const o = JSON.parse(localStorage.getItem(LS_NS + 'sess') || 'null'); return o && o.uid === UID && o.at > Date.now() - 5 * 3600 * 1000 ? o.sess : ''; } catch (e) { return ''; } }   // 合言葉（本人確認の時短 2026-10-12）。5時間で捨てる（サーバーは6時間）
+function sessRead(){ try { const o = JSON.parse(localStorage.getItem('inv_sess') || 'null'); return o && o.uid === UID && o.at > Date.now() - 5 * 3600 * 1000 ? o.sess : ''; } catch (e) { return ''; } }   // 合言葉（本人確認の時短 2026-10-12）。5時間で捨てる（サーバーは6時間）
+function sessWrite(s){ try { if (s && UID) localStorage.setItem('inv_sess', JSON.stringify({ uid: UID, sess: s, at: Date.now() })); } catch (e) {} }
 const SRV_READ = /^liff(Load|DraftLast|OrderInit|OrderLoad|PhotoGet|SearchLines|PreviewHtml|ViewUrl)$/;   // 読むだけの呼び出し（2本送っても害がない）
-function sessWrite(s){ try { if (s && UID) localStorage.setItem(LS_NS + 'sess', JSON.stringify({ uid: UID, sess: s, at: Date.now() })); } catch (e) {} }
 function srvReal(fn, args){ let tok = ''; try { tok = (typeof liff !== 'undefined' && liff.getIDToken && liff.getIDToken()) || ''; } catch (e) { tok = ''; }
-  const body = JSON.stringify({ fn, args, idToken: tok, uid: UID, sess: sessRead(), log: (fn === 'liffLoad' || fn === 'liffDraftLast' || typeof alogTake !== 'function') ? undefined : alogTake() });
+  const body = JSON.stringify({ fn, args, idToken: tok, uid: UID, sess: sessRead(), as: (typeof ACT_AS === 'string' ? ACT_AS : ''), log: (fn === 'liffLoad' || fn === 'liffDraftLast' || typeof alogTake !== 'function') ? undefined : alogTake() });
   const once = () => fetch(API_URL, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body });
   // たまにある長い待ち（Google側の1回だけの遅れ）対策（更新229）：読むだけの呼び出しは、8秒たっても返事がなければ2本目を送り、先に返った方を使う
   const first = SRV_READ.test(fn) ? new Promise((ok, ng) => { let done = false; const fin = (f, v) => { if (done) return; done = true; f(v); };
@@ -561,9 +567,16 @@ const TERMS_POINTS = ['書類の中身と送り先の責任は、親方ご自身
 function termsGate(){ if (DEMO || VIEW_MODE || !UID) return; if (String(S.termsAgreed || '') === TERMS_VER && String(S.trialAgreed || '') === TRIAL_VER) return; consentDialog(null); }
 /** 規約と試験提供のお願いの画面。reg があれば自己登録（屋号・招待コード）も同じ画面で（更新204） */
 function consentDialog(reg){
-  const regHtml = reg ? `<div style="margin-top:10px;padding:10px;background:#F2F7F2;border-radius:10px"><div style="font-weight:700;font-size:13.5px;margin-bottom:4px">はじめての登録</div>
-      <label style="font-size:12.5px;color:var(--muted)">屋号（書類の発行者名。あとで設定から直せます）</label><input id="regName" style="width:100%;font-size:16px;padding:8px;border:1px solid var(--line);border-radius:8px;margin:4px 0 6px" value="${esc(reg.name || '')}" placeholder="例：○○建設">
-      ${reg.regMode === '招待コード' ? '<label style="font-size:12.5px;color:var(--muted)">招待コード（製作者からお伝えしたもの）</label><input id="regCode" inputmode="numeric" style="width:100%;font-size:16px;padding:8px;border:1px solid var(--line);border-radius:8px;margin:4px 0 2px">' : ''}</div>` : '';
+  const inp = 'style="width:100%;font-size:16px;padding:8px;border:1px solid var(--line);border-radius:8px;margin:4px 0 6px"';
+  const regHtml = reg ? `<div style="margin-top:10px;padding:10px;background:#F2F7F2;border-radius:10px">
+      <div class="seg" style="margin:0 0 8px"><button id="regModeA" class="on" onclick="regMode('new')">はじめて登録する（親方）</button><button id="regModeB" onclick="regMode('join')">チームに参加する</button></div>
+      <div id="regBoxNew"><div style="font-weight:700;font-size:13.5px;margin-bottom:4px">はじめての登録</div>
+      <label style="font-size:12.5px;color:var(--muted)">屋号（書類の発行者名。あとで設定から直せます）</label><input id="regName" ${inp} value="${esc(reg.name || '')}" placeholder="例：○○建設">
+      ${reg.regMode === '招待コード' ? '<label style="font-size:12.5px;color:var(--muted)">招待コード（製作者からお伝えしたもの）</label><input id="regCode" inputmode="numeric" ' + inp + '>' : ''}</div>
+      <div id="regBoxJoin" style="display:none"><div style="font-weight:700;font-size:13.5px;margin-bottom:4px">チームに参加する</div>
+      <p style="font-size:12.5px;color:var(--muted);margin:0 0 4px">親方（管理者）から聞いた6桁のチームコードと、あなたの名前を入れてください。あなたの担当だけが見える、あなた用の画面になります。</p>
+      <label style="font-size:12.5px;color:var(--muted)">チームコード（6桁）</label><input id="regTeamCode" inputmode="numeric" maxlength="6" ${inp} placeholder="例：123456">
+      <label style="font-size:12.5px;color:var(--muted)">あなたの名前（職人の一覧に出ます）</label><input id="regTeamName" ${inp} value="${esc(reg.name || '')}" placeholder="例：山田 太郎"></div></div>` : '';
   dialog(`<h3>はじめに：利用のきまり</h3><p style="font-size:12.5px;color:var(--muted);margin:0 0 6px">「LINE de 請求書」（運営：未来クリエイティブマネジメント合同会社）を使う前に、次の5つをご確認ください。</p>
     <ol style="font-size:13.5px;line-height:1.7;padding-left:20px;margin:0">${TERMS_POINTS.map(t => '<li>' + esc(t) + '</li>').join('')}</ol>
     <details style="margin-top:8px"><summary style="font-size:13px;color:var(--blue)">📖 利用規約の全文を読む</summary><div style="font-size:12.5px;line-height:1.7;max-height:40vh;overflow:auto;background:#F7F7F4;border-radius:8px;padding:8px;margin-top:6px;white-space:pre-wrap">${esc(termsText())}</div></details>
@@ -575,9 +588,19 @@ function consentDialog(reg){
     <div class="row" style="margin-top:10px"><button class="pri" id="consentGo" style="flex:1" disabled onclick="${reg ? 'regGo()' : 'termsAgree()'}">${reg ? '同意して登録する' : '同意して始める'}</button></div>`); document.getElementById('dlg').classList.remove('editing'); }
 function termsAgree(){ closeDlg(); spin(true, '記録しています…'); run('liffTermsAgree', [UID, TERMS_VER, TRIAL_VER], res => { spin(false); S.termsAgreed = res.termsAgreed || TERMS_VER; S.trialAgreed = res.trialAgreed || TRIAL_VER; cacheWrite(UID, S); toast('ありがとうございます。始めましょう'); if (TERMS_DRAFT) { const d0 = TERMS_DRAFT; TERMS_DRAFT = null; bootDraft(d0); } }, () => { setTimeout(termsGate, 1500); }); }
 /** 自己登録（更新204）：台帳にいない人が開いたとき。regInfo＝サーバーの返事（needReg・regMode）、name＝LINEの表示名 */
-let REG_INFO = null, REGISTERING = false;
+let REG_INFO = null, REGISTERING = false, REG_MODE = 'new';
+function regMode(m){ REG_MODE = m; document.getElementById('regBoxNew').style.display = m === 'new' ? '' : 'none'; document.getElementById('regBoxJoin').style.display = m === 'join' ? '' : 'none'; document.getElementById('regModeA').classList.toggle('on', m === 'new'); document.getElementById('regModeB').classList.toggle('on', m === 'join'); const b = document.getElementById('consentGo'); if (b) b.textContent = m === 'join' ? '同意して参加する' : '同意して登録する'; }
+/** チームコードで参加（更新231） */
+function regJoin(){ const code = ((document.getElementById('regTeamCode') || {}).value || '').replace(/\D/g, ''); const name = ((document.getElementById('regTeamName') || {}).value || '').trim();
+  if (code.length !== 6) { toast('チームコードは6桁の数字です'); return; } if (!name) { toast('名前を入れてください'); return; }
+  closeDlg(); REGISTERING = true; spin(true, 'チームに参加しています…', '台帳に名前を書いて、あなた用の画面を作ります');
+  run('liffJoinTeam', [UID, { code: code, name: name, termsVer: TERMS_VER, trialVer: TRIAL_VER }], res => { cacheClear();
+    srvReal('liffLoad', ['', '']).then(data => { REGISTERING = false; if (!data || !data.labels) throw new Error('台帳が読めませんでした'); cacheWrite(UID, data); S = data; L = labelsOf(data.labels); STALE = false; boot(); spin(false); toast('参加しました。' + (res.name || '') + ' の職人 ' + (res.no || '') + ' として始めます'); })
+      .catch(() => { REGISTERING = false; spin(false); location.reload(); });
+  }, () => { REGISTERING = false; spin(false); setTimeout(() => { regGate(REG_INFO, (REG_INFO || {}).name); setTimeout(() => regMode('join'), 50); }, 1200); }); }
 function regGate(regInfo, name){ REG_INFO = Object.assign({}, regInfo || {}, { name: name || '' }); consentDialog(REG_INFO); }
-function regGo(){ const name = (document.getElementById('regName') || {}).value || ''; const code = (document.getElementById('regCode') || {}).value || '';
+function regGo(){ if (REG_MODE === 'join') { regJoin(); return; }
+  const name = (document.getElementById('regName') || {}).value || ''; const code = (document.getElementById('regCode') || {}).value || '';
   if (!name.trim()) { toast('屋号（書類に出す名前）を入れてください'); return; }
   closeDlg(); REGISTERING = true; regWait(true, name.trim());
   run('liffRegister', [UID, { name: name.trim(), code: code.trim(), termsVer: TERMS_VER, trialVer: TRIAL_VER }], res => {
@@ -620,7 +643,7 @@ function applyBrandColors(){
   const out = css.replace(/#3DAE4A|#1F7A33|#E9F6EC|#BFE3C6|#F6FBF7|#9FD3A8|#2E7D5B/gi, m => map[m.toUpperCase()] || m);
   let el = document.getElementById('brandCss'); if (!el) { el = document.createElement('style'); el.id = 'brandCss'; document.head.appendChild(el); } el.textContent = out;
 }
-function boot(){
+function boot(){ try { permApply(); actBarDraw(); } catch (e) {}
   applyStaticLabels();
   document.getElementById('sub').textContent = 'LINE de 請求書 ／ ' + (S.issuer || '');
   if (S.draft && S.draft._link && S.draft._link.originId && !(S.docs || []).some(d => d.id === S.draft._link.originId && live(d))) S.draft = null;   // 作り直し済みの版の書きかけは捨てる（二重書類の防止）
@@ -1674,8 +1697,62 @@ function doFinalize(kind, send){
 }
 // ---------- 現場・書類
 let SET_SUB = 'items';   // 設定タブの中：品目／お客様・定型文
+let ACT_AS = (function () { try { return localStorage.getItem(LS_NS + 'as') || ''; } catch (e) { return ''; } })();   // 管理者が選んだ職人番号（空＝自分／全員）更新232
+const KUBUN_WORD = { '重役': '重役', '事務責任者': '事務責任者', 'IT責任者': 'IT責任者', '職人': '職人' };
+/** チームの節（設定タブ）：一覧・コード・区分と権限・退職・担当の付け替え・重複の疑い（更新231〜232） */
+function teamDraw(){ const el = document.getElementById('teamBody'); const me = S && S.me; if (!el || !me) return; if (!(me.perm === '管理者' || me.perm === '設定係')) { el.innerHTML = ''; return; }
+  const team = (S.team || []); const admin = me.perm === '管理者'; const codes = S.teamCodes || {};
+  const sel = (name, cur, list) => `<select data-k="${name}" onchange="teamChange(this)" ${name === 'kubun' || name === 'perm' ? '' : ''}>${list.map(v => `<option ${v === cur ? 'selected' : ''}>${v}</option>`).join('')}</select>`;
+  const rows = team.map(x => `<tr class="${x.retired ? 'ret' : ''}" data-uid="${esc(x.uid)}"><td><b>${esc(x.no)}</b></td><td>${esc(x.name)}${x.no === me.no ? '<small>（自分）</small>' : ''}</td><td>${x.retired ? '退職' : sel('kubun', x.kubun, ['重役', '事務責任者', 'IT責任者', '職人'])}</td><td>${x.retired ? '' : sel('perm', x.perm, ['管理者', '設定係', '職人'])}</td><td>${x.no === me.no || x.no === '01' ? '' : (x.retired ? `<button class="sm" onclick="teamRetire('${esc(x.uid)}', false)">戻す</button>` : `<button class="sm" onclick="teamRetire('${esc(x.uid)}', true)">退職</button>`)}</td></tr>`).join('');
+  const names = team.filter(x => !x.retired).map(x => `<option value="${esc(x.no)}">職人 ${esc(x.no)} ${esc(x.name)}</option>`).join('');
+  el.innerHTML = `<p class="hint" style="margin:0 0 6px">番号は名札です（序列ではありません）。番号は一生もので、辞めても使い回しません。区分と権限は番号と別に直せます。</p>
+    <div class="tcodes"><div><b>職人用のチームコード</b><span class="code">${esc(codes.worker || '未発行')}</span><button class="sm" onclick="teamCode('worker')">${codes.worker ? '作り直す' : '発行する'}</button></div>
+    <div><b>管理者用のチームコード</b><span class="code">${esc(codes.admin || '未発行')}</span><button class="sm" onclick="teamCode('admin')">${codes.admin ? '作り直す' : '発行する'}</button></div>
+    <p class="hint" style="margin:4px 0 0">新しい人は、LINEでこのアプリを開き「チームに参加する」でコードと名前を入れます。管理者用で入った人は 01〜10 の番号、職人用は 11〜99 の番号になります。</p></div>
+    <table class="tteam"><thead><tr><th>番号</th><th>名前</th><th>区分</th><th>権限</th><th></th></tr></thead><tbody>${rows || '<tr><td colspan="5">まだ自分だけです</td></tr>'}</tbody></table>
+    ${admin ? `<div class="treas"><b>担当の付け替え（引き継ぎ）</b><div class="row"><select id="reasFrom"><option value="">（元の職人）</option>${names}</select><span>→</span><select id="reasTo"><option value="">（先の職人）</option>${names}</select></div><div class="row"><select id="reasWhat"><option value="all">お客様・現場・書類・入金の全部</option><option value="customers">お客様だけ</option><option value="cases">現場だけ</option><option value="docs">書類だけ</option><option value="payments">入金だけ</option></select><button class="sm" onclick="teamReassign()">付け替える</button></div><p class="hint" style="margin:2px 0 0">元の職人の担当を、先の職人の担当に書き換えます（辞める人の引き継ぎ）。</p></div>
+    <div class="tdup"><b>重複の疑い（同じ名前・同じ電話のお客様）</b> <button class="sm" onclick="dupLoad()">しらべる</button><div id="dupBody" class="hint"></div></div>
+    <div class="tdup"><b>CSVで出す（パソコン向け）</b> <button class="sm" onclick="csvOut('docs')">書類の一覧</button> <button class="sm" onclick="csvOut('payments')">入金の一覧</button> <button class="sm" onclick="csvOut('customers')">お客様</button><p class="hint" style="margin:2px 0 0">今見えている範囲（切替中ならその職人の分）を、Excelで開ける形で保存します。LINEの中では保存できないことがあります。</p></div>` : ''}`; }
+/** CSVで出す（更新233）。Excel で文字化けしないよう BOM 付き UTF-8 */
+function csvOut(kind){ const q = s => '"' + String(s == null ? '' : s).replace(/"/g, '""') + '"'; let rows = [], name = kind;
+  const tn = no => { const t = (S.team || []).filter(x => x.no === no)[0]; return t ? no + ' ' + t.name : (no || ''); };
+  if (kind === 'docs') { rows.push(['番号', '種類', '状態', 'お客様', '件名', '発行日', '期限', '小計（税抜）', '合計（税込）', '請求額', '入金済', '担当', '作成者']); (S.docs || []).forEach(d => rows.push([d.no, d.kind, d.status, d.custName, d.subject, d.date, d.due, d.subt, d.total, d.amount, d.paid, tn(d.tanto), tn(d.maker)])); }
+  else if (kind === 'payments') { rows.push(['入金ID', '書類番号', 'お客様', '種類', '方法', '金額', '入金日', '取消', 'メモ', '担当']); const dm = {}; (S.docs || []).forEach(d => { dm[d.id] = d; }); (S.payments || []).forEach(p => { const d = dm[p.docId] || {}; rows.push([p.id, d.no || p.docId, d.custName || '', p.kind, p.method, p.amount, p.date, p.cancel ? '取消' : '', p.memo, tn(p.tanto)]); }); }
+  else { rows.push(['顧客ID', '名前', '敬称', '区分', '電話', '住所', '締め日', '支払月', '支払日', '担当']); (S.customers || []).filter(c => !c.del).forEach(c => rows.push([c.id, c.name, c.honor, c.kubun, c.tel, c.address, c.close, c.payMonth, c.payDay, tn(c.tanto)])); }
+  const csv = '\uFEFF' + rows.map(r => r.map(q).join(',')).join('\r\n');
+  try { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = 'LINEde請求書_' + ({ docs: '書類', payments: '入金', customers: 'お客様' })[kind] + '_' + new Date().toISOString().slice(0, 10) + '.csv'; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000); toast('保存しました（' + (rows.length - 1) + '件）'); } catch (e) { toast('保存できませんでした：' + (e.message || e)); } }
+function teamChange(sel){ const tr = sel.closest('tr'); const uid = tr.getAttribute('data-uid'); const k = sel.getAttribute('data-k'); const o = { uid: uid }; o[k] = sel.value; if (k === 'kubun') { const p = tr.querySelector('select[data-k="perm"]'); const auto = { '重役': '管理者', '事務責任者': '管理者', 'IT責任者': '設定係', '職人': '職人' }[sel.value]; if (p) { p.value = auto; } o.perm = auto; }
+  spin(true, '直しています…'); run('liffTeamSet', [UID, o], r => { spin(false); S.team = r.team || S.team; cacheWrite(UID, S); teamDraw(); toast('直しました'); }, () => { spin(false); teamDraw(); }); }
+function teamRetire(uid, on){ const t = (S.team || []).filter(x => x.uid === uid)[0]; if (!t) return; if (on && !confirm(`職人 ${t.no} ${t.name} を退職にしますか？\n（この人はアプリを開けなくなります。担当の書類は残ります。番号は使い回しません）`)) return;
+  spin(true, '直しています…'); run('liffTeamSet', [UID, { uid: uid, retire: on }], r => { spin(false); S.team = r.team || S.team; cacheWrite(UID, S); teamDraw(); toast(on ? '退職にしました' : '戻しました'); }, () => spin(false)); }
+function teamCode(kind){ const cur = (S.teamCodes || {})[kind]; if (cur && !confirm('コードを作り直すと、古いコードでは参加できなくなります。作り直しますか？')) return; spin(true, '発行しています…'); run('liffTeamCode', [UID, { renew: cur ? kind : '' }], r => { spin(false); S.teamCodes = r; cacheWrite(UID, S); teamDraw(); }, () => spin(false)); }
+function teamReassign(){ const from = document.getElementById('reasFrom').value, to = document.getElementById('reasTo').value, what = document.getElementById('reasWhat').value; if (!from || !to || from === to) { toast('元と先の職人を選んでください'); return; } const tf = (S.team || []).filter(x => x.no === from)[0], tt = (S.team || []).filter(x => x.no === to)[0]; if (!confirm(`職人 ${from} ${tf ? tf.name : ''} の担当を、職人 ${to} ${tt ? tt.name : ''} に付け替えます。よろしいですか？`)) return;
+  spin(true, '付け替えています…'); run('liffReassign', [UID, { from: from, to: to, what: what }], r => { spin(false); toast(`${r.n || 0}件を付け替えました`); reload(() => { try { showTab(CUR_TAB); } catch (e) {} }); }, () => spin(false)); }
+function dupLoad(){ const el = document.getElementById('dupBody'); el.textContent = 'しらべています…'; run('liffDupCustomers', [UID], r => { const gs = (r && r.groups) || []; if (!gs.length) { el.textContent = '重複の疑いはありません'; return; }
+  el.innerHTML = gs.map((g, gi) => `<div class="dupg"><div><b>${esc(g.why)}</b></div>${g.list.map(c => `<div class="dupc">${esc(c.name)}（${esc(c.kubun)}・担当 ${esc(c.tanto || '-')}・書類 ${c.docs}件${c.tel ? '・' + esc(c.tel) : ''}）<button class="sm" onclick="dupMerge(${gi}, '${esc(c.id)}')">この人に統合</button></div>`).join('')}</div>`).join(''); DUP_GROUPS = gs; }, () => { el.textContent = 'しらべられませんでした'; }); }
+let DUP_GROUPS = [];
+function dupMerge(gi, keepId){ const g = DUP_GROUPS[gi]; if (!g) return; const keep = g.list.filter(c => c.id === keepId)[0]; const drops = g.list.filter(c => c.id !== keepId); if (!keep || !drops.length) return;
+  if (!confirm(`${drops.map(c => c.name + '（担当 ' + (c.tanto || '-') + '）').join('、')} を「${keep.name}（担当 ${keep.tanto || '-'}）」に統合します。現場・書類・入金はすべて ${keep.name} のものになります。元に戻せません。よろしいですか？`)) return;
+  spin(true, '統合しています…'); const next = i => { if (i >= drops.length) { spin(false); toast('統合しました'); reload(() => { dupLoad(); }); return; } run('liffDupMerge', [UID, keepId, drops[i].id], () => next(i + 1), () => spin(false)); }; next(0); }
+/** 設定タブの上：職人番号。管理者は職人の切替（名前順＋全員） */
+function wkBarDraw(t){ const me = S && S.me; if (!me) return; let el = document.getElementById('wkBar'); const host = document.getElementById(t); if (!host) return;
+  if (!el) { el = document.createElement('div'); el.id = 'wkBar'; el.className = 'wkbar'; }
+  if (el.parentNode !== host) host.insertBefore(el, host.firstChild);
+  const admin = me.perm === '管理者';
+  const self = `<b>職人 ${esc(me.no)}</b>　${esc(me.name || '')}<span class="wkk">${esc(KUBUN_WORD[me.kubun] || me.kubun || '')}・${esc(me.perm || '')}</span>`;
+  if (!admin || !Array.isArray(S.team)) { el.innerHTML = `<div class="wkme">${self}</div>`; return; }
+  const opts = [`<option value="">全員分を見る（管理者）</option>`].concat(S.team.filter(x => !x.retired).map(x => `<option value="${esc(x.no)}" ${ACT_AS === x.no ? 'selected' : ''}>職人 ${esc(x.no)}　${esc(x.name)}${x.no === me.no ? '（自分）' : ''}</option>`));
+  el.innerHTML = `<div class="wkme">${self}</div><div class="wksel"><label>見る・操作する職人</label><select onchange="actAsSet(this.value)">${opts.join('')}</select></div>`; }
+function actAsSet(no){ ACT_AS = String(no || ''); try { if (ACT_AS) localStorage.setItem(LS_NS + 'as', ACT_AS); else localStorage.removeItem(LS_NS + 'as'); } catch (e) {} cacheClear(); spin(true, '切り替えています…'); run('liffLoad', [UID, ''], data => { cacheWrite(UID, data); S = data; L = labelsOf(data.labels); STALE = false; boot(); spin(false); actBarDraw(); try { showTab(CUR_TAB); } catch (e) {} }, () => spin(false)); }
+/** 操作中の帯（管理者がほかの職人として操作しているとき） */
+function actBarDraw(){ let b = document.getElementById('actBar'); const me = S && S.me; const on = me && me.perm === '管理者' && ACT_AS && ACT_AS !== me.no; if (!on) { if (b) b.remove(); document.body.classList.remove('acting'); return; }
+  if (!b) { b = document.createElement('div'); b.id = 'actBar'; b.className = 'actbar'; document.body.appendChild(b); }
+  const t = (S.team || []).filter(x => x.no === ACT_AS)[0]; b.innerHTML = `職人 ${esc(ACT_AS)} ${esc(t ? t.name : '')} として操作中（作る書類の担当はこの職人）<button onclick="actAsSet('')">戻す</button>`; document.body.classList.add('acting'); }
+/** 権限で出し分け：職人は設定を直せない（見るだけ）。設定係は自分の担当だけ見えるが設定は直せる */
+function permApply(){ const me = S && S.me; document.body.classList.toggle('pw', !!(me && me.perm === '職人')); document.body.classList.toggle('padmin', !!(me && me.perm === '管理者')); document.body.classList.toggle('pset', !!(me && (me.perm === '管理者' || me.perm === '設定係'))); }
 function showTab(t){
   if (t === 'items' || t === 'lists' || t === 'own') SET_SUB = t; if (t !== 'edit') CUR_TAB = t;
+  if (t === 'items' || t === 'lists' || t === 'own') { try { wkBarDraw(t); } catch (e) {} }
   alog('scr', t);
   closeBs(); CASE_OPEN = '';
   if (t === 'edit') { openEd(); return; }   // 古い呼び方（編集タブ）は、編集画面を開く
@@ -3114,7 +3191,7 @@ function renderLists(){
 }
 function dueNoticeSet(n){ if (DEMO) { toast('お試し中は変えられません'); return; } S.dueNotice = n; dueNoticeDraw(); run('liffDueNotifySave', [UID, n], () => toast(n ? `支払期限の${n}日前の朝に知らせます` : '通知しません')); }
 function dueNoticeDraw(){ const n = +(S.dueNotice || 0); document.querySelectorAll('#dueSeg button').forEach(b => b.classList.toggle('on', b.textContent === (n ? n + '日前' : 'しない'))); }
-function renderOwn(){ try { const bt = document.getElementById('bootTime'); if (bt) bt.innerHTML = bootTimeText(); } catch (e) {} const ds = document.getElementById('demoSec'); if (ds) ds.style.display = DEMO ? 'none' : ''; dueNoticeDraw(); const tt = document.getElementById('thanksTpl'); if (tt) tt.value = (S.thanksTpl || '').trim() || THANKS_DEFAULT;
+function renderOwn(){ try { teamDraw(); } catch (e) {} try { const bt = document.getElementById('bootTime'); if (bt) bt.innerHTML = bootTimeText(); } catch (e) {} const ds = document.getElementById('demoSec'); if (ds) ds.style.display = DEMO ? 'none' : ''; dueNoticeDraw(); const tt = document.getElementById('thanksTpl'); if (tt) tt.value = (S.thanksTpl || '').trim() || THANKS_DEFAULT;
   const iss = S.iss || {};
   document.getElementById('ownPv').innerHTML = issuerBlockHtml(iss, false) || '<span class="pph">まだ入っていません</span>';
   document.getElementById('ownBank').innerHTML = '<b>お振込先</b><br>' + (iss.bank ? bankLines(iss.bank) : '（未入力）');
