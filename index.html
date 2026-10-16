@@ -303,7 +303,7 @@
     <div class="row" style="margin-top:8px"><button class="pri" onclick="openIssuer(true)">自社情報とロゴを直す</button></div>
     <div class="row" style="margin-top:6px"><button onclick="termsShow()">📖 利用規約を読む</button></div>
   </div>
-  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新228</b>（2026-10-17）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
+  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新229</b>（2026-10-17）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
   <div class="sec" style="margin-top:12px"><h2>備考の定型文（5つ設定可能）</h2>
     <div id="memoEdit"></div>
     <div class="row" style="margin-top:8px"><button class="pri" onclick="saveMemo()">定型文を保存</button></div>
@@ -413,7 +413,7 @@ function failNote(step, msg){ try { const a = failRead(); a.push({ t: Date.now()
 function snapRebuild(){ spin(true); run('liffSnapRebuild', [UID, true], () => { reload(() => { try { showTab(CUR_TAB); } catch (e) {} toast('台帳を読み直しました'); }); }, () => spin(false)); }
 // ② 前回の台帳をスマホに覚えさせ、まず前回の内容で画面を出す（外の置き場だけ。Google側は uid を信じる作りなので使わない）2026-10-11
 let STALE = false, FRESH_PENDING = null, CUR_TAB = 'cases';
-const PAGE_VER = '228';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
+const PAGE_VER = '229';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
 function cacheKey(){ return LS_NS + 'cache_p' + PAGE_VER; }
 function cacheRead(){ try { const o = JSON.parse(localStorage.getItem(cacheKey()) || 'null'); return o && o.uid && o.S && o.S.labels ? o : null; } catch (e) { return null; } }
 function cacheWrite(uid, data){ try { const s = JSON.stringify({ uid, at: Date.now(), S: data }); if (s.length < 4000000) localStorage.setItem(cacheKey(), s); } catch (e) { /* 入らなければ覚えない */ } }
@@ -487,8 +487,16 @@ window.addEventListener('load', async () => { stickyTop();
 const SERVER_MODE = 'api';   // 外の置き場（静的な置き場）
 function sessRead(){ try { const o = JSON.parse(localStorage.getItem('inv_sess') || 'null'); return o && o.uid === UID && o.at > Date.now() - 5 * 3600 * 1000 ? o.sess : ''; } catch (e) { return ''; } }   // 合言葉（本人確認の時短 2026-10-12）。5時間で捨てる（サーバーは6時間）
 function sessWrite(s){ try { if (s && UID) localStorage.setItem('inv_sess', JSON.stringify({ uid: UID, sess: s, at: Date.now() })); } catch (e) {} }
+const SRV_READ = /^liff(Load|DraftLast|OrderInit|OrderLoad|PhotoGet|SearchLines|PreviewHtml|ViewUrl)$/;   // 読むだけの呼び出し（2本送っても害がない）
 function srvReal(fn, args){ let tok = ''; try { tok = (typeof liff !== 'undefined' && liff.getIDToken && liff.getIDToken()) || ''; } catch (e) { tok = ''; }
-  return fetch(API_URL, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn, args, idToken: tok, uid: UID, sess: sessRead(), log: (fn === 'liffLoad' || fn === 'liffDraftLast' || typeof alogTake !== 'function') ? undefined : alogTake() }) })
+  const body = JSON.stringify({ fn, args, idToken: tok, uid: UID, sess: sessRead(), log: (fn === 'liffLoad' || fn === 'liffDraftLast' || typeof alogTake !== 'function') ? undefined : alogTake() });
+  const once = () => fetch(API_URL, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body });
+  // たまにある長い待ち（Google側の1回だけの遅れ）対策（更新229）：読むだけの呼び出しは、8秒たっても返事がなければ2本目を送り、先に返った方を使う
+  const first = SRV_READ.test(fn) ? new Promise((ok, ng) => { let done = false; const fin = (f, v) => { if (done) return; done = true; f(v); };
+      once().then(r => fin(ok, r)).catch(e => { if (!done) setTimeout(() => { if (!done) fin(ng, e); }, 9000); });
+      setTimeout(() => { if (done) return; try { alog('msg', fn + '：8秒待っても返事がないので2本目を送った'); } catch (_) {} once().then(r => fin(ok, r)).catch(e => fin(ng, e)); }, 8000); })
+    : once();
+  return first
     .then(r => r.text()).then(t => { let j = null; try { j = JSON.parse(t); } catch (e) { throw new Error('サーバーの返事が読めません（' + t.slice(0, 80) + '）'); }
       if (!j || !j.ok) throw new Error((j && j.err) || 'サーバーから返事がありません'); LIFFD.lastSrvMs = j.ms || 0; LIFFD.lastSrvAuth = j.msAuth || 0; if (j.sess) sessWrite(j.sess);
       if (j.dirty && fn !== 'liffSnapRebuild') snapKick(); return j.r; }); }
@@ -3448,7 +3456,16 @@ function spin(on, msg, sub){ const el = document.getElementById('spin'); const k
   if (on) { document.getElementById('spMsg').textContent = msg || (S ? '読み込み中…' : `${L.workWord}データを読み込み中…`); document.getElementById('spSub').textContent = sub || '';
     if (!el.classList.contains('on')) { k.classList.remove('on'); clearTimeout(SPK_T); spinPic(k); } }   // 絵は埋め込み済みなので、すぐ出す（2026-10-13 三浦さん）
   else { clearTimeout(SPK_T); k.classList.remove('on'); }
+  spinClock(on, sub);
   el.classList.toggle('on', !!on); }
+/** 待ち札の経過秒（更新229 三浦さん：たまにある40秒待ちに、理由と目安を出す）。12秒を超えたら「Google側の返事待ち」、30秒を超えたら開き直しの案内 */
+let SPIN_T0 = 0, SPIN_TM = null;
+function spinClock(on, sub){ clearInterval(SPIN_TM); SPIN_TM = null; if (!on) return; SPIN_T0 = performance.now();
+  SPIN_TM = setInterval(() => { const s = Math.round((performance.now() - SPIN_T0) / 1000); const e = document.getElementById('spSub'); if (!e) return;
+    if (s >= 30) e.textContent = `${s}秒経過。Google側の返事が止まっているようです。この画面を閉じて、LINEから開き直してください（作った書類は消えません）`;
+    else if (s >= 12) e.textContent = `${s}秒経過。Google側の返事が遅いときがあります（ふだんは3〜8秒）。このままお待ちください`;
+    else if (s >= 5) e.textContent = (sub ? sub + '　' : '') + `${s}秒経過`;
+  }, 1000); }
 let tt; function toast(m){ alog('msg', m); const t = document.getElementById('toast'); t.textContent = m; t.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('on'), 3000); }
 function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 </script>
