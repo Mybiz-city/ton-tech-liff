@@ -302,7 +302,7 @@
     <div class="row" style="margin-top:8px"><button class="pri" onclick="openIssuer(true)">自社情報とロゴを直す</button></div>
     <div class="row" style="margin-top:6px"><button onclick="termsShow()">📖 利用規約を読む</button></div>
   </div>
-  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新225</b>（2026-10-16）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
+  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新226</b>（2026-10-16）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
   <div class="sec" style="margin-top:12px"><h2>備考の定型文（5つ設定可能）</h2>
     <div id="memoEdit"></div>
     <div class="row" style="margin-top:8px"><button class="pri" onclick="saveMemo()">定型文を保存</button></div>
@@ -365,7 +365,7 @@ const L_TYPES = {   // 起動時に先出しする型の言葉（GASの INV_LABE
     placeWords: ['サービス／作業', 'サービス／点検', 'サービス／修理', 'サービス／代行', '制作／デザイン', '制作／ページ', '相談／打合せ', '相談／顧問', '月額／顧問料', '月額／保守', '出張／訪問', '出張／講師'],   // 仮。テスト先が決まったら差し替え
     userWord: 'ご利用者', guardian: '恵比寿様', brand: 'Mybiz', color: 'ネイビー', colorHex: '#1E3A5F', colorMid: '#2B4C7E', colorLight: '#EAF0F8', colorLine: '#C5D3E8', colorSoft: '#F4F7FB', chara: '水瀬みお', prepay: false, order: false, breakdown: false, visit: false }
 };
-const TYPE_PRESET = '建設';   // 置き場ごとの業種の型（起動時の先出し 2026-10-15）
+const TYPE_PRESET = '';
 /** この端末に覚える名前の頭（2026-10-15 更新222）：建設と Mybiz を同じドメイン（app.mybiz-city.net）に置いているため、前回の内容・足あと・合言葉が混ざっていた。建設は今までどおり inv_、ほかの型は inv_型名_ */
 const LS_NS = 'inv_' + (L_TYPES[TYPE_PRESET] ? TYPE_PRESET + '_' : '');
 /** 水瀬みお（Biz city）のアイコン（2026-10-14 三浦さんの画像から96px）。かんなはHTMLに直書きのまま */
@@ -400,12 +400,19 @@ document.addEventListener('click', e => { const b = e.target && e.target.closest
 const T0 = performance.now(); const tmark = k => { LIFFD.ms[k] = Math.round(performance.now() - T0); };
 /** 起動の秒数を文にする（設定の一番下）。画面＝HTMLが出るまで、本人確認＝LINE、台帳＝Googleの読み込み */
 function bootTimeText(){ const m = LIFFD.ms || {}; const s = k => m[k] == null ? '–' : (m[k] / 1000).toFixed(1) + '秒';
-  const calls = (LIFFD.calls || []).slice(-5).map(c => `${c.fn.replace(/^liff/, '')} ${(c.ms / 1000).toFixed(1)}秒${c.srv ? '（サーバー' + (c.srv / 1000).toFixed(1) + '秒' + (c.sa ? '・うち本人確認' + (c.sa / 1000).toFixed(1) : '') + '）' : ''}${c.t ? '［' + Object.keys(c.t).filter(k => k !== 'total').map(k => k + (c.t[k] / 1000).toFixed(1)).join(' ') + '］' : ''}`).join('／');
-  const lt = LIFFD.loadT ? '［' + Object.keys(LIFFD.loadT).filter(k => k !== 'total').map(k => k + (LIFFD.loadT[k] / 1000).toFixed(1)).join(' ') + '］' : '';
-  return `起動 ${s('render')}（画面 ${s('load')}／前回の内容で表示 ${s('cache')}／本人確認 ${s('auth')}／台帳 ${s('data')}${lt}）` + (calls ? `<br>最近の呼び出し：${calls}` : '') + `<br>しらべ：LIFF起動 ${esc(LIFFD.init || '未')}／LINEの中 ${esc(LIFFD.client || '?')}／カード機能 ${esc(LIFFD.api || '?')}`; }
+  const howWord = h => h === 1 ? '写し（一時置き場）' : h === 2 ? '写し（ファイル）' : h === 3 ? '表から作り直し' : '';
+  const calls = (LIFFD.calls || []).slice(-5).map(c => `${c.fn.replace(/^liff/, '')} ${(c.ms / 1000).toFixed(1)}秒${c.srv ? '（サーバー' + (c.srv / 1000).toFixed(1) + '秒' + (c.sa ? '・うち本人確認' + (c.sa / 1000).toFixed(1) : '') + '）' : ''}${c.t ? '［' + Object.keys(c.t).filter(k => k !== 'total' && k !== 'how').map(k => k + (c.t[k] / 1000).toFixed(1)).join(' ') + (c.t.how ? '・' + howWord(c.t.how) : '') + '］' : ''}`).join('／');
+  const lt = LIFFD.loadT ? '［' + Object.keys(LIFFD.loadT).filter(k => k !== 'total' && k !== 'how').map(k => k + (LIFFD.loadT[k] / 1000).toFixed(1)).join(' ') + (LIFFD.loadT.how ? '・' + howWord(LIFFD.loadT.how) : '') + '］' : '';
+  const fails = failRead(); const ft = fails.length ? `<br>止まった記録（最近${fails.length}件）：` + fails.slice(-5).reverse().map(f => `${new Date(f.t).toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })} ${esc(f.step)} ${(f.ms / 1000).toFixed(0)}秒 ${esc(f.msg)}`).join('／') : '';
+  return `起動 ${s('render')}（画面 ${s('load')}／前回の内容で表示 ${s('cache')}／本人確認 ${s('auth')}／台帳 ${s('data')}${lt}）` + (calls ? `<br>最近の呼び出し：${calls}` : '') + `<br>しらべ：LIFF起動 ${esc(LIFFD.init || '未')}／LINEの中 ${esc(LIFFD.client || '?')}／カード機能 ${esc(LIFFD.api || '?')}` + ft + `<br><button class="sec" style="margin-top:6px;font-size:12px;padding:6px 12px" onclick="snapRebuild()">台帳を読み直す（表から写しを作り直す）</button>`; }
+/** 止まった記録（更新226）：起動が途中で止まった・失敗したときに、段・秒数・文言を端末に残す（最近30件）。設定の一番下に出す */
+function failRead(){ try { const a = JSON.parse(localStorage.getItem(LS_NS + 'fail') || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
+function failNote(step, msg){ try { const a = failRead(); a.push({ t: Date.now(), step: String(step || ''), ms: Math.round(performance.now() - T0), msg: String(msg || '').slice(0, 120) }); while (a.length > 30) a.shift(); localStorage.setItem(LS_NS + 'fail', JSON.stringify(a)); } catch (e) {} try { alog('err', '起動：' + step + '：' + msg); } catch (e) {} }
+/** 「台帳を読み直す」：表から写しを作り直して、画面を描き直す（三浦さんが表を手で直したあとに使う 更新226） */
+function snapRebuild(){ spin(true); run('liffSnapRebuild', [UID, true], () => { reload(() => { try { showTab(CUR_TAB); } catch (e) {} toast('台帳を読み直しました'); }); }, () => spin(false)); }
 // ② 前回の台帳をスマホに覚えさせ、まず前回の内容で画面を出す（外の置き場だけ。Google側は uid を信じる作りなので使わない）2026-10-11
 let STALE = false, FRESH_PENDING = null, CUR_TAB = 'cases';
-const PAGE_VER = '225';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
+const PAGE_VER = '226';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
 function cacheKey(){ return LS_NS + 'cache_p' + PAGE_VER; }
 function cacheRead(){ try { const o = JSON.parse(localStorage.getItem(cacheKey()) || 'null'); return o && o.uid && o.S && o.S.labels ? o : null; } catch (e) { return null; } }
 function cacheWrite(uid, data){ try { const s = JSON.stringify({ uid, at: Date.now(), S: data }); if (s.length < 4000000) localStorage.setItem(cacheKey(), s); } catch (e) { /* 入らなければ覚えない */ } }
@@ -425,11 +432,11 @@ function tryApplyFresh(){ if (!FRESH_PENDING) return; const busy = document.getE
 window.addEventListener('load', async () => { stickyTop();
   if (typeof VIEW_MODE !== 'undefined' && VIEW_MODE) { viewerBoot(); return; }   // お客様の閲覧ページ（2026-10-11）
   tmark('load');
-  if (L_TYPES[TYPE_PRESET]) applyStaticLabels();   // 先出しの型の文・色・アイコン（2026-10-15）
+  if (L_TYPES[TYPE_PRESET]) applyStaticLabels();
   spin(true);
   if (!LIFF_ID) { STEP = '設定の読み込み'; try { const c = await (await fetch(API_URL + '?page=cfg', { redirect: 'follow' })).json(); LIFF_ID = c.liffId || ''; } catch (e) { LIFFD.api = '設定が読めない：' + (e && e.message || e); } }
   if (SERVER_MODE === 'api' && !DEV_UID) { const C = cacheRead(); if (C) { try { S = C.S; L = labelsOf(S.labels); UID = C.uid; STALE = true; boot(); spin(false); staleBar(true); tmark('cache'); } catch (e) { S = null; L = labelsOf(L_TYPES[TYPE_PRESET] || null); UID = ''; STALE = false; cacheClear(); spin(true); } } }   // 前回の内容で先に出す（2026-10-11）
-  setTimeout(() => { const sp = document.getElementById('spin'); if (sp && sp.classList.contains('on') && !S && !REGISTERING) { spin(false); dialog(`<h3>起動に時間がかかっています</h3><p>止まった段：${esc(STEP || '起動')}（40秒）</p><p style="font-size:12px;color:#666">LIFF起動 ${esc(LIFFD.init || '未')}／枠の外の印 ${esc(LIFFD.hash || '?')}</p><p>この画面を三浦さんに送ってください。</p><div class="row"><button class="pri" onclick="location.reload()">もう一度</button></div>`); } }, 40000);   // 止まったときに段を見せる（2026-10-10）
+  setTimeout(() => { const sp = document.getElementById('spin'); if (sp && sp.classList.contains('on') && !S && !REGISTERING) { spin(false); failNote(STEP || '起動', '40秒たっても終わらない'); dialog(`<h3>起動に時間がかかっています</h3><p>止まった段：${esc(STEP || '起動')}（40秒）</p><p style="font-size:12px;color:#666">LIFF起動 ${esc(LIFFD.init || '未')}／枠の外の印 ${esc(LIFFD.hash || '?')}</p><p>この画面を三浦さんに送ってください。</p><div class="row"><button class="pri" onclick="location.reload()">もう一度</button></div>`); } }, 40000);   // 止まったときに段を見せる（2026-10-10）
   try {
     const inLine = navigator.userAgent.indexOf(' Line/') >= 0;
     let hash = '';
@@ -447,7 +454,7 @@ window.addEventListener('load', async () => { stickyTop();
       if (logged && SERVER_MODE === 'api') {   // 本人確認（プロフィール）と台帳の読み込みを同時に走らせる。台帳の持ち主はサーバーが id_token で決める（2026-10-11）
         STEP = 'プロフィールと台帳'; let pr = null;
         const tq = performance.now();
-        try { pr = await withTimeout(Promise.all([liff.getProfile().then(x => { tmark('auth'); return x; }), srvReal('liffLoad', ['', STALE && S && S.stamp ? S.stamp : '']).then(x => { tmark('data'); LIFFD.loadT = x && x._t; LIFFD.calls = (LIFFD.calls || []).concat([{ fn: 'liffLoad', ms: Math.round(performance.now() - tq), srv: LIFFD.lastSrvMs || 0, sa: LIFFD.lastSrvAuth || 0, t: x && x._t }]); return x; })]), 25000, '台帳の読み込み'); } catch (e) { pr = null; LIFFD.api = '同時読み込み失敗：' + (e && e.message || e); }
+        try { pr = await withTimeout(Promise.all([liff.getProfile().then(x => { tmark('auth'); return x; }), srvReal('liffLoad', ['', STALE && S && S.stamp ? S.stamp : '']).then(x => { tmark('data'); LIFFD.loadT = x && x._t; LIFFD.calls = (LIFFD.calls || []).concat([{ fn: 'liffLoad', ms: Math.round(performance.now() - tq), srv: LIFFD.lastSrvMs || 0, sa: LIFFD.lastSrvAuth || 0, t: x && x._t }]); return x; })]), 25000, '台帳の読み込み'); } catch (e) { pr = null; LIFFD.api = '同時読み込み失敗：' + (e && e.message || e); failNote('プロフィールと台帳', (e && e.message) || String(e)); }
         if (pr) { const uid0 = pr[0].userId;
           if (STALE && UID && UID !== uid0) { cacheClear(); location.reload(); return; }   // 別の人の前回の内容を出していた → やり直し
           if (pr[1] && pr[1].needReg) { UID = uid0; spin(false); STEP = ''; regGate(pr[1], pr[0].displayName || ''); return; }   // 未登録の人：規約・試験提供の同意＋屋号で、その場で親方に（更新204）
@@ -468,21 +475,24 @@ window.addEventListener('load', async () => { stickyTop();
     }
     STEP = '台帳の読み込み';
     if (STALE && UID !== (cacheRead() || {}).uid) { cacheClear(); location.reload(); return; }
-    const loadOk = data => { tmark('data'); if (SERVER_MODE === 'api' && !DEV_UID) cacheWrite(UID, data); if (!applyFresh(data)) { spin(false); tmark('render'); STEP = ''; return; } STEP = '画面の組み立て'; try { boot(); } catch (e) { spin(false); dialog(`<h3>起動できませんでした（画面の組み立て）</h3><p>${esc(e.message || e)}</p><p style="font-size:11px;color:#666">${esc(String(e.stack || '').slice(0, 300))}</p><div class="row"><button class="pri" onclick="location.reload()">もう一度</button></div>`); return; } spin(false); STEP = ''; };
-    const loadNg = err => { if (STALE && S && LOAD_RETRY < 3) { LOAD_RETRY++; setTimeout(() => run('liffLoad', [UID], loadOk, loadNg), 4000 * LOAD_RETRY); return; }   // 前回の内容を出せているなら、裏で3回までやり直す（Load failed 対策 更新217）
+    const loadOk = data => { tmark('data'); LIFFD.loadT = data && data._t; if (SERVER_MODE === 'api' && !DEV_UID) cacheWrite(UID, data); if (!applyFresh(data)) { spin(false); tmark('render'); STEP = ''; return; } STEP = '画面の組み立て'; try { boot(); } catch (e) { spin(false); dialog(`<h3>起動できませんでした（画面の組み立て）</h3><p>${esc(e.message || e)}</p><p style="font-size:11px;color:#666">${esc(String(e.stack || '').slice(0, 300))}</p><div class="row"><button class="pri" onclick="location.reload()">もう一度</button></div>`); return; } spin(false); STEP = ''; };
+    const loadNg = err => { failNote('台帳の読み込み' + (LOAD_RETRY ? '（やり直し' + LOAD_RETRY + '）' : ''), (err && err.message) || String(err)); if (STALE && S && LOAD_RETRY < 3) { LOAD_RETRY++; setTimeout(() => run('liffLoad', [UID], loadOk, loadNg), 4000 * LOAD_RETRY); return; }   // 前回の内容を出せているなら、裏で3回までやり直す（Load failed 対策 更新217）
       dialog(`<h3>開けませんでした</h3><p>${esc((err && err.message) || String(err))}</p><p>台帳のID・設定「係」「テスト対象」・URLの uid を確かめてください。</p><div class="row"><button class="pri" onclick="location.reload()">もう一度</button></div>`); };
     run('liffLoad', [UID], loadOk, loadNg);
     const _sp = spin; /* 台帳が来て描き終えたら秒数の印 */
-  } catch (e) { spin(false); dialog(`<h3>起動できませんでした</h3><p>${esc(e.message || e)}</p><p style="font-size:12px;color:#666">止まった段：${esc(STEP || '起動')}</p><div class="row"><button class="pri" onclick="location.reload()">もう一度</button></div>`); }
+  } catch (e) { spin(false); failNote(STEP || '起動', (e && e.message) || String(e)); dialog(`<h3>起動できませんでした</h3><p>${esc(e.message || e)}</p><p style="font-size:12px;color:#666">止まった段：${esc(STEP || '起動')}</p><div class="row"><button class="pri" onclick="location.reload()">もう一度</button></div>`); }
 });
 /** サーバーの窓口（2026-10-11）。Googleの枠の中では google.script.run。外の置き場（静的な置き場）では fetch に差し替える（make_static.py） */
 const SERVER_MODE = 'api';   // 外の置き場（静的な置き場）
-function sessRead(){ try { const o = JSON.parse(localStorage.getItem(LS_NS + 'sess') || 'null'); return o && o.uid === UID && o.at > Date.now() - 5 * 3600 * 1000 ? o.sess : ''; } catch (e) { return ''; } }   // 合言葉（本人確認の時短 2026-10-12）。5時間で捨てる（サーバーは6時間）
-function sessWrite(s){ try { if (s && UID) localStorage.setItem(LS_NS + 'sess', JSON.stringify({ uid: UID, sess: s, at: Date.now() })); } catch (e) {} }
+function sessRead(){ try { const o = JSON.parse(localStorage.getItem('inv_sess') || 'null'); return o && o.uid === UID && o.at > Date.now() - 5 * 3600 * 1000 ? o.sess : ''; } catch (e) { return ''; } }   // 合言葉（本人確認の時短 2026-10-12）。5時間で捨てる（サーバーは6時間）
+function sessWrite(s){ try { if (s && UID) localStorage.setItem('inv_sess', JSON.stringify({ uid: UID, sess: s, at: Date.now() })); } catch (e) {} }
 function srvReal(fn, args){ let tok = ''; try { tok = (typeof liff !== 'undefined' && liff.getIDToken && liff.getIDToken()) || ''; } catch (e) { tok = ''; }
   return fetch(API_URL, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn, args, idToken: tok, uid: UID, sess: sessRead(), log: (fn === 'liffLoad' || fn === 'liffDraftLast' || typeof alogTake !== 'function') ? undefined : alogTake() }) })
     .then(r => r.text()).then(t => { let j = null; try { j = JSON.parse(t); } catch (e) { throw new Error('サーバーの返事が読めません（' + t.slice(0, 80) + '）'); }
-      if (!j || !j.ok) throw new Error((j && j.err) || 'サーバーから返事がありません'); LIFFD.lastSrvMs = j.ms || 0; LIFFD.lastSrvAuth = j.msAuth || 0; if (j.sess) sessWrite(j.sess); return j.r; }); }
+      if (!j || !j.ok) throw new Error((j && j.err) || 'サーバーから返事がありません'); LIFFD.lastSrvMs = j.ms || 0; LIFFD.lastSrvAuth = j.msAuth || 0; if (j.sess) sessWrite(j.sess);
+      if (j.dirty && fn !== 'liffSnapRebuild') snapKick(); return j.r; }); }
+let SNAP_KICK = null;   // 書いたあと、裏で写しを作り直してもらう（更新226）。続けて書いたときは1.5秒まとめて1回
+function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTimeout(() => { SNAP_KICK = null; srvReal('liffSnapRebuild', [UID]).catch(() => {}); }, 1500); }
 // ============ お客様の閲覧ページ（外の置き場に置いたときだけ動く。Googleの青い帯が出ない）2026-10-11 ============
 const VIEW_Q = new URLSearchParams(location.search); let SEND_Q = VIEW_Q.get('send') || '';
 const VIEW_MODE = SERVER_MODE === 'api' && !!(VIEW_Q.get('v') || VIEW_Q.get('page') === 'guide');
