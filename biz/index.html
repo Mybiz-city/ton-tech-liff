@@ -346,7 +346,7 @@
     <div class="row"><button class="pri" onclick="demoStart()">🎓 お試しを始める</button></div>
   </div>
   <div class="sec acc" data-acc="eng" style="margin-top:12px" id="engSec"><h2>🔧 動作の記録（保守用）</h2>
-    <div class="hint" style="margin:0 0 4px">画面の版：<b>更新253</b>（2026-10-18）。古い画面が出るときは、LINEのトークを閉じて開き直してください</div>
+    <div class="hint" style="margin:0 0 4px">画面の版：<b>更新254</b>（2026-10-18）。古い画面が出るときは、LINEのトークを閉じて開き直してください</div>
     <div class="hint" id="bootTime" style="font-size:11px;line-height:1.7"></div>
   </div>
 </div>
@@ -439,7 +439,7 @@ function snapRebuild(){ spin(true); run('liffSnapRebuild', [UID, true], () => { 
 // ② 前回の台帳をスマホに覚えさせ、まず前回の内容で画面を出す（外の置き場だけ。Google側は uid を信じる作りなので使わない）2026-10-11
 let STALE = false, FRESH_PENDING = null, CUR_TAB = 'cases';
 let SEL_T = (function () { try { return localStorage.getItem(LS_NS + 't') || ''; } catch (e) { return ''; } })();   // 選んだ台帳（親方ID。空＝自分の台帳）更新235
-const PAGE_VER = '253';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
+const PAGE_VER = '254';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
 function cacheKey(){ return LS_NS + 'cache_p' + PAGE_VER + (SEL_T ? '_' + SEL_T : ''); }
 function cacheRead(){ try { const o = JSON.parse(localStorage.getItem(cacheKey()) || 'null'); return o && o.uid && o.S && o.S.labels ? o : null; } catch (e) { return null; } }
 function cacheWrite(uid, data){ try { const s = JSON.stringify({ uid, at: Date.now(), S: data }); if (s.length < 4000000) localStorage.setItem(cacheKey(), s); } catch (e) { /* 入らなければ覚えない */ } }
@@ -2403,9 +2403,15 @@ function contractMemoEdit(id){
     ${F('契約の種類', seg('cmKind', ['請負', '準委任'], m.kind || ''), `<span id="cmKH">${esc(CTR_KIND_HINT[m.kind] || 'ITエンジニアは、同じ仕事でも「請負（納品型）」と「準委任（技術提供型）」に分かれます。契約書の印紙の要否に使います')}</span>`)}
     ${F('業務の内容', `<textarea id="cmWork" rows="3" maxlength="400" placeholder="例：○○のホームページ制作一式／毎月の経理代行（記帳・請求書発行）">${v('work')}</textarea>`)}
     ${F('期間', `<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><input type="date" id="cmFrom" value="${v('from')}" style="flex:1 1 40%"><span>〜</span><input type="date" id="cmTo" value="${v('to')}" style="flex:1 1 40%"></div><div class="tog" style="margin-top:4px"><input type="checkbox" id="cmMonthly" ${m.monthly ? 'checked' : ''}><label for="cmMonthly">月額（1か月ごとに自動更新）</label></div><input id="cmPeriodNote" maxlength="100" value="${v('periodNote')}" placeholder="補足（例：納期は11月末）" style="margin-top:4px">`)}
+    ${F('納期（成果物を納める日＝受領日）', `<input type="date" id="cmDue" value="${v('due')}">`, '準委任で納める物がないときは空でよい（期間が役務提供の期間になります）')}
+    ${F('成果物', `<input id="cmDeliver" maxlength="200" value="${v('deliver')}" placeholder="例：ホームページ一式（HTML・画像）／納品物なし">`)}
+    ${F('納入場所・納め方', `<input id="cmPlace" maxlength="120" value="${v('place')}" placeholder="例：PDFをLINEで／甲の事務所／オンライン（Zoom）">`)}
+    ${F('検査', seg('cmInspect', ['しない', 'する'], m.inspect || 'しない') + `<div style="display:flex;gap:6px;align-items:center;margin-top:4px"><span style="font-size:12.5px">受領から</span><input type="number" id="cmInspectDays" min="1" max="60" value="${esc(m.inspectDays || 7)}" style="width:70px"><span style="font-size:12.5px">日以内に検査を完了（「する」のとき）</span></div>`)}
     ${F('報酬（税込）', `<input id="cmFee" maxlength="120" value="${v('fee')}" placeholder="例：月額 55,000円／一式 330,000円">`, '金額の数字は請求書の目安になります')}
-    ${F('支払条件', `<input id="cmPay" maxlength="200" value="${v('pay')}" placeholder="例：月末締め翌月末払い／着手時50%・完了時50%">`)}
-    ${F('成果物と納め方', `<input id="cmDeliver" maxlength="200" value="${v('deliver')}" placeholder="例：PDFをLINEで／納品物なし">`)}
+    ${F('支払期日', seg('cmPayRule', ['受領日から', '月末締め翌月末', '着手時・完了時', 'その他'], m.payRule || (m.pay ? 'その他' : '受領日から')) + `<div style="display:flex;gap:6px;align-items:center;margin-top:4px;flex-wrap:wrap"><span style="font-size:12.5px">受領日から</span><input type="number" id="cmPayDays" min="1" max="60" value="${esc(m.payDays || 30)}" style="width:70px"><span style="font-size:12.5px">日以内（上限60日）</span><input id="cmPayFirst" maxlength="60" value="${v('payFirst')}" placeholder="着手時の分（例：50%／100,000円）" style="flex:1 1 100%"></div>`, 'フリーランス法では、支払期日は受領日から60日以内に定めます。「月末締め翌月末」は60日を超える月があるので、超えるときはその前日まで、の文になります')}
+    ${F('支払条件の補足', `<input id="cmPay" maxlength="200" value="${v('pay')}" placeholder="例：請求書の受領後／分割の内訳">`)}
+    ${F('支払方法', seg('cmPayMethod', ['振込（手数料は甲の負担）', '振込（手数料は乙の負担）', 'その他'], m.payMethod || '振込（手数料は甲の負担）') + `<input id="cmPayMethodNote" maxlength="100" value="${v('payMethodNote')}" placeholder="その他のとき（例：現金／カード決済）" style="margin-top:4px">`)}
+    ${F('知的財産（成果物の権利）', seg('cmIp', ['移転', '留保'], m.ip || '移転'), '移転＝報酬の支払いをもって甲のものに（制作物の一般的な形）。留保＝乙に残し、甲は利用できる')}
     ${F('追加・変更の扱い', `<input id="cmChange" maxlength="200" value="${v('change') || (m.change === undefined ? '別途お見積りのうえ、合意して進める。' : '')}">`)}
     ${F('再委託', seg('cmSub', ['可', '不可', '要相談'], m.sub || ''))}
     <div class="tog" style="margin-top:8px"><input type="checkbox" id="cmNda" ${m.nda === false ? '' : 'checked'}><label for="cmNda">秘密保持の条を入れる</label></div>
@@ -2417,7 +2423,9 @@ function contractMemoSave(id){
   const g = k => (document.getElementById(k) || {}).value || '';
   const on = name => { const b = document.querySelector(`#${name} button.on`); return b ? b.textContent : ''; };
   const fee = g('cmFee').trim(), num = (fee.replace(/,/g, '').match(/\d+/g) || []).map(Number).sort((a, b) => b - a)[0] || 0;
-  const m = { kind: on('cmKind'), work: g('cmWork'), from: g('cmFrom'), to: g('cmTo'), monthly: document.getElementById('cmMonthly').checked, periodNote: g('cmPeriodNote'), fee, feeAmount: num, pay: g('cmPay'), deliver: g('cmDeliver'), change: g('cmChange'), sub: on('cmSub'), nda: document.getElementById('cmNda').checked, cancel: g('cmCancel'), note: g('cmNote') };
+  const m = { kind: on('cmKind'), work: g('cmWork'), from: g('cmFrom'), to: g('cmTo'), monthly: document.getElementById('cmMonthly').checked, periodNote: g('cmPeriodNote'), fee, feeAmount: num, pay: g('cmPay'), deliver: g('cmDeliver'), change: g('cmChange'), sub: on('cmSub'), nda: document.getElementById('cmNda').checked, cancel: g('cmCancel'), note: g('cmNote'),
+    due: g('cmDue'), place: g('cmPlace'), inspect: on('cmInspect'), inspectDays: +g('cmInspectDays') || 7, payRule: on('cmPayRule'), payDays: +g('cmPayDays') || 30, payFirst: g('cmPayFirst'), payMethod: on('cmPayMethod'), payMethodNote: g('cmPayMethodNote'), ip: on('cmIp') };
+  if ((m.payRule === '受領日から' || m.payRule === '着手時・完了時') && m.payDays > 60) { toast('支払期日は、受領日から60日以内にしてください（フリーランス法）'); const e = document.getElementById('cmPayDays'); if (e) { e.style.borderColor = 'var(--danger)'; e.focus(); } return; }
   const c = S.cases.find(x => x.id === id); if (c && c.contract && c.contract.draft) m.draft = c.contract.draft;   // 条文の下書きは残す
   if (!m.kind) { toast('契約の種類（請負／準委任）を選んでください'); return; }
   closeDlg(); spin(true, '保存しています…');
@@ -2439,6 +2447,7 @@ function contractDraftOpen(id, originId){
 }
 function contractDraftDraw(){ const d = CTR_D; if (!d) return;
   dialog(`<h3>📑 業務委託契約書${d.originId ? '（改訂）' : 'の下書き'}</h3>
+    <div class="hint" style="margin:0 0 4px;color:${L.colorHex};font-weight:700">フリーランス法で発注者（甲）に求められる明示事項（業務内容・報酬・支払期日・受領日・納入場所・検査）を含む型です。</div>
     <div class="hint" style="margin:0 0 6px">甲＝${esc(d.cust.name)} ${esc(d.cust.honor)}　乙＝${esc(d.issuer.name)}。条文は自由に直せます（空行で条を区切り、1行目は「第n条（見出し）」）。${d.originId ? '前の番号は失効になり、新しい番号が付きます。' : ''}</div>
     <textarea id="ctrT" rows="14" style="font-size:12.5px;line-height:1.6;white-space:pre-wrap">${esc(ctrToText(d.clauses))}</textarea>
     <div class="hint" style="margin:4px 0"><u onclick="document.getElementById('ctrT').value=ctrToText(CTR_D.fresh)">↺ 案件メモの内容で作り直す</u></div>
