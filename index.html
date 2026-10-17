@@ -346,7 +346,7 @@
     <div class="row"><button class="pri" onclick="demoStart()">🎓 お試しを始める</button></div>
   </div>
   <div class="sec acc" data-acc="eng" style="margin-top:12px" id="engSec"><h2>🔧 動作の記録（保守用）</h2>
-    <div class="hint" style="margin:0 0 4px">画面の版：<b>更新250</b>（2026-10-17）。古い画面が出るときは、LINEのトークを閉じて開き直してください</div>
+    <div class="hint" style="margin:0 0 4px">画面の版：<b>更新251</b>（2026-10-17）。古い画面が出るときは、LINEのトークを閉じて開き直してください</div>
     <div class="hint" id="bootTime" style="font-size:11px;line-height:1.7"></div>
   </div>
 </div>
@@ -439,7 +439,7 @@ function snapRebuild(){ spin(true); run('liffSnapRebuild', [UID, true], () => { 
 // ② 前回の台帳をスマホに覚えさせ、まず前回の内容で画面を出す（外の置き場だけ。Google側は uid を信じる作りなので使わない）2026-10-11
 let STALE = false, FRESH_PENDING = null, CUR_TAB = 'cases';
 let SEL_T = (function () { try { return localStorage.getItem(LS_NS + 't') || ''; } catch (e) { return ''; } })();   // 選んだ台帳（親方ID。空＝自分の台帳）更新235
-const PAGE_VER = '250';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
+const PAGE_VER = '251';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
 function cacheKey(){ return LS_NS + 'cache_p' + PAGE_VER + (SEL_T ? '_' + SEL_T : ''); }
 function cacheRead(){ try { const o = JSON.parse(localStorage.getItem(cacheKey()) || 'null'); return o && o.uid && o.S && o.S.labels ? o : null; } catch (e) { return null; } }
 function cacheWrite(uid, data){ try { const s = JSON.stringify({ uid, at: Date.now(), S: data }); if (s.length < 4000000) localStorage.setItem(cacheKey(), s); } catch (e) { /* 入らなければ覚えない */ } }
