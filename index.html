@@ -273,9 +273,9 @@
     <p class="hint" style="margin:0 0 6px">職人ごとの進行中の現場と、お客様の重複の疑い。現場は別の職人へ引き継げます。</p>
     <div id="teamListBody" style="font-size:13px;line-height:1.7"></div>
   </div>
-  <div class="sec acc" id="sqDl" data-acc="sqdl" style="margin-top:12px"><h2>📥 データダウンロード（CSV）</h2>
-    <p class="hint" style="margin:0 0 6px">Excelで開ける形で保存します（パソコン向け。LINEの中では保存できないことがあります）。</p>
-    <div class="row" style="gap:6px;flex-wrap:wrap"><button class="sm" onclick="csvOut('search')">検索した書類</button><button class="sm" onclick="csvOut('docs')">書類の一覧（全部）</button><button class="sm" onclick="csvOut('payments')">入金の一覧</button><button class="sm" onclick="csvOut('customers')">お客様</button></div>
+  <div class="sec acc" id="sqDl" data-acc="sqdl" style="margin-top:12px"><h2>📨 売上情報を税理士に送る</h2>
+    <p class="hint" style="margin:0 0 6px">今日から12か月分を、現場ごとに「完成日・請負内容・請負金額・入金日・手数料引き・分割入金」の表（CSV）にして、税理士へメールします。送り先：<b id="taxTo">metiskumatori@gmail.com</b></p>
+    <div class="row"><button class="pri" onclick="taxSendAsk()">📨 税理士に送る</button></div>
   </div>
 </div>
 <div class="body" id="cases">
@@ -333,6 +333,11 @@
     <div class="hint" style="margin:0 0 8px">請求書の支払期限の前に、入金の記録がないものを、あなたのLINEに知らせます。お客様には送りません（お客様への案内は、請求中の画面から自分のタイミングで）。</div>
     <div class="seg" id="dueSeg"><button onclick="dueNoticeSet(0)">しない</button><button onclick="dueNoticeSet(1)">1日前</button><button onclick="dueNoticeSet(3)">3日前</button><button onclick="dueNoticeSet(5)">5日前</button><button onclick="dueNoticeSet(7)">7日前</button></div>
   </div>
+  <div class="sec acc" data-acc="tax" style="margin-top:12px" id="taxSec"><h2>📨 税理士のメールアドレス</h2>
+    <div class="hint" style="margin:0 0 8px">検索タブの「売上情報を税理士に送る」の送り先です。</div>
+    <div class="row" style="align-items:center;gap:6px"><input id="taxMailIn" type="email" inputmode="email" readonly style="flex:1;font-size:15px;padding:8px;border:1px solid var(--line);border-radius:8px;background:#F3F4F6" value=""><button class="sm" id="taxMailBtn" onclick="taxMailEdit()">編集</button></div>
+    <div class="row" id="taxMailOps" style="display:none;margin-top:6px"><button onclick="taxMailCancel()">やめる</button><button class="pri" onclick="taxMailSave()">この宛先にする</button></div>
+  </div>
   <div class="sec acc" data-acc="help" style="margin-top:12px"><h2>❓ 使い方</h2>
     <div class="row" style="flex-wrap:wrap"><button class="pri" onclick="helpOpen('')">📘 使い方を見る（4ページ）</button><button onclick="helpOpen('cust')">📄 お客様向けの1枚を見る</button><button onclick="helpSend()">📤 お客様向けの1枚をLINEで送る</button></div>
   </div>
@@ -341,7 +346,7 @@
     <div class="row"><button class="pri" onclick="demoStart()">🎓 お試しを始める</button></div>
   </div>
   <div class="sec acc" data-acc="eng" style="margin-top:12px" id="engSec"><h2>🔧 動作の記録（保守用）</h2>
-    <div class="hint" style="margin:0 0 4px">画面の版：<b>更新249</b>（2026-10-17）。古い画面が出るときは、LINEのトークを閉じて開き直してください</div>
+    <div class="hint" style="margin:0 0 4px">画面の版：<b>更新250</b>（2026-10-17）。古い画面が出るときは、LINEのトークを閉じて開き直してください</div>
     <div class="hint" id="bootTime" style="font-size:11px;line-height:1.7"></div>
   </div>
 </div>
@@ -434,7 +439,7 @@ function snapRebuild(){ spin(true); run('liffSnapRebuild', [UID, true], () => { 
 // ② 前回の台帳をスマホに覚えさせ、まず前回の内容で画面を出す（外の置き場だけ。Google側は uid を信じる作りなので使わない）2026-10-11
 let STALE = false, FRESH_PENDING = null, CUR_TAB = 'cases';
 let SEL_T = (function () { try { return localStorage.getItem(LS_NS + 't') || ''; } catch (e) { return ''; } })();   // 選んだ台帳（親方ID。空＝自分の台帳）更新235
-const PAGE_VER = '249';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
+const PAGE_VER = '250';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
 function cacheKey(){ return LS_NS + 'cache_p' + PAGE_VER + (SEL_T ? '_' + SEL_T : ''); }
 function cacheRead(){ try { const o = JSON.parse(localStorage.getItem(cacheKey()) || 'null'); return o && o.uid && o.S && o.S.labels ? o : null; } catch (e) { return null; } }
 function cacheWrite(uid, data){ try { const s = JSON.stringify({ uid, at: Date.now(), S: data }); if (s.length < 4000000) localStorage.setItem(cacheKey(), s); } catch (e) { /* 入らなければ覚えない */ } }
@@ -676,6 +681,9 @@ function tenChange(v){ if (v === '+') { tenDraw(); joinDialog(); return; }
   tenSwitch(v); }
 function tenSwitch(tid, cb){ const ts = S && S.tenants || []; const t = ts.filter(x => x.id === tid)[0]; SEL_T = t && !t.own ? tid : ''; try { if (SEL_T) localStorage.setItem(LS_NS + 't', SEL_T); else localStorage.removeItem(LS_NS + 't'); } catch (e) {} ACT_AS = ''; try { localStorage.removeItem(LS_NS + 'as'); } catch (e) {}
   spin(true, '台帳を切り替えています…'); run('liffLoad', [UID, ''], data => { cacheWrite(UID, data); S = data; L = labelsOf(data.labels); STALE = false; boot(); spin(false); try { showTab('cases'); } catch (e) {} toast(data.tenant && !data.tenant.own ? 'チーム「' + (data.tenant.name || '') + '」の書類です' : '自分の書類です'); if (cb) cb(); }, () => spin(false)); }
+/** 売上情報を税理士に送る（更新250） */
+function taxSendAsk(){ const t = document.getElementById('taxTo'); if (t && S.taxMail) t.textContent = S.taxMail; dialog(`<h3>📨 税理士に送る</h3><p style="font-size:13px;line-height:1.7">今日から12か月分の売上情報（現場ごと）を、<b>${esc((document.getElementById('taxTo') || {}).textContent || '')}</b> にメールします。${S.me && S.me.perm === '管理者' && !ACT_AS ? 'チーム全員分です。' : '自分の担当分です。'}</p><div class="row"><button onclick="closeDlg()">やめる</button><button class="pri" onclick="closeDlg();taxSendGo()">送る</button></div>`); }
+function taxSendGo(){ spin(true, '📨 売上情報をまとめて送っています…'); run('liffTaxSend', [UID], r => { spin(false); const el = document.getElementById('taxTo'); if (el && r.to) el.textContent = r.to; toast(`送りました（${r.n || 0}現場・${(r.from || '').slice(0, 7).replace('-', '/')}〜${(r.until || '').slice(0, 7).replace('-', '/')}）`); }, () => spin(false)); }
 /** 名義の確認（台帳が2つ以上ある人だけ）更新243 */
 function tenantLabel(){ const t = (S && S.tenant) || {}; return t.own ? '自分：' + ((S.iss || {}).name || t.name || '自分の書類') : '👥 ' + (t.name || 'チーム'); }
 function nameGateHtml(){ return `<div style="background:#FDECEA;border-radius:8px;padding:8px 10px;margin:6px 0;font-size:13px;line-height:1.6"><b style="color:#C0392B">⚠ 名義の確認</b><br>この書類は <b>${esc(tenantLabel())}</b> の名義です。<br>・お客様情報は別のチームへ移せません<br>・間違えた場合は、取りやめにして作り直してください</div>`; }
@@ -2196,6 +2204,7 @@ function sqDraw(){ const qc = normQ(SQ.cust), qs = normQ(SQ.subj), qt = normQ(SQ
     if (dcond) { const dv = document.createElement('div'); dv.className = 'sqdocs'; dv.innerHTML = x.ds.slice(0, 20).map(drow).join(''); wrap.appendChild(dv); } box.appendChild(wrap); });
   if (loose.length) { const dv = document.createElement('div'); dv.className = 'sqdocs loose'; dv.innerHTML = `<div class="wg">${L.siteWord}なしの書類</div>` + loose.slice(0, 50).map(drow).join(''); box.appendChild(dv); }
   if (rows.length > 200) box.insertAdjacentHTML('beforeend', '<div class="hint" style="text-align:center">200件まで表示しています。条件を足して絞ってください</div>');
+  if (SQ_LAST.length) box.insertAdjacentHTML('beforeend', '<div class="row" style="margin:10px 0 4px"><button class="sm" onclick="csvOut(\'search\')">📥 検索した書類をダウンロード（CSV・パソコン向け）</button></div>');   // 更新250
   window.scrollTo(0, document.getElementById('sqRes').offsetTop - 60); }
 /** 検索結果の書類 → その現場を開く（現場なしの書類は書類の枠を直接） */
 function openDocFromSearch(id){ const d = S.docs.find(x => x.id === id); if (!d) return; const cid = docCases(d).find(c => S.cases.some(x => x.id === c)); if (cid) { openCase(cid); return; } bsOpen(bsHead(docTitle(d)) + docCard(d, true)); }
@@ -3287,12 +3296,17 @@ function renderLists(){
     }
     box.appendChild(d); });
 }
+/** 税理士のメールアドレス：編集モードにしないと直せない（更新250） */
+function taxMailDraw(){ const i = document.getElementById('taxMailIn'); if (!i) return; i.value = S.taxMail || 'metiskumatori@gmail.com'; const t = document.getElementById('taxTo'); if (t) t.textContent = i.value; const adm = S.me && S.me.perm === '管理者'; const b = document.getElementById('taxMailBtn'); if (b) b.style.display = adm ? '' : 'none'; }
+function taxMailEdit(){ if (DEMO) { toast('お試し中は変えられません'); return; } const i = document.getElementById('taxMailIn'); i.readOnly = false; i.style.background = '#fff'; document.getElementById('taxMailBtn').style.display = 'none'; document.getElementById('taxMailOps').style.display = ''; i.focus(); }
+function taxMailCancel(){ const i = document.getElementById('taxMailIn'); i.readOnly = true; i.style.background = '#F3F4F6'; document.getElementById('taxMailBtn').style.display = ''; document.getElementById('taxMailOps').style.display = 'none'; taxMailDraw(); }
+function taxMailSave(){ const v = (document.getElementById('taxMailIn').value || '').trim(); if (v && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) { toast('メールアドレスの形ではありません'); return; } spin(true, '直しています…'); run('liffTaxMailSave', [UID, v], r => { spin(false); S.taxMail = r.taxMail; cacheWrite(UID, S); taxMailCancel(); toast('送り先を ' + r.taxMail + ' にしました'); }, () => spin(false)); }
 function dueNoticeSet(n){ if (DEMO) { toast('お試し中は変えられません'); return; } S.dueNotice = n; dueNoticeDraw(); run('liffDueNotifySave', [UID, n], () => toast(n ? `支払期限の${n}日前の朝に知らせます` : '通知しません')); }
 function dueNoticeDraw(){ const n = +(S.dueNotice || 0); document.querySelectorAll('#dueSeg button').forEach(b => b.classList.toggle('on', b.textContent === (n ? n + '日前' : 'しない'))); }
 /** 設定の各項目の開閉（更新234 三浦さん）。見出しを押すと開く・閉じる。状態は端末に覚える。はじめは全部閉じている */
 function accInit(){ document.querySelectorAll('#own .sec.acc, #search .sec.acc').forEach(sec => { if (sec.dataset.accReady) return; sec.dataset.accReady = '1'; const h = sec.querySelector('h2'); if (!h) return; h.addEventListener('click', e => { if (e.target.closest('button,a,input,select')) return; accToggle(sec); }); let open = false; try { open = localStorage.getItem(LS_NS + 'acc_' + sec.dataset.acc) === '1'; } catch (e) {} sec.classList.toggle('closed', !open); }); }
 function accToggle(sec, force){ const open = typeof force === 'boolean' ? force : sec.classList.contains('closed'); sec.classList.toggle('closed', !open); try { localStorage.setItem(LS_NS + 'acc_' + sec.dataset.acc, open ? '1' : '0'); } catch (e) {} }
-function renderOwn(){ try { accInit(); } catch (e) {} try { teamDraw(); } catch (e) {} try { const bt = document.getElementById('bootTime'); if (bt) bt.innerHTML = bootTimeText(); } catch (e) {} const ds = document.getElementById('demoSec'); if (ds) ds.style.display = DEMO ? 'none' : ''; dueNoticeDraw(); const tt = document.getElementById('thanksTpl'); if (tt) tt.value = (S.thanksTpl || '').trim() || THANKS_DEFAULT;
+function renderOwn(){ try { accInit(); } catch (e) {} try { teamDraw(); } catch (e) {} try { const bt = document.getElementById('bootTime'); if (bt) bt.innerHTML = bootTimeText(); } catch (e) {} const ds = document.getElementById('demoSec'); if (ds) ds.style.display = DEMO ? 'none' : ''; dueNoticeDraw(); try { taxMailDraw(); } catch (e) {} const tt = document.getElementById('thanksTpl'); if (tt) tt.value = (S.thanksTpl || '').trim() || THANKS_DEFAULT;
   const iss = S.iss || {};
   document.getElementById('ownPv').innerHTML = issuerBlockHtml(iss, false) || '<span class="pph">まだ入っていません</span>';
   document.getElementById('ownBank').innerHTML = '<b>お振込先</b><br>' + (iss.bank ? bankLines(iss.bank) : '（未入力）');
