@@ -317,7 +317,7 @@
     <div class="row" style="margin-top:8px"><button class="pri" onclick="openIssuer(true)">自社情報とロゴを直す</button></div>
     <div class="row" style="margin-top:6px"><button onclick="termsShow()">📖 利用規約を読む</button></div>
   </div>
-  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新245</b>（2026-10-17）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
+  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新246</b>（2026-10-17）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
   <div class="sec acc" id="teamSec" data-acc="team" style="margin-top:12px"><h2>👥 チームの設定</h2>
     <div id="teamBody" style="font-size:13px;line-height:1.7"></div>
   </div>
@@ -393,11 +393,11 @@ let D = emptyDraft();
 let originId = '', originNo = '', FROM_ID = '';
 let lastDeleted = null, SORT = false;
 /** 単位の書き方をそろえる（m2→㎡、m3→㎥） */
-const unitN = u => String(u || '').trim().replace(/^(m2|m²|ｍ2|ｍ²|平米|平方メートル)$/i, '㎡').replace(/^(m3|m³|ｍ3|ｍ³|立米|立方メートル)$/i, '㎥').replace(/^(式|1式|１式)$/, '一式');   // 標準は一式（更新242）
-const UNITS = ['一式', '㎡', 'm', '㎥', 'か所', '個', '枚', '本', '台', '人工', '回'];
+const unitN = u => String(u || '').trim().replace(/^(m2|m²|ｍ2|ｍ²|平米|平方メートル)$/i, '㎡').replace(/^(m3|m³|ｍ3|ｍ³|立米|立方メートル)$/i, '㎥').replace(/^(一式|1式|１式)$/, '式');   // 標準は「式」（1 式）。一式は式にそろえる（更新246）
+const UNITS = ['式', '㎡', 'm', '㎥', 'か所', '個', '枚', '本', '台', '人工', '回'];
 const yen = n => '¥' + Math.round(n).toLocaleString('ja-JP');
 
-function emptyDraft(){ return { doc_type:'', customer:{id:'',name:'',kubun:'元請'}, subject:'', tax_included:false, notes:'', sites:[{case_id:'',owner:'',name:'',items:[{item_id:'',name:'',qty:1,unit:'一式',unit_price:0,note:''}]}] }; }
+function emptyDraft(){ return { doc_type:'', customer:{id:'',name:'',kubun:'元請'}, subject:'', tax_included:false, notes:'', sites:[{case_id:'',owner:'',name:'',items:[{item_id:'',name:'',qty:1,unit:'式',unit_price:0,note:''}]}] }; }
 
 // ---------- 起動
 /** 固定表示の位置（上のバーの高さ）を測る（2026-10-06） */
@@ -431,7 +431,7 @@ function snapRebuild(){ spin(true); run('liffSnapRebuild', [UID, true], () => { 
 // ② 前回の台帳をスマホに覚えさせ、まず前回の内容で画面を出す（外の置き場だけ。Google側は uid を信じる作りなので使わない）2026-10-11
 let STALE = false, FRESH_PENDING = null, CUR_TAB = 'cases';
 let SEL_T = (function () { try { return localStorage.getItem(LS_NS + 't') || ''; } catch (e) { return ''; } })();   // 選んだ台帳（親方ID。空＝自分の台帳）更新235
-const PAGE_VER = '245';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
+const PAGE_VER = '246';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
 function cacheKey(){ return LS_NS + 'cache_p' + PAGE_VER + (SEL_T ? '_' + SEL_T : ''); }
 function cacheRead(){ try { const o = JSON.parse(localStorage.getItem(cacheKey()) || 'null'); return o && o.uid && o.S && o.S.labels ? o : null; } catch (e) { return null; } }
 function cacheWrite(uid, data){ try { const s = JSON.stringify({ uid, at: Date.now(), S: data }); if (s.length < 4000000) localStorage.setItem(cacheKey(), s); } catch (e) { /* 入らなければ覚えない */ } }
@@ -1157,7 +1157,7 @@ function applyCaseItems(items){ if (!items.length) return; const old = {}; D.sit
 const ciKey = m => m.id + '|' + m.name;
 const ciItem = x => { const s = String(x || ''), k = s.indexOf('|'), id = k > 0 ? s.slice(0, k) : '', nm = k > 0 ? s.slice(k + 1) : s; return (S.items || []).find(m => id && m.id === id) || (S.items || []).find(m => m.name === nm) || { name: nm }; };
 const ciName = x => ciItem(x).name;
-function itemRow(n){ const m = ciItem(n); return { item_id: m.id || '', name: m.name, qty: 1, unit: unitN(m.unit || '一式'), unit_price: m.price || 0, note: '' }; }
+function itemRow(n){ const m = ciItem(n); return { item_id: m.id || '', name: m.name, qty: 1, unit: unitN(m.unit || '式'), unit_price: m.price || 0, note: '' }; }
 function fit(){
   const f = document.getElementById('pfit'), sh = document.getElementById('psheet'), st = document.getElementById('pstage'); if (!f || !st.clientWidth) return;
   const w = st.clientWidth - 16, sc = ZOOM ? 1 : Math.min(1, w / 600);
@@ -1343,7 +1343,7 @@ function trPick(i, k, on){ const x = tradesOf()[i], nm = x.items[k].name;
   if (on && !TP.sel[x.t]) { TP.sel[x.t] = true; TP.off[x.t] = {}; x.items.forEach(it => { if (it.name !== nm) TP.off[x.t][it.name] = 1; }); }
   else { const o = TP.off[x.t] || (TP.off[x.t] = {}); if (on) delete o[nm]; else o[nm] = 1; if (!trOn(x)) { TP.sel[x.t] = false; TP.off[x.t] = {}; } }
   drawTrades(); }
-function tradeItems(){ const seen = new Set(), out = []; tradesOf().filter(x => TP.sel[x.t] || x.t === '共通').forEach(x => x.items.forEach(it => { if (seen.has(it.name) || (x.t !== '共通' && !trInc(x, it))) return; seen.add(it.name); out.push({ name: it.name, unit: '一式', price: 0, cat: x.t, keep: true }); })); return out; }   // 単位は一式で入れる（更新242）
+function tradeItems(){ const seen = new Set(), out = []; tradesOf().filter(x => TP.sel[x.t] || x.t === '共通').forEach(x => x.items.forEach(it => { if (seen.has(it.name) || (x.t !== '共通' && !trInc(x, it))) return; seen.add(it.name); out.push({ name: it.name, unit: '式', price: 0, cat: x.t, keep: true }); })); return out; }   // 単位は一式で入れる（更新242）
 function saveTrades(){ const list = tradeItems(); if (!list.length) { toast('業種にチェックを付けてください'); return; }
   spin(true, '料金表に入れています…');
   run('liffItemsAdd', [UID, list], r => { spin(false); S.items = r.items; closeBs(); renderItems(); guideDraw(); toast(r.added ? `${r.added}品目を入れました。単価を「品目編集・料金設定」で入れてください` : '新しく入る品目はありませんでした（すべて登録済み）'); }); }
@@ -1363,7 +1363,7 @@ function renderItems(){
         c.innerHTML = `<div class="ed"><input id="ie_n" value="${esc(m.name)}" placeholder="品目名"><div class="g2"><input id="ie_p" type="number" inputmode="numeric" value="${m.price || ''}" placeholder="単価（税抜）"><input id="ie_u" value="${esc(m.unit || '式')}" placeholder="単位"></div></div>
           <div class="btns"><button onclick="IT_EDIT='';renderItems()">やめる</button><button class="pri" onclick="saveEditItem('${m.id}')">保存</button></div>`;
       } else {
-        c.innerHTML = `<button class="x" onclick="delItem('${m.id}')" aria-label="消去">×</button><div class="t"><b><small class="itl">品目：</small>${esc(m.name)}</b></div><div class="m">単価：${m.price ? `¥${m.price.toLocaleString('ja-JP')}（税抜）` : '<span style="color:#B26A00">未設定（税抜）</span>'}　／ 単位：${esc(unitN(m.unit || '一式'))}</div>
+        c.innerHTML = `<button class="x" onclick="delItem('${m.id}')" aria-label="消去">×</button><div class="t"><b><small class="itl">品目：</small>${esc(m.name)}</b></div><div class="m">単価：${m.price ? `¥${m.price.toLocaleString('ja-JP')}（税抜）` : '<span style="color:#B26A00">未設定（税抜）</span>'}　／ 単位：${esc(unitN(m.unit || '式'))}</div>
           <div class="btns"><button onclick="IT_EDIT='${m.id}';renderItems()">品目編集・料金設定</button><button onclick="copyItem('${m.id}')">複製</button><span class="mv"><button onclick="moveItem('${m.id}',-1)" ${k === 0 ? 'disabled' : ''}>↑</button><button onclick="moveItem('${m.id}',1)" ${k >= items.length - 1 ? 'disabled' : ''}>↓</button></span></div>`;
       }
       body.appendChild(c); });
@@ -1515,7 +1515,7 @@ function openSite(si){ const s = D.sites[si];
     + sec(2, L.siteWord + '名', `<input id="stN" value="${esc(s.name)}" placeholder="例：${L.siteEx}" oninput="wordMark('stN')"><div id="stW">${wordChips('stN', s.owner)}</div>`)
     + bsBtns(`D.sites[${si}].name=document.getElementById('stN').value.trim();D.sites[${si}].owner=document.getElementById('stO').value.trim();closeBs();render()`, D.sites.length > 1 ? `delSite(${si})` : ''));
 }
-function addSite(){ D.sites.push({ case_id: '', owner: '', name: '', items: [{ item_id: '', name: '', qty: 1, unit: '一式', unit_price: 0, note: '' }] }); render(); openSite(D.sites.length - 1); }
+function addSite(){ D.sites.push({ case_id: '', owner: '', name: '', items: [{ item_id: '', name: '', qty: 1, unit: '式', unit_price: 0, note: '' }] }); render(); openSite(D.sites.length - 1); }
 function delSite(si){ D.sites.splice(si, 1); if (!D.sites.length) D.sites = emptyDraft().sites; closeBs(); render(); }
 
 // 明細の1行
@@ -1556,7 +1556,7 @@ function openRow(si, i){
       + (S.items.length ? `<input class="csq" id="rQ2" type="search" autocomplete="off" placeholder="🔍 料金表から探す（名前の一部でOK）" style="margin-top:8px" oninput="itemPickDraw(this.value)"><div id="rPick">${itemPickHtml('')}</div>` : `<div class="hint">料金表に品目がありません。<u onclick="closeBs();showTab('items')">設定 → 料金表</u>で入れると、ここから選べます。</div>`), S.items.length ? '料金表から選ぶ／自由入力' : '') +
     (bdOn() ? sec(3, '費目 <span class="qi" onclick="bdInfo()">？</span>', `<div class="seg" id="rK">${KINDS.map(k => `<button class="${kindOf(r) === k ? 'on' : ''}" onclick="ROW.r.kind='${k}';document.querySelectorAll('#rK button').forEach(b=>b.classList.toggle('on',b.textContent==='${k}'))">${k}</button>`).join('')}</div>`, '内訳の集計に使う') : '') +
     sec(2, '数量と単価', `<div class="pg3"><div>${lb('数量')}<input id="rQ" type="number" inputmode="decimal" value="${r.qty}" oninput="ROW.r.qty=+this.value||0;rowAmt()"></div>
-    <div>${lb('単位')}<div class="ucombo"><input id="rU" value="${esc(unitN(r.unit || '一式'))}" oninput="ROW.r.unit=unitN(this.value)"><span class="uarr">▼</span><select aria-label="単位を選ぶ" onchange="if(this.value){ROW.r.unit=this.value;document.getElementById('rU').value=this.value;}this.value=''"><option value="">単位を選ぶ</option>${UNITS.map(u => `<option value="${u}">${u}</option>`).join('')}</select></div></div>
+    <div>${lb('単位')}<div class="ucombo"><input id="rU" value="${esc(unitN(r.unit || '式'))}" oninput="ROW.r.unit=unitN(this.value)"><span class="uarr">▼</span><select aria-label="単位を選ぶ" onchange="if(this.value){ROW.r.unit=this.value;document.getElementById('rU').value=this.value;}this.value=''"><option value="">単位を選ぶ</option>${UNITS.map(u => `<option value="${u}">${u}</option>`).join('')}</select></div></div>
     <div>${lb('単価（税抜）')}<input id="rP" type="number" inputmode="numeric" value="${r.unit_price || ''}" oninput="ROW.r.unit_price=+this.value||0;rowAmt()"></div></div><div class="pamt" id="rA"></div>`) +
     `<div class="rmv"><button onclick="moveRow(-1)" ${i === 0 ? 'disabled' : ''}>⬆ 1つ上へ</button><button onclick="moveRow(1)" ${i >= D.sites[si].items.length - 1 ? 'disabled' : ''}>⬇ 1つ下へ</button></div>` +
     bsBtns('saveRow()', 'delRow()'));
@@ -1567,7 +1567,7 @@ function mvRow(si, i, dir){ const it = D.sites[si].items, j = i + dir; if (j < 0
 function moveRow(dir){ const it = D.sites[ROW.si].items, i = ROW.i, j = i + dir; if (j < 0 || j >= it.length) return;
   it[i] = Object.assign({}, it[i], ROW.r); [it[i], it[j]] = [it[j], it[i]]; closeBs(); render(); toast(dir < 0 ? '1つ上へ移しました' : '1つ下へ移しました'); }
 function pickItem(k){ const m = typeof k === 'number' ? S.items[k] : S.items.find(x => x.id === k); if (!m) return;
-  const mu = (+m.price > 0) ? unitN(m.unit || '一式') : '一式';   // 単価のない品目は一式（更新242）
+  const mu = (+m.price > 0) ? unitN(m.unit || '式') : '式';   // 単価のない品目は一式（更新242）
   Object.assign(ROW.r, { item_id: m.id, name: m.name, unit: mu, unit_price: m.price || 0, kind: m.kind || '' }); document.querySelectorAll('#rK button').forEach(b => b.classList.toggle('on', b.textContent === kindOf(ROW.r)));
   document.getElementById('rN').value = m.name; document.getElementById('rU').value = mu; document.getElementById('rP').value = m.price || '';
   recentItemPush(m.id); itemPickMark(); rowAmt(); }
@@ -1606,9 +1606,9 @@ function rowAmt(){ const p = netPrice(ROW.r);
 function saveRow(){ const r = ROW.r; r.name = String(r.name || '').trim(); if (!r.item_id) { const m = S.items.find(x => x.name === r.name); if (m) r.item_id = m.id; }
   D.sites[ROW.si].items[ROW.i] = r; closeBs(); render(); }
 function delRow(){ const it = D.sites[ROW.si].items; lastDeleted = { si: ROW.si, i: ROW.i, row: it[ROW.i] }; it.splice(ROW.i, 1);
-  if (!it.length) it.push({ item_id: '', name: '', qty: 1, unit: '一式', unit_price: 0, note: '' }); closeBs(); render(); toast('行を消しました（「消した行を戻す」で戻せます）'); }
+  if (!it.length) it.push({ item_id: '', name: '', qty: 1, unit: '式', unit_price: 0, note: '' }); closeBs(); render(); toast('行を消しました（「消した行を戻す」で戻せます）'); }
 function addRow(si){ const it = D.sites[si].items; const empty = it.findIndex(r => !r.name && !r.unit_price);
-  if (empty < 0) it.push({ item_id: '', name: '', qty: 1, unit: '一式', unit_price: 0, note: '' }); render(); openRow(si, empty < 0 ? it.length - 1 : empty); }
+  if (empty < 0) it.push({ item_id: '', name: '', qty: 1, unit: '式', unit_price: 0, note: '' }); render(); openRow(si, empty < 0 ? it.length - 1 : empty); }
 function undo(){ if (lastDeleted) { const it = D.sites[lastDeleted.si].items; if (it.length === 1 && !it[0].name && !it[0].unit_price) it.splice(0, 1); it.splice(Math.min(lastDeleted.i, it.length), 0, lastDeleted.row); lastDeleted = null; render(); } }
 
 // 備考（定型文のチェック＋自由入力）
@@ -2572,7 +2572,7 @@ function newDocForCase(caseId, kind, items, force){
   if (kind === '請求' && !force && cu.kubun !== '元請') { const ds = docsOf(caseId).filter(live); const okd = ds.some(d => d.kind === '注文' || (d.kind === '契約' && d.okAt) || (d.kind === '見積' && (d.okAt || d.okBy || d.result === '受注')));
     if (!okd) { dialog(`<h3>見積書の承認なしで請求書を作ります</h3><p style="font-size:13px;line-height:1.7">この${L.siteWord}には、承認された見積書も注文書もありません。<br>このまま請求書を作ることはできますが、金額の「言った・言わない」になったとき、${L.userWord}に不利です。<br><b>おすすめ：</b>先に見積書を作って、承認を記録してから請求書へ。</p><div class="row"><button onclick="closeDlg()">やめる</button><button onclick="closeDlg();newDocForCase('${caseId}','請求',null,true)">このまま作る</button></div>`); return; } }
   newDoc(kind, () => { MODE = cu.kubun === '元請' ? '元請' : '施主'; D.customer = { id: cu.id || '', name: cu.name || '', kubun: MODE };
-    D.sites = [{ case_id: c.id, owner: c.owner || cu.name || '', name: c.name, items: items && items.length ? items : [{ item_id: '', name: '', qty: 1, unit: '一式', unit_price: 0, note: '' }] }];
+    D.sites = [{ case_id: c.id, owner: c.owner || cu.name || '', name: c.name, items: items && items.length ? items : [{ item_id: '', name: '', qty: 1, unit: '式', unit_price: 0, note: '' }] }];
     if (MODE === '施主') D.subject = c.name;
     if (kind === '見積' && c.pay) { const p = ppFrom([], '', c.pay); D.stages = ppStages(p, 0); D.done_method = p.done.method; } });
 }
@@ -2859,15 +2859,15 @@ function invPick(caseId){ const vs = estVers(caseId); if (!vs.length) { newDocFo
   cands.sort((a, b) => (a.d === ad ? -1 : b.d === ad ? 1 : ((b.d.ver || 1) - (a.d.ver || 1))));
   const row = (d, why) => `<label class="pck"><input type="radio" name="ipV" value="${d.id}" ${IP_SEL === d.id ? 'checked' : ''} onchange="IP_SEL=this.value"><span style="flex:1"><b>第${d.ver || 1}版</b>　${yen(d.total)}${why ? `<br><small style="color:${L.colorHex}">${esc(why)}</small>` : ''}<br><small style="color:var(--muted)">${d.sentAt ? '送信 ' + esc(d.sentAt.slice(5).replace('-', '/')) : '未送信'}${d.okAt ? '・LINE承認 ' + esc(d.okAt.slice(5).replace('-', '/')) : d.okBy ? '・承認の記録あり' : ''}　${esc(d.no)}</small></span>${d.pdf ? `<button class="pvbtn" onclick="event.preventDefault();previewDoc('${d.id}')" aria-label="見積書を見る">📄</button>` : ''}</label>`;
   const others = vs.filter(d => !cands.some(x => x.d === d));
-  dialog(`<h3>どの見積書から請求しますか</h3>${cands.map(x => row(x.d, x.why.join('・'))).join('')}${others.length ? `<details style="margin-top:6px"><summary style="font-size:13px;color:var(--muted)">ほかの版から選ぶ（${others.length}）</summary>${others.map(d => row(d, '')).join('')}</details>` : ''}<p class="hint" style="margin:8px 0 0">請求書は、送る直前まで編集できます（追加・値引はそこで直せます）</p><div class="row"><button onclick="closeDlg()">やめる</button><button class="pri" onclick="closeDlg();invConfirm(IP_SEL)">次へ</button></div>`); }
+  dialog(`<h3>どの見積書から請求しますか</h3>${cands.map(x => row(x.d, x.why.join('・'))).join('')}${others.length ? `<details style="margin-top:6px"><summary style="font-size:13px;color:var(--muted)">ほかの版から選ぶ（${others.length}）</summary>${others.map(d => row(d, '')).join('')}</details>` : ''}<div class="row" style="margin-top:8px"><button onclick="closeDlg()">やめる</button><button class="pri" onclick="closeDlg();invConfirm(IP_SEL)">次へ</button></div>`); }
 /** 変換の前の確認（2026-10-12）：選んだ版・金額・承認の状態を大きく出す。承認のない版は赤で注意 */
 function invConfirm(docId){ const d = S.docs.find(x => x.id === docId); if (!d) return; const c = S.cases.find(x => x.id === docCases(d)[0]) || {};
-  const okS = d.okAt ? `<b style="color:${L.colorHex}">✓ お客様がLINEで承認（${esc(d.okAt.slice(5).replace('-', '/'))}）</b>` : d.okBy ? `<b style="color:${L.colorHex}">✓ ${okByText(d.okBy)}</b>` : d.result === '受注' ? `<b style="color:${L.colorHex}">✓ 受注${L.order ? '（注文書など）' : ''}</b>` : `<b style="color:var(--danger)">⚠ お客様の承認がありません</b>`;
+  const okS = d.okAt ? `<b style="color:${L.colorHex}">✓ お客様がLINEで承認（${esc(d.okAt.slice(5).replace('-', '/'))}）</b>` : d.okBy ? `<b style="color:${L.colorHex}">✓ ${okByText(d.okBy)}</b>` : d.result === '受注' ? `<b style="color:${L.colorHex}">✓ 受注${L.order ? '（注文書など）' : ''}</b>` : `<b style="color:var(--danger)">記録なし</b><small style="color:var(--muted)">（電話・対面の承認は記録に残りません）</small>`;
   const hasOk = !!d.okAt || !!d.okBy || d.result === '受注';
   const stg = (d.stg || []).map(x => `${esc(x.name)} ${yen(x.amount)}`).join('・'); const tm = termText(c.term || {});
   dialog(`<h3>この版で請求書を作ります</h3><div class="cinfo2" style="margin:6px 0 8px"><span class="k">${L.siteWord}</span>${esc(c.name || '')}<br><span class="k">見積書</span>第${d.ver || 1}版　${esc(d.no)}${d.pdf ? ` <button class="pvbtn" style="margin-left:6px" onclick="previewDoc('${d.id}')">📄 見積書を見る</button>` : ''}<br><span class="k">金額</span><b style="font-size:18px">${yen(d.total)}</b>（税込）${L.prepay || stg ? `<br><span class="k">着手・中間</span>${stg || `なし（${L.done}時に一括）`}` : ''}<br><span class="k">${L.termWord}</span>${tm ? esc(tm) : '未定'}<br><span class="k">送信</span>${d.sentAt ? esc(d.sentAt.slice(5).replace('-', '/')) : '未送信'}<br><span class="k">承認</span>${okS}</div>
-    ${hasOk ? '' : `<p style="font-size:13px;color:var(--danger);line-height:1.7">⚠ 承認の記録${L.order ? 'も注文書も' : 'が'}ない版から請求書を作ろうとしています。このまま作れますが、「言った・言わない」になったとき不利です。先に${L.siteWord}の画面で「承認を記録して受注」を押すことをおすすめします。</p>`}
-    <label class="pck"><input type="checkbox" id="icChk"><span>内容を確かめました。この版で請求書を作ります</span></label>
+    ${hasOk ? '' : `<div style="font-size:13px;color:var(--danger);line-height:1.7;margin:4px 0 6px"><b>⚠ 承認${L.order ? 'や注文書' : ''}をスキップして作成</b><br>・言った言わないのトラブル時に不利になる<br>・「承認を記録して受注」を押すことを推奨</div>`}
+    <label class="pck"><input type="checkbox" id="icChk"><span>内容を確かめました</span></label>
     <div class="pchips pch2" style="margin-top:8px">${invConfirmBtns(d, c)}</div>`); }
 /** 確認画面のボタン（2026-10-12 三浦さん：着手金・中間金・残金の三択を先に。段の状態で「請求」「入金を記録」「入金済」に変わる） */
 const CHK = "if(!document.getElementById('icChk').checked){toast('チェックを入れてください');return;}closeDlg();";
@@ -3097,27 +3097,26 @@ function openPick(res, want){ PK = res; const d = res.draft; const all = [];
       + radio('rest', PK.mode === 'rest', false, `残金（${L.workWord}の行から選ぶ）${d.advance ? `<br><small style="color:var(--muted)">請求済みの ${yen(d.advance.amount)}（税込・${d.advance.nos.map(esc).join('・')}）を、合計から差し引いて請求します</small>` : ''}`), '支払条件より') : '';
   const fd = S.docs.find(x => x.id === res.fromId) || {}; PK.caseId = fd.caseId || ((d.sites || [])[0] || {}).case_id || ''; PK.rep = '';
   const pc = S.cases.find(x => x.id === PK.caseId), needDone = !!pc && ![L.done, L.statuses[3], '取りやめ'].includes(pc.status); PK.needDone = needDone;
-  bsOpen(bsHead('請求書を作る') + (needDone ? pkDoneHtml(pc) : '') + `<div class="hint" style="margin:0 0 4px">見積 ${esc(res.fromNo)} から請求書を作ります。${res.billed && res.billed.length ? `<br>この見積からの請求書：${res.billed.map(esc).join('・')}（請求済の行は外してあります）` : ''}</div>`
+  bsOpen(bsHead('請求書を作る') + (needDone ? pkDoneHtml(pc) : '') + (res.billed && res.billed.length ? `<div class="hint" style="margin:0 0 4px">この見積からの請求書：${res.billed.map(esc).join('・')}（請求済の行は外してあります）</div>` : '')
     + modes + `<div id="pkRows"><div class="pbtn" style="margin:6px 0"><button onclick="pickAll(true)">すべて選ぶ</button><button onclick="pickAll(false)">すべて外す</button></div>`
     + sites + (disc ? sec(4, '値引き', disc) : '')
     + (allBilled ? '<div class="hint" style="color:#B26A00">すべての行が請求済みです。追加の請求なら、必要な行だけ選んでください。</div>' : '') + '</div>'
-    + `<div class="pamt" id="pkSum"></div>` + pkFixHtml() + `<div class="bsb pk3"><button onclick="closeBs()">やめる</button>${pkFixBtn()}<button class="ok" onclick="pickDo()">この内容で請求書を作る</button></div>`);
+    + `<div class="pamt" id="pkSum"></div>` + pkFixHtml() + `<div class="bsb pk3"><button onclick="closeBs()">やめる</button>${pkFixBtn()}<button onclick="pickDo()">請求書を編集</button><button class="ok" onclick="pickDo(true)">この請求書を保存</button></div>`);
   pickMode(PK.mode); }
 /** 追加工事があるとき（2026-10-07）：この画面では行を足さず、見積書を直してから請求する。
  *  注文書がある見積 →「追加工事を見積る」（第2版）／ないとき →「見積書を直す」（作り直し）／直せないとき（完成済みなど）→ 請求書の画面で足す */
 function pkFix(){ const e = S.docs.find(d => d.id === PK.fromId) || {}; if (e.kind !== '見積') return null;
   const c = S.cases.find(x => x.id === PK.caseId);
-  if (c && [L.done, L.statuses[3]].includes(c.status)) return { label: '', fn: '', note: `※${L.extraWord}があるときは、この請求書の画面で行を足してください。` };
+  if (c && [L.done, L.statuses[3]].includes(c.status)) return { label: '', fn: '', note: `※${L.extraWord}は「請求書を編集」で行を足せます` };
   if (hasOrder(e)) return { label: '見積書の編集からやり直し', fn: `closeBs();estRestartAsk('${PK.caseId}')`, note: `※${L.extraWord}があるときは「見積書の編集からやり直し」。注文書を取り消し、見積書の承認前の状態に戻ります。` };   // 2026-10-12
-  return { label: e.sentN ? '次の版を作る' : '見積書を直す', fn: `closeBs();verRedo('${e.id}')`, note: `※${L.extraWord}があるときは、見積書の次の版を作ってから請求してください。` }; }   // 版の形（2026-10-10）
+  return { label: '', fn: '', note: `※${L.extraWord}は「請求書を編集」で行を足せます` }; }   // 「次の版を作る」は外した（更新246）
 function pkFixHtml(){ const f = pkFix(); return f ? `<div class="hint" style="margin:6px 0 0">${f.note}</div>` : ''; }
 function pkFixBtn(){ const f = pkFix(); return f && f.label ? `<button onclick="${f.fn}">${f.label}</button>` : ''; }
 /** 完成の欄（請求書を作る画面の一番上）。残金の請求なら「完成しました」にチェック、着手金・中間金なら外しておく */
 function pkDoneHtml(c){ const today = ymdStr(new Date()), cu = S.customers.find(x => x.id === c.custId) || {};
   return `<div class="pkdone"><label class="pck" style="border:none;padding:2px 0"><input type="checkbox" id="pkDn" checked onchange="pkDoneUi()"><span style="flex:1"><b>${L.workWord}は${L.done}しました</b><small style="display:block;color:var(--muted)">${L.prepay ? `未${L.done}で「着手金・中間金を請求する時」はチェックを外す` : `未${L.done}なら、チェックを外す`}</small></span></label>
     <div id="pkDnBox"><div class="drow" style="margin-top:4px"><span style="flex:none;font-size:13px">${L.done}日</span><input type="date" id="pkDnD" value="${c.done && c.done <= today ? c.done : today}" max="${today}" onclick="try{this.showPicker()}catch(e){}" oninput="pkRepTxt()"></div>
-    <details class="pkrep" ontoggle="pkRepTxt()"><summary>📨 ${esc(cu.name ? cu.name + (cu.honor || (cu.kubun === '元請' ? '御中' : '様')) : 'お客様')}に${L.done}の報告も送る場合は<u>コチラ</u></summary><textarea id="pkRepT" rows="5" style="font-size:13px;margin-top:6px" oninput="pkRepHref()"></textarea>
-      <a class="sendln" id="pkRepA" href="#" target="_blank" rel="noopener" onclick="PK.rep='LINE'">📤 報告をLINEで送る</a></details></div></div>`; }
+    </div></div>`; }   // 完成の報告の定型文は外した（個別に連絡してもらう。更新246）
 function pkDoneUi(){ const on = document.getElementById('pkDn').checked; document.getElementById('pkDnBox').style.display = on ? '' : 'none'; }
 function pkRepTxt(){ const t = document.getElementById('pkRepT'); if (!t) return; const c = S.cases.find(x => x.id === PK.caseId); if (c && !PK.repEdited) t.value = doneMsg(c, document.getElementById('pkDnD').value); pkRepHref(true); }
 function pkRepHref(auto){ if (!auto) PK.repEdited = true; const t = document.getElementById('pkRepT'), a = document.getElementById('pkRepA'); if (t && a) a.href = 'https:\/\/line.me/R/share?text=' + encodeURIComponent(t.value); }
@@ -3131,7 +3130,7 @@ function pickSum(){ const el = document.getElementById('pkSum'); const d = PK.dr
   const t = inclTax(rows.reduce((a, r) => a + Math.round((r.unit_price || 0) * (r.qty || 0)), 0) - disc);
   el.textContent = `${rows.length}行 ／ 今回の請求 ${yen(t - adv)}（税込${adv ? '・お預かり済 ' + yen(adv) + ' を差し引き' : ''}）`; }
 /** 「この内容で請求書を作る」：完成にチェックがあれば、先に完成日を記録してから請求書を開く */
-function pickDo(){ const dn = document.getElementById('pkDn'), done = PK.needDone && dn && dn.checked;
+function pickDo(save){ PK.save = !!save; const dn = document.getElementById('pkDn'), done = PK.needDone && dn && dn.checked;
   const date = done ? document.getElementById('pkDnD').value : ''; if (done && !date) { toast(L.done + '日を入れてください'); return; }
   const e = S.docs.find(d => d.id === PK.fromId) || {};
   const step2 = () => { if (!done) { pickDo2(); return; } spin(true, '🏁 ' + L.done + 'を記録しています…');
@@ -3140,7 +3139,7 @@ function pickDo(){ const dn = document.getElementById('pkDn'), done = PK.needDon
   step2(); }
 function pickDo2(){ const d = PK.draft; const dc = document.getElementById('pkDisc');
   if (PK.mode !== 'rest') { const x = d.stages[PK.mode]; const s0 = d.sites[0] || {};
-    d.sites = [{ case_id: s0.case_id || '', owner: s0.owner || '', name: s0.name || '', items: [{ item_id: '', name: x.name + '（' + (d.subject || s0.name || L.workWord) + '）', qty: 1, unit: '一式', unit_price: stgAmt(x), note: '分割:' + x.name }] }];
+    d.sites = [{ case_id: s0.case_id || '', owner: s0.owner || '', name: s0.name || '', items: [{ item_id: '', name: x.name + '（' + (d.subject || s0.name || L.workWord) + '）', qty: 1, unit: '式', unit_price: stgAmt(x), note: '分割:' + x.name }] }];
     d.tax_included = false; d.incl_total = true;   // 入れた税込金額をそのまま請求額に。消費税は税込からの割り戻し（2026-10-12）
     if (x.method === '現金') d.notes = [d.notes || '', 'お支払いは現金でお願いいたします。'].filter(String).join('\n');
     d.discount = null; d.stages = []; delete d.discount_billed; delete d.advance; closeBs(); invOpen(PK, false, x.name);
@@ -3179,7 +3178,9 @@ function mergeGo(on){ const g = MG; MG = null; if (!g) return; if (!on) { invOpe
     if (md.discount && md.discount.amount && !d.discount) d.discount = md.discount;
     d.merge_ids = [g.mid]; invOpen(g.res, g.partial); toast('前の請求書と1枚にまとめました。保存すると前の請求書は「訂正前」になります'); }); }
 function invOpen(res, partial, stage){ D = res.draft; originId = ''; originNo = ''; FROM_ID = res.fromId; if (!D.sites || !D.sites.length) D = emptyDraft(); swapNotes('請求');
-    VIEW = '請求'; afterLoadDraft(); openEd(); toast(res.fromNo + (stage ? ' の' + stage + 'で' : partial ? ' の選んだ行で' : ' の内容で') + '請求書の下書きを開きました。確かめて「📤 請求PDFを送る」へ'); }
+    VIEW = '請求'; afterLoadDraft(); openEd();
+    if (PK && PK.save) { PK.save = false; setTimeout(() => { try { finalize('請求'); } catch (e) {} }, 50); return; }   // 「この請求書を保存」：そのまま番号を付けて保存の確認へ（更新246）
+    toast(res.fromNo + (stage ? ' の' + stage + 'で' : partial ? ' の選んだ行で' : ' の内容で') + '請求書の下書きを開きました。確かめて「📤 請求PDFを送る」へ'); }
 /** 編集画面の中身の「しるし」（2026-10-09）：編集して何も変わっていないかを見るため。お客様・現場ごとの品目・単価・税・値引・備考 */
 function draftSig(){ const d = currentDraft(); return JSON.stringify({ c: (d.customer || {}).name || '', s: (d.sites || []).map(x => [x.name, (x.items || []).map(it => [it.name, it.qty, it.unit, it.unit_price, it.kind || ''])]), t: !!d.tax_included, it: !!d.incl_total, adv: d.advance || null, dc: d.discount || null, m: d.notes || '', sj: d.subject || '', ph: d.photos || [], st: (d.stages || []).map(x => [x.name, x.amount, x.pct, x.method]), dm: d.done_method || '' }); }
 let ORIGIN_SIG = '';
