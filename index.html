@@ -317,7 +317,7 @@
     <div class="row" style="margin-top:8px"><button class="pri" onclick="openIssuer(true)">自社情報とロゴを直す</button></div>
     <div class="row" style="margin-top:6px"><button onclick="termsShow()">📖 利用規約を読む</button></div>
   </div>
-  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新246</b>（2026-10-17）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
+  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新247</b>（2026-10-17）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
   <div class="sec acc" id="teamSec" data-acc="team" style="margin-top:12px"><h2>👥 チームの設定</h2>
     <div id="teamBody" style="font-size:13px;line-height:1.7"></div>
   </div>
@@ -431,7 +431,7 @@ function snapRebuild(){ spin(true); run('liffSnapRebuild', [UID, true], () => { 
 // ② 前回の台帳をスマホに覚えさせ、まず前回の内容で画面を出す（外の置き場だけ。Google側は uid を信じる作りなので使わない）2026-10-11
 let STALE = false, FRESH_PENDING = null, CUR_TAB = 'cases';
 let SEL_T = (function () { try { return localStorage.getItem(LS_NS + 't') || ''; } catch (e) { return ''; } })();   // 選んだ台帳（親方ID。空＝自分の台帳）更新235
-const PAGE_VER = '246';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
+const PAGE_VER = '247';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
 function cacheKey(){ return LS_NS + 'cache_p' + PAGE_VER + (SEL_T ? '_' + SEL_T : ''); }
 function cacheRead(){ try { const o = JSON.parse(localStorage.getItem(cacheKey()) || 'null'); return o && o.uid && o.S && o.S.labels ? o : null; } catch (e) { return null; } }
 function cacheWrite(uid, data){ try { const s = JSON.stringify({ uid, at: Date.now(), S: data }); if (s.length < 4000000) localStorage.setItem(cacheKey(), s); } catch (e) { /* 入らなければ覚えない */ } }
@@ -2103,11 +2103,11 @@ function bulkCands(custId){ return S.cases.filter(c => c.custId === custId && ![
   return ok ? { c, done: c.status === L.done, doc: ord || est, est, st: c.status === L.done ? L.done : est.result === '受注' || ord ? '受注' : '見積中' } : null; }).filter(Boolean); }
 function bulkOpen(custId){ const cu = S.customers.find(x => x.id === custId) || {}, list = bulkCands(custId), today = ymdStr(new Date());
   const tag = x => `<span class="tag ${x.st === '見積中' ? '' : 'ok'}" style="margin-left:4px">${x.st}${x.done && x.c.done ? ' ' + esc(x.c.done.slice(5).replace('-', '/')) : ''}</span>`;
-  const row = x => `<div class="bkr"><label class="bkc"><input type="checkbox" data-c="${x.c.id}" data-d="${x.done ? 1 : 0}" ${x.done ? 'checked' : ''} onchange="bulkUi()"><span><b>${esc(kindName(x.doc))}書${x.doc.kind === '見積' && estVers(x.c.id).length > 1 ? ' 第' + (x.doc.ver || 1) + '版（採用）' : ''} ${esc(x.doc.no)}</b>${tag(x)}<small>${esc(x.c.name)}${x.doc.kind === '見積' && estVers(x.c.id).length > 1 ? `　※版を替えるには${L.siteWord}の「版を選ぶ」から` : ''}</small></span><span style="flex:none;font-weight:800">${yen(x.doc.total)}</span></label>`
+  const row = x => `<div class="bkr"><label class="bkc"><input type="checkbox" data-c="${x.c.id}" data-d="${x.done ? 1 : 0}" ${x.done ? 'checked' : ''} onchange="bulkUi()"><span><b>${esc(x.c.name)}</b>${tag(x)}<small>${esc(docTitle(x.doc))}${x.doc.kind === '見積' && estVers(x.c.id).length > 1 ? '（第' + (x.doc.ver || 1) + '版）' : ''}　${esc(x.doc.no)}</small></span><span style="flex:none;font-weight:800">${yen(x.doc.total)}</span></label>`
     + (x.done ? '' : `<div class="drow bkd" id="bkd_${x.c.id}" style="display:none"><span style="flex:none;font-size:12.5px">${L.done}日</span><input type="date" id="bkD_${x.c.id}" value="${today}" max="${today}" onclick="try{this.showPicker()}catch(e){}"></div>`) + `</div>`;
   // 一緒にまとめる請求書：入金のない、未入金の請求書（チェックすると1枚に作り直す）
   const open = S.docs.filter(d => live(d) && d.kind === '請求' && !d.stage && d.custId === custId && bal(d) > 0 && !((d.paid || 0) + (d.adj || 0))).sort((a, b) => a.id < b.id ? 1 : -1);   // 着手金・中間金の請求書は合流させない（お預かり分として差し引く 2026-10-12）
-  const mrow = d => `<label class="bkc"><input type="checkbox" data-m="${d.id}" onchange="bulkUi()"><span><b>請求書 ${esc(d.no)}</b><small>${esc(d.period || d.subject || '')}</small></span><span style="flex:none;font-weight:800">${yen(d.total)}</span></label>`;
+  const mrow = d => `<label class="bkc"><input type="checkbox" data-m="${d.id}" onchange="bulkUi()"><span><b>${esc(docTitle(d))}</b><small>${esc(d.period || d.subject || '')}　${esc(d.no)}</small></span><span style="flex:none;font-weight:800">${yen(d.total)}</span></label>`;
   bsOpen(bsHead('まとめて請求書へ変換：' + esc(cu.name || '')) + `<div class="ppst" style="margin-top:0">① 請求する書類</div>` + (list.map(row).join('') || '<div class="hint">ありません</div>')
     + (open.length ? `<div class="ppst">② 一緒にまとめる請求書<small style="font-weight:400;color:var(--muted)">（任意）</small></div>` + open.map(mrow).join('') : '')
     + `<div class="bsb"><button onclick="closeBs()">やめる</button><button class="ok" id="bkGo" onclick="bulkGo('${custId}')">請求書へ変換</button></div>`); bulkUi(); }
@@ -2881,7 +2881,7 @@ function invConfirmBtns(d, c){ const cid = docCases(d)[0]; const stInv = name =>
   const slot = name => { const x = stg.find(s => s.name === name); return x ? stBtn(x) : none(name); };
   const named = stg.every(s => s.name === '着手金' || s.name === '中間金');
   const mid = !L.prepay && !stg.length ? '' : named ? slot('着手金') + slot('中間金') : stg.map(stBtn).join('') + (stg.length === 1 ? none('中間金') : '');   // 前受金を使わない型（物販）は段の行なし（2026-10-14）
-  return `<button class="full" onclick="closeDlg();invPick('${cid}')">版を選び直す</button>` + mid + `<button class="pri full" onclick="${CHK}toInvoice('${d.id}','rest')">🧾 ${stg.length ? '未入金（残金）' : ''}の請求書を作る</button>`.replace('🧾 の請求書', '🧾 請求書'); }
+  return `<button class="full" onclick="closeDlg();invPick('${cid}')">← 戻る</button>` + mid + `<button class="pri full" onclick="${CHK}toInvoice('${d.id}','rest')">🧾 ${stg.length ? '未入金（残金）' : ''}の請求書を作る</button>`.replace('🧾 の請求書', '🧾 請求書'); }
 /** 変更見積を確定（2026-10-10）：注文書を作らない現場（元請など）向け。確定すると、作り直した版は主役に、追加分は見積書の枠に並ぶ */
 function chgOkAsk(docId){ const d = S.docs.find(x => x.id === docId); if (!d) return;
   dialog(`<h3>変更の見積を確定</h3><p style="font-size:13px;line-height:1.7">${esc(docTitle(d))}（${yen(d.total)}）を、お客様の承認済みにします。${d.ver >= 2 ? '<br>前の版は履歴に移り、請求書はこの版の内容で作られます。' : '<br>追加分として、請求のときに元の見積と合わせて入ります。'}${!d.okAt ? '<br><span style="color:var(--danger)">LINEの確認ボタンはまだ押されていません。電話・口頭でOKをもらった場合だけ進めてください。</span>' : ''}</p><div class="row"><button onclick="closeDlg()">やめる</button><button class="pri" onclick="closeDlg();chgOk('${docId}')">✅ 確定する</button></div>`); }
