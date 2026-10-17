@@ -317,7 +317,7 @@
     <div class="row" style="margin-top:8px"><button class="pri" onclick="openIssuer(true)">自社情報とロゴを直す</button></div>
     <div class="row" style="margin-top:6px"><button onclick="termsShow()">📖 利用規約を読む</button></div>
   </div>
-  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新247</b>（2026-10-17）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
+  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新248</b>（2026-10-17）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
   <div class="sec acc" id="teamSec" data-acc="team" style="margin-top:12px"><h2>👥 チームの設定</h2>
     <div id="teamBody" style="font-size:13px;line-height:1.7"></div>
   </div>
@@ -431,7 +431,7 @@ function snapRebuild(){ spin(true); run('liffSnapRebuild', [UID, true], () => { 
 // ② 前回の台帳をスマホに覚えさせ、まず前回の内容で画面を出す（外の置き場だけ。Google側は uid を信じる作りなので使わない）2026-10-11
 let STALE = false, FRESH_PENDING = null, CUR_TAB = 'cases';
 let SEL_T = (function () { try { return localStorage.getItem(LS_NS + 't') || ''; } catch (e) { return ''; } })();   // 選んだ台帳（親方ID。空＝自分の台帳）更新235
-const PAGE_VER = '247';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
+const PAGE_VER = '248';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
 function cacheKey(){ return LS_NS + 'cache_p' + PAGE_VER + (SEL_T ? '_' + SEL_T : ''); }
 function cacheRead(){ try { const o = JSON.parse(localStorage.getItem(cacheKey()) || 'null'); return o && o.uid && o.S && o.S.labels ? o : null; } catch (e) { return null; } }
 function cacheWrite(uid, data){ try { const s = JSON.stringify({ uid, at: Date.now(), S: data }); if (s.length < 4000000) localStorage.setItem(cacheKey(), s); } catch (e) { /* 入らなければ覚えない */ } }
@@ -2049,12 +2049,15 @@ function renderCases(){
   document.getElementById('showDead').textContent = SHOW_DEAD ? '取消・訂正前の書類を隠す' : '取消・訂正前の書類も表示する';
   if (CASE_OPEN && document.getElementById('bsh').classList.contains('on') && document.getElementById('bsh').innerHTML.indexOf('class="csb"') >= 0) bsSet(caseSheetHtml(CASE_OPEN));
 }
+/** 日付を 10/17 の形に。期間「2026年9月1日〜2026年9月30日」を「9/1〜9/30」に（更新248：請求書の札をすっきり） */
+const dshort = v => String(v || '').slice(5, 10).replace('-', '/').replace(/^0/, '').replace('/0', '/');
+const perShort = p => String(p || '').replace(/(\d{4})年(\d{1,2})月(\d{1,2})日/g, '$2/$3').replace(/\s/g, '');
 /** 請求中の段：お客様の枠に出す請求書のかたまり（プレビュー・送信／編集・取消と、入金の行） */
 function invBlk(d){ const hasPay = ((d.paid || 0) + (d.adj || 0)) > 0, n = docCases(d).length, cu = S.customers.find(x => x.id === d.custId) || {};
   const cn = docCases(d).map(id => (S.cases.find(c => c.id === id) || {}).name).filter(Boolean);
   // 番号は出さない（2026-10-10）：現場名・施工内容・発行日・金額で見分ける。番号はPDFと台帳に
-  return `<div class="ivb"><div class="t"><b>${n > 1 ? `請求書（${esc(cn.slice(0, 2).join('・'))}${cn.length > 2 ? ` ほか${cn.length - 2}件` : ''}）` : docTitle(d)}</b>${n > 1 ? `<span class="tag moto">締め請求（${n}${L.siteWord}）</span>` : ''}<span class="camt">${yen(d.total)}</span></div><div class="m" style="margin-top:2px;color:var(--muted)">${n === 1 && cn.length ? esc(cn[0]) + '　' : ''}${d.date ? '発行 ' + esc(d.date.slice(5).replace('-', '/')) : ''}${d.sentAt ? '　送信 ' + esc(d.sentAt.slice(5).replace('-', '/')) : '　<span style="color:#B26A00">未送信</span>'}</div>
-    <div class="m">未入金 <b style="color:var(--danger)">${yen(bal(d))}</b>${d.due ? '　期限 ' + esc(d.due.slice(5).replace('-', '/')) + (d.due < ymdStr(new Date()) ? ' <span class="tag" style="background:#FDECEC;color:var(--danger)">期限超え</span>' : '') : ''}${d.period ? '　' + esc(d.period) : ''}</div>${payRows(d, false)}
+  return `<div class="ivb"><div class="t"><b>${n > 1 ? `請求書（${esc(cn.slice(0, 2).join('・'))}${cn.length > 2 ? ` ほか${cn.length - 2}件` : ''}）` : docTitle(d)}</b>${n > 1 ? `<span class="tag moto">締め請求（${n}${L.siteWord}）</span>` : ''}<span class="camt">${yen(d.total)}</span></div><div class="m" style="margin-top:2px;color:var(--muted)">${[n === 1 && cn.length ? esc(cn[0]) : '', (function () { const c1 = n === 1 ? S.cases.find(c => c.id === docCases(d)[0]) : null; return c1 && c1.done ? L.done + ' ' + esc(dshort(c1.done)) : ''; })(), d.period ? esc(perShort(d.period)) : ''].filter(Boolean).join('・')}</div>
+    <div class="m" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span>${d.sentAt ? '送信 ' + esc(dshort(d.sentAt)) : (d.date ? '発行 ' + esc(dshort(d.date)) + '・' : '') + '<span style="color:#B26A00">未送信</span>'}${d.due ? ' → 期限 ' + esc(dshort(d.due)) + (d.due < ymdStr(new Date()) ? ' <span class="tag" style="background:#FDECEC;color:var(--danger)">期限超え</span>' : '') : ''}</span><span style="margin-left:auto">未入金 <b style="color:var(--danger)">${yen(bal(d))}</b></span></div>${payRows(d, false)}
     <div class="btns">${d.paidReport ? `<button style="flex-basis:100%;background:${L.colorLight};border-color:${L.colorLine};color:${L.colorHex}" onclick="custPay('${d.custId}')">💴 「振り込みました」の報告あり（${esc(d.paidReport.slice(5, 16).replace('-', '/'))}）→ 入金を記録</button>` : d.due && d.due < ymdStr(new Date()) ? `<button style="flex-basis:100%;border-color:var(--danger);color:var(--danger)" onclick="remindDoc('${d.id}')">📨 お支払いのお願いを送る</button>` : (cu.kubun !== '元請' ? `<button style="flex-basis:100%" onclick="remindDoc('${d.id}')">📨 お支払いのご案内を送る</button>` : '')}<button onclick="previewDoc('${d.id}',true)">📄 請求PDFプレビュー・送信</button>${hasPay ? '' : `<button class="pri" onclick="redoDoc('${d.id}')">請求書を編集</button><button class="warn" onclick="invCancel('${d.id}')">取消</button>`}</div></div>`; }
 /** 済・過去（2026-10-09）：現場を「入金した月」の枠に分ける。いちばん新しい月だけ開く。入金の記録がない現場（取りやめ・失注など）は完了・取りやめの日の月 */
 function paidMonth(c){ const ids = docsOf(c.id).filter(d => live(d) && d.kind === '請求').map(d => d.id);
@@ -2107,7 +2110,7 @@ function bulkOpen(custId){ const cu = S.customers.find(x => x.id === custId) || 
     + (x.done ? '' : `<div class="drow bkd" id="bkd_${x.c.id}" style="display:none"><span style="flex:none;font-size:12.5px">${L.done}日</span><input type="date" id="bkD_${x.c.id}" value="${today}" max="${today}" onclick="try{this.showPicker()}catch(e){}"></div>`) + `</div>`;
   // 一緒にまとめる請求書：入金のない、未入金の請求書（チェックすると1枚に作り直す）
   const open = S.docs.filter(d => live(d) && d.kind === '請求' && !d.stage && d.custId === custId && bal(d) > 0 && !((d.paid || 0) + (d.adj || 0))).sort((a, b) => a.id < b.id ? 1 : -1);   // 着手金・中間金の請求書は合流させない（お預かり分として差し引く 2026-10-12）
-  const mrow = d => `<label class="bkc"><input type="checkbox" data-m="${d.id}" onchange="bulkUi()"><span><b>${esc(docTitle(d))}</b><small>${esc(d.period || d.subject || '')}　${esc(d.no)}</small></span><span style="flex:none;font-weight:800">${yen(d.total)}</span></label>`;
+  const mrow = d => `<label class="bkc"><input type="checkbox" data-m="${d.id}" onchange="bulkUi()"><span><b>${esc((S.cases.find(c => c.id === docCases(d)[0]) || {}).name || docTitle(d))}</b><small>${esc(docTitle(d))}　${esc(d.period || d.subject || '')}　${esc(d.no)}</small></span><span style="flex:none;font-weight:800">${yen(d.total)}</span></label>`;
   bsOpen(bsHead('まとめて請求書へ変換：' + esc(cu.name || '')) + `<div class="ppst" style="margin-top:0">① 請求する書類</div>` + (list.map(row).join('') || '<div class="hint">ありません</div>')
     + (open.length ? `<div class="ppst">② 一緒にまとめる請求書<small style="font-weight:400;color:var(--muted)">（任意）</small></div>` + open.map(mrow).join('') : '')
     + `<div class="bsb"><button onclick="closeBs()">やめる</button><button class="ok" id="bkGo" onclick="bulkGo('${custId}')">請求書へ変換</button></div>`); bulkUi(); }
