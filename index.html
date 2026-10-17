@@ -317,7 +317,7 @@
     <div class="row" style="margin-top:8px"><button class="pri" onclick="openIssuer(true)">自社情報とロゴを直す</button></div>
     <div class="row" style="margin-top:6px"><button onclick="termsShow()">📖 利用規約を読む</button></div>
   </div>
-  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新244</b>（2026-10-17）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
+  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新245</b>（2026-10-17）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
   <div class="sec acc" id="teamSec" data-acc="team" style="margin-top:12px"><h2>👥 チームの設定</h2>
     <div id="teamBody" style="font-size:13px;line-height:1.7"></div>
   </div>
@@ -431,7 +431,7 @@ function snapRebuild(){ spin(true); run('liffSnapRebuild', [UID, true], () => { 
 // ② 前回の台帳をスマホに覚えさせ、まず前回の内容で画面を出す（外の置き場だけ。Google側は uid を信じる作りなので使わない）2026-10-11
 let STALE = false, FRESH_PENDING = null, CUR_TAB = 'cases';
 let SEL_T = (function () { try { return localStorage.getItem(LS_NS + 't') || ''; } catch (e) { return ''; } })();   // 選んだ台帳（親方ID。空＝自分の台帳）更新235
-const PAGE_VER = '244';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
+const PAGE_VER = '245';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
 function cacheKey(){ return LS_NS + 'cache_p' + PAGE_VER + (SEL_T ? '_' + SEL_T : ''); }
 function cacheRead(){ try { const o = JSON.parse(localStorage.getItem(cacheKey()) || 'null'); return o && o.uid && o.S && o.S.labels ? o : null; } catch (e) { return null; } }
 function cacheWrite(uid, data){ try { const s = JSON.stringify({ uid, at: Date.now(), S: data }); if (s.length < 4000000) localStorage.setItem(cacheKey(), s); } catch (e) { /* 入らなければ覚えない */ } }
@@ -669,7 +669,7 @@ function teamColorApply(col){ const r = document.documentElement.style; if (col)
 function myColorSet(col){ spin(true, '直しています…'); run('liffMyColor', [UID, col], () => { spin(false); S.me.color = col; cacheWrite(UID, S); tenDraw(); teamDraw(); toast('色を変えました'); }, () => spin(false)); }
 function teamNameSet(){ const v = (document.getElementById('teamNameIn') || {}).value || ''; spin(true, '直しています…'); run('liffTeamName', [UID, v.trim()], r => { spin(false); if (S.tenant) S.tenant.name = r.team || S.tenant.name; (S.tenants || []).forEach(t => { if (t.id === (S.tenant || {}).id) t.name = r.team || t.name; }); cacheWrite(UID, S); tenDraw(); teamDraw(); toast('チーム名を直しました'); }, () => spin(false)); }
 function tenChange(v){ if (v === '+') { tenDraw(); joinDialog(); return; }
-  if (document.getElementById('edv').classList.contains('on')) { tenDraw(); draftMoveAsk(); return; }   // 編集中は「別の台帳へ移す」の案内を出す（更新242）
+  if (document.getElementById('edv').classList.contains('on')) { tenDraw(); toast('書類を作っている途中です。先に閉じるか保存してから、台帳を切り替えてください'); return; }   // 編集中は切り替えない（更新245）
   tenSwitch(v); }
 function tenSwitch(tid, cb){ const ts = S && S.tenants || []; const t = ts.filter(x => x.id === tid)[0]; SEL_T = t && !t.own ? tid : ''; try { if (SEL_T) localStorage.setItem(LS_NS + 't', SEL_T); else localStorage.removeItem(LS_NS + 't'); } catch (e) {} ACT_AS = ''; try { localStorage.removeItem(LS_NS + 'as'); } catch (e) {}
   spin(true, '台帳を切り替えています…'); run('liffLoad', [UID, ''], data => { cacheWrite(UID, data); S = data; L = labelsOf(data.labels); STALE = false; boot(); spin(false); try { showTab('cases'); } catch (e) {} toast(data.tenant && !data.tenant.own ? 'チーム「' + (data.tenant.name || '') + '」の書類です' : '自分の書類です'); if (cb) cb(); }, () => spin(false)); }
@@ -677,24 +677,12 @@ function tenSwitch(tid, cb){ const ts = S && S.tenants || []; const t = ts.filte
 function tenantLabel(){ const t = (S && S.tenant) || {}; return t.own ? '自分：' + ((S.iss || {}).name || t.name || '自分の書類') : '👥 ' + (t.name || 'チーム'); }
 function nameGateHtml(){ return `<div style="background:#FDECEA;border-radius:8px;padding:8px 10px;margin:6px 0;font-size:13px;line-height:1.6"><b style="color:#C0392B">⚠ 名義の確認</b><br>この書類は <b>${esc(tenantLabel())}</b> の名義です。<br>・お客様情報は別のチームへ移せません<br>・間違えた場合は、取りやめにして作り直してください</div>`; }
 function nameGate(next){ if (((S && S.tenants) || []).length < 2) { next(); return; }
-  dialog(`<h3>📤 送る前に</h3>${nameGateHtml()}<div class="row"><button onclick="closeDlg()">やめる</button><button class="sm" onclick="closeDlg();draftMoveAsk()">別の台帳へ移す</button><button class="pri" onclick="closeDlg();window.__nameNext&&window.__nameNext()">この名義で送る</button></div>`); window.__nameNext = next; }
+  dialog(`<h3>📤 送る前に</h3>${nameGateHtml()}<div class="row"><button onclick="closeDlg()">やめる</button><button class="pri" onclick="closeDlg();window.__nameNext&&window.__nameNext()">この名義で送る</button></div>`); window.__nameNext = next; }
 /** 書類をどの台帳で作っているか（台帳が2つ以上あるときだけ）。別の台帳へ移せる（更新242） */
 function edFromDraw(){ const el = document.getElementById('edFrom'); if (!el) return; const ts = (S && S.tenants) || []; if (ts.length < 2) { el.style.display = 'none'; return; }
   const t = S.tenant || {}; const nm = t.own ? '自分：' + ((S.iss || {}).name || t.name || '自分の書類') : '👥 ' + (t.name || 'チーム');
-  el.style.display = ''; el.innerHTML = `この書類の台帳：<b>${esc(nm)}</b>　<button class="sm" onclick="draftMoveAsk()">別の台帳へ移す</button>`; }
-let DRAFT_CARRY = null;
-function draftMoveAsk(){ const ts = ((S && S.tenants) || []).filter(t => t.id !== ((S.tenant || {}).own ? '' : (S.tenant || {}).id) && !(t.own && (S.tenant || {}).own));
-  if (!ts.length) { toast('移せる台帳がありません'); return; }
-  const opts = ts.map(t => `<option value="${esc(t.id)}">${t.own ? '自分：' + (esc(t.name) || '自分の書類') : '👥 ' + esc(t.name)}</option>`).join('');
-  dialog(`<h3>⚠ 別の台帳へ移す</h3><ul class="dl"><li>いま書いている内容（お客様の名前・${L.siteWord}名・明細・備考）を持って、別の台帳に切り替えます</li><li>お客様と${L.siteWord}は、切り替え先で選び直します（名前は入ったままです）</li>${originId ? `<li class="red">元の書類（${esc(originNo)}）はこの台帳に残ります。不要なら「取りやめ」にしてください</li>` : ''}</ul>
-    <select id="dmTo" style="width:100%;font-size:15px;padding:8px;border:1px solid var(--line);border-radius:8px;margin:4px 0 10px">${opts}</select>
-    <div class="row"><button onclick="closeDlg()">やめる</button><button class="pri" onclick="draftMoveGo()">移す</button></div>`); }
-function draftMoveGo(){ const to = (document.getElementById('dmTo') || {}).value || ''; closeDlg();
-  const d = JSON.parse(JSON.stringify(currentDraft())); d.customer = { id: '', name: d.customer ? d.customer.name : '', kubun: d.customer ? d.customer.kubun : '元請' };
-  (d.sites || []).forEach(x => { x.case_id = ''; (x.items || []).forEach(it => { it.item_id = ''; }); }); delete d._link;
-  DRAFT_CARRY = { d, view: VIEW, mode: MODE }; originId = ''; originNo = ''; FROM_ID = '';
-  document.getElementById('edv').classList.remove('on');
-  tenSwitch(to, () => { const c = DRAFT_CARRY; DRAFT_CARRY = null; if (!c) return; D = c.d; VIEW = c.view; MODE = c.mode; try { openEd(); } catch (e) {} toast('書きかけを持って切り替えました。お客様と' + L.siteWord + 'を選び直してください'); }); }
+  el.style.display = ''; el.innerHTML = `この書類の台帳：<b>${esc(nm)}</b>`; }   // 「別の台帳へ移す」は廃止（更新245）
+// 「別の台帳へ移す」（更新242〜244）は廃止（更新245）：元の台帳に書きかけが残る・同名のお客様に付く道があるため。名義が違うときは 取りやめ→切り替え→作り直し
 /** ＋チームを追加：チームコードと名前 */
 function joinDialog(){ dialog(`<h3>チームに参加する</h3><p style="font-size:13px;color:var(--muted)">親方（管理者）から聞いた6桁のチームコードと、あなたの名前を入れてください。参加すると、ヘッダーの切替でそのチームの書類を作れます（あなたの担当だけが見えます）。</p>
     <label style="font-size:12.5px;color:var(--muted)">チームコード（6桁）</label><input id="jnCode" inputmode="numeric" maxlength="6" style="width:100%;font-size:18px;letter-spacing:.15em;padding:8px;border:1px solid var(--line);border-radius:8px;margin:4px 0 8px" placeholder="123456">
