@@ -307,7 +307,7 @@
     <div class="row" style="margin-top:8px"><button class="pri" onclick="openIssuer(true)">自社情報とロゴを直す</button></div>
     <div class="row" style="margin-top:6px"><button onclick="termsShow()">📖 利用規約を読む</button></div>
   </div>
-  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新235</b>（2026-10-17）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
+  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新236</b>（2026-10-17）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
   <div class="sec acc" id="teamSec" data-acc="team" style="margin-top:12px"><h2>👥 チームで使う</h2>
     <div id="teamBody" style="font-size:13px;line-height:1.7"></div>
   </div>
@@ -421,7 +421,7 @@ function snapRebuild(){ spin(true); run('liffSnapRebuild', [UID, true], () => { 
 // ② 前回の台帳をスマホに覚えさせ、まず前回の内容で画面を出す（外の置き場だけ。Google側は uid を信じる作りなので使わない）2026-10-11
 let STALE = false, FRESH_PENDING = null, CUR_TAB = 'cases';
 let SEL_T = (function () { try { return localStorage.getItem(LS_NS + 't') || ''; } catch (e) { return ''; } })();   // 選んだ台帳（親方ID。空＝自分の台帳）更新235
-const PAGE_VER = '235';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
+const PAGE_VER = '236';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
 function cacheKey(){ return LS_NS + 'cache_p' + PAGE_VER + (SEL_T ? '_' + SEL_T : ''); }
 function cacheRead(){ try { const o = JSON.parse(localStorage.getItem(cacheKey()) || 'null'); return o && o.uid && o.S && o.S.labels ? o : null; } catch (e) { return null; } }
 function cacheWrite(uid, data){ try { const s = JSON.stringify({ uid, at: Date.now(), S: data }); if (s.length < 4000000) localStorage.setItem(cacheKey(), s); } catch (e) { /* 入らなければ覚えない */ } }
@@ -648,11 +648,11 @@ function applyBrandColors(){
 }
 /** ヘッダー右の台帳の切替（更新235）：自分の書類／参加しているチーム／＋チームを追加 */
 function tenDraw(){ const box = document.getElementById('tenSelBox'), sel = document.getElementById('tenSel'); if (!box || !sel || !S) return;
-  const ts = Array.isArray(S.tenants) ? S.tenants : []; const cur = (S.tenant && S.tenant.id) || '';
-  if (!ts.length) { box.style.display = 'none'; return; }
+  let ts = Array.isArray(S.tenants) ? S.tenants.slice() : []; if (!ts.some(t => t.own)) ts.unshift({ id: '', name: '', own: true }); const cur = (S.tenant && !S.tenant.own) ? S.tenant.id : (ts.filter(t => t.own)[0] || {}).id || '';
   sel.innerHTML = ts.map(t => `<option value="${esc(t.id)}" ${t.id === cur ? 'selected' : ''}>${t.own ? '自分の書類' : '👥 ' + esc(t.name)}</option>`).join('') + '<option value="+">＋ チームを追加</option>';
+  sel.value = cur;
   box.style.display = ''; document.body.classList.toggle('team', !!(S.tenant && !S.tenant.own)); }
-function tenChange(v){ if (v === '+') { const sel = document.getElementById('tenSel'); if (sel && S.tenant) sel.value = S.tenant.id; joinDialog(); return; }
+function tenChange(v){ if (v === '+') { tenDraw(); joinDialog(); return; }
   tenSwitch(v); }
 function tenSwitch(tid){ const ts = S && S.tenants || []; const t = ts.filter(x => x.id === tid)[0]; SEL_T = t && !t.own ? tid : ''; try { if (SEL_T) localStorage.setItem(LS_NS + 't', SEL_T); else localStorage.removeItem(LS_NS + 't'); } catch (e) {} ACT_AS = ''; try { localStorage.removeItem(LS_NS + 'as'); } catch (e) {}
   spin(true, '台帳を切り替えています…'); run('liffLoad', [UID, ''], data => { cacheWrite(UID, data); S = data; L = labelsOf(data.labels); STALE = false; boot(); spin(false); try { showTab('cases'); } catch (e) {} toast(data.tenant && !data.tenant.own ? 'チーム「' + (data.tenant.name || '') + '」の書類です' : '自分の書類です'); }, () => spin(false)); }
