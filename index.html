@@ -158,6 +158,7 @@
   #regWait{position:fixed;inset:0;z-index:70;background:#F2F4F5;display:flex;align-items:center;justify-content:center;padding:20px}#regWait .rw{background:#fff;border-radius:16px;padding:20px 18px;max-width:360px;width:100%;box-shadow:0 6px 24px rgba(0,0,0,.12);text-align:center}#regWait .rwpic img{width:120px;height:120px;border-radius:50%;object-fit:cover;object-position:top;background:#fff;animation:stbob 1.6s ease-in-out infinite}#regWait h3{font-size:17px;margin:10px 0 2px}#regWait .rwname{color:var(--muted);font-size:13px;margin:0 0 12px}#regWait .rwsteps{list-style:none;text-align:left;margin:0 auto 12px;max-width:290px}#regWait .rwsteps li{display:flex;align-items:center;gap:10px;padding:7px 0;font-size:14px;color:#9AA3AB;border-bottom:1px dashed #E6E9EC}#regWait .rwsteps li i{width:18px;height:18px;border-radius:50%;border:2px solid #D9DEE3;flex-shrink:0;display:inline-block}#regWait .rwsteps li.now{color:var(--ink);font-weight:800}#regWait .rwsteps li.now i{border-color:var(--y);border-top-color:transparent;animation:vspin 1s linear infinite}#regWait .rwsteps li.done{color:var(--ok)}#regWait .rwsteps li.done i{background:var(--ok);border-color:var(--ok)}#regWait .rwsteps li.done i::after{content:'';display:block;width:5px;height:9px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg);margin:1px auto 0}#regWait .rwt{font-size:12.5px;color:var(--muted);line-height:1.7;text-align:left}@keyframes vspin{to{transform:rotate(360deg)}}
   .wkbar{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin:0 0 10px;font-size:13px}.wkbar .wkk{color:var(--muted);font-size:11.5px;margin-left:6px}.wkbar .wksel{display:flex;flex-direction:column;align-items:flex-end}.wkbar .wksel label{font-size:10.5px;color:var(--muted)}.wkbar select{font:inherit;font-size:13px;padding:4px 6px;border:1px solid var(--line);border-radius:8px;background:#fff;max-width:200px}.actbar{position:fixed;left:0;right:0;bottom:0;z-index:65;background:#1F3A5F;color:#fff;font-size:12.5px;padding:8px 12px;display:flex;align-items:center;gap:8px;justify-content:center}.actbar button{font:inherit;font-size:12px;border:1px solid #fff;background:none;color:#fff;border-radius:8px;padding:3px 8px}body.acting .body{padding-bottom:180px}.tteam{width:100%;border-collapse:collapse;font-size:12.5px;margin:8px 0}.tteam th,.tteam td{border-bottom:1px solid var(--line);padding:5px 4px;text-align:left;vertical-align:middle}.tteam td select{font:inherit;font-size:12px;padding:3px 4px;border:1px solid var(--line);border-radius:6px;background:#fff}.tteam tr.ret td{color:#9AA3AB}.tteam small{color:var(--muted)}button.sm{font:inherit;font-size:12px;padding:4px 8px;border:1px solid var(--line);border-radius:8px;background:#fff}.tcodes{background:#F3F8FD;border-radius:10px;padding:8px 10px;margin:6px 0}.tcodes>div{display:flex;align-items:center;gap:8px;margin:2px 0}.tcodes .code{font-size:18px;font-weight:800;letter-spacing:.1em;flex:1}.treas,.tdup{margin-top:10px;padding-top:8px;border-top:1px dashed var(--line)}.treas .row{align-items:center;gap:6px;margin-top:6px}.treas select{font:inherit;font-size:12.5px;padding:4px 6px;border:1px solid var(--line);border-radius:8px;background:#fff;flex:1;min-width:0}.dupg{background:#FFF8E6;border-radius:8px;padding:6px 8px;margin:6px 0}.dupc{display:flex;align-items:center;gap:6px;justify-content:space-between;margin:3px 0;font-size:12.5px;color:var(--ink)}body.pw #itNewBtn,body.pw #itNew,body.pw #itemList button,body.pw #own .sec button.pri,body.pw .pset-only{display:none!important}body.pw #own textarea,body.pw #own input,body.pw #own select{pointer-events:none;opacity:.7}body:not(.pset) .pset-only{display:none!important}
   @media (min-width:900px){.body{max-width:1000px;margin:0 auto;padding-left:24px;padding-right:24px}.top,.tabs{padding-left:calc(50% - 500px + 24px);padding-right:calc(50% - 500px + 24px)}.wkbar select{max-width:340px}.dlg{max-width:720px}.tteam{font-size:13.5px}}
+  #own .sec.acc>h2{cursor:pointer;user-select:none;margin-bottom:8px}#own .sec.acc>h2::after{content:'▴';font-size:13px;color:var(--muted);margin-left:auto}#own .sec.acc.closed>h2::after{content:'▾'}#own .sec.acc.closed>h2{margin-bottom:0}#own .sec.acc.closed>*:not(h2){display:none!important}
   .stalebar{position:fixed;left:50%;top:6px;transform:translateX(-50%);z-index:60;background:#FFF8DC;color:#8A5A00;font-size:12px;font-weight:700;display:none;align-items:center;gap:8px;padding:3px 12px 3px 3px;border-radius:14px;overflow:hidden;border:1.5px solid #F0D9A0;box-shadow:0 4px 14px rgba(0,0,0,.12);white-space:nowrap}.stalebar.on{display:flex;animation:stbob 1.8s ease-in-out infinite}.stalebar img{width:44px;height:44px;border-radius:10px;object-fit:contain;background:#fff}@keyframes stbob{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,-4px)}}
   .iprec{margin-top:8px}.iprec .wg{display:block;font-size:11px;color:var(--muted);font-weight:700;margin-bottom:4px}
   details.ipb,details.ipg{border:1px solid var(--line);border-radius:10px;background:#fff;margin-top:6px;overflow:hidden}details.ipb>summary,details.ipg>summary{display:flex;align-items:center;gap:6px;padding:9px 10px;font-size:14px;font-weight:800;cursor:pointer;list-style:none}details.ipb>summary::-webkit-details-marker,details.ipg>summary::-webkit-details-marker{display:none}details.ipb>summary::before,details.ipg>summary::before{content:'▸';color:var(--muted);font-size:12px}details.ipb[open]>summary::before,details.ipg[open]>summary::before{content:'▾'}details.ipb>summary{background:#EEF6FF}details.ipg>summary{background:#F7F8F9;font-size:13.5px}details.ipb>details.ipg{margin:0 8px 8px;}details.ipg>summary small,details.ipb>summary small{margin-left:auto;font-weight:700;color:var(--muted);font-size:11.5px}details.ipg>.pchips{padding:8px}
@@ -299,33 +300,33 @@
 
 <div class="body" id="own" style="display:none">
   <div class="seg subseg"><button class="" onclick="showTab('items')">料金表</button><button class="" onclick="showTab('lists')">お客様</button><button class="on" onclick="showTab('own')">自社情報・定型文</button></div>
-  <div class="sec"><h2>自社情報（書類の右上・振込先）</h2>
+  <div class="sec acc" data-acc="issuer"><h2>🏢 自社情報（書類の右上・振込先）</h2>
     <div class="ipv" style="position:static;box-shadow:none"><div class="piss" id="ownPv"></div></div>
     <div style="background:#F3F4F6;border-radius:10px;padding:8px 10px;margin:0 0 6px"><div id="ownBank" style="background:#fff;border-radius:6px;padding:8px 10px;font-size:11.5px;line-height:1.75;color:#222"></div></div>
     <div class="row" style="margin-top:8px"><button class="pri" onclick="openIssuer(true)">自社情報とロゴを直す</button></div>
     <div class="row" style="margin-top:6px"><button onclick="termsShow()">📖 利用規約を読む</button></div>
   </div>
-  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新233</b>（2026-10-17）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
-  <div class="sec pset-only" id="teamSec" style="margin-top:12px"><h2>チーム（1つの台帳を複数人で）</h2>
+  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新234</b>（2026-10-17）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
+  <div class="sec acc pset-only" id="teamSec" data-acc="team" style="margin-top:12px"><h2>👥 チームで使う</h2>
     <div id="teamBody" style="font-size:13px;line-height:1.7"></div>
   </div>
-  <div class="sec" style="margin-top:12px"><h2>備考の定型文（5つ設定可能）</h2>
+  <div class="sec acc" data-acc="memo" style="margin-top:12px"><h2>📝 備考の定型文（5つ設定可能）</h2>
     <div id="memoEdit"></div>
     <div class="row" style="margin-top:8px"><button class="pri" onclick="saveMemo()">定型文を保存</button></div>
   </div>
-  <div class="sec" style="margin-top:12px"><h2>💴 ご入金のお礼の定型文</h2>
+  <div class="sec acc" data-acc="thanks" style="margin-top:12px"><h2>💴 ご入金のお礼の定型文</h2>
     <div class="hint" style="margin:0 0 6px">「振り込みました」の報告を受けて入金を記録すると、この文が出ます。送る前にその場でも直せます。使える言葉：{お客様} {敬称} {番号} {金額} {屋号}</div>
     <textarea id="thanksTpl" rows="5" style="font-size:13px;line-height:1.6"></textarea>
     <div class="row" style="margin-top:6px"><button class="pri" onclick="thanksTplSave()">定型文を保存</button></div>
   </div>
-  <div class="sec" style="margin-top:12px"><h2>🔔 支払期限の前にLINEで知らせる</h2>
+  <div class="sec acc" data-acc="due" style="margin-top:12px"><h2>🔔 支払期限の前にLINEで知らせる</h2>
     <div class="hint" style="margin:0 0 8px">請求書の支払期限の前に、入金の記録がないものを、あなたのLINEに知らせます。お客様には送りません（お客様への案内は、請求中の画面から自分のタイミングで）。</div>
     <div class="seg" id="dueSeg"><button onclick="dueNoticeSet(0)">しない</button><button onclick="dueNoticeSet(1)">1日前</button><button onclick="dueNoticeSet(3)">3日前</button><button onclick="dueNoticeSet(5)">5日前</button><button onclick="dueNoticeSet(7)">7日前</button></div>
   </div>
-  <div class="sec" style="margin-top:12px"><h2>❓ 使い方</h2>
+  <div class="sec acc" data-acc="help" style="margin-top:12px"><h2>❓ 使い方</h2>
     <div class="row" style="flex-wrap:wrap"><button class="pri" onclick="helpOpen('')">📘 使い方を見る（4ページ）</button><button onclick="helpOpen('cust')">📄 お客様向けの1枚を見る</button><button onclick="helpSend()">📤 お客様向けの1枚をLINEで送る</button></div>
   </div>
-  <div class="sec" style="margin-top:12px" id="demoSec"><h2>🎓 お試し（使い方を試す）</h2>
+  <div class="sec acc" data-acc="demo" style="margin-top:12px" id="demoSec"><h2>🎓 お試し（使い方を試す）</h2>
     <div class="hint" style="margin:0 0 8px">お試しデータで、使い方をひととおり試せます。何をしても本当のデータには残りません。友達に見せるときにも（自分のお客様の名前は出ません）。</div>
     <div class="row"><button class="pri" onclick="demoStart()">🎓 お試しを始める</button></div>
   </div>
@@ -418,7 +419,7 @@ function failNote(step, msg){ try { const a = failRead(); a.push({ t: Date.now()
 function snapRebuild(){ spin(true); run('liffSnapRebuild', [UID, true], () => { reload(() => { try { showTab(CUR_TAB); } catch (e) {} toast('台帳を読み直しました'); }); }, () => spin(false)); }
 // ② 前回の台帳をスマホに覚えさせ、まず前回の内容で画面を出す（外の置き場だけ。Google側は uid を信じる作りなので使わない）2026-10-11
 let STALE = false, FRESH_PENDING = null, CUR_TAB = 'cases';
-const PAGE_VER = '233';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
+const PAGE_VER = '234';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
 function cacheKey(){ return LS_NS + 'cache_p' + PAGE_VER; }
 function cacheRead(){ try { const o = JSON.parse(localStorage.getItem(cacheKey()) || 'null'); return o && o.uid && o.S && o.S.labels ? o : null; } catch (e) { return null; } }
 function cacheWrite(uid, data){ try { const s = JSON.stringify({ uid, at: Date.now(), S: data }); if (s.length < 4000000) localStorage.setItem(cacheKey(), s); } catch (e) { /* 入らなければ覚えない */ } }
@@ -1705,10 +1706,10 @@ function teamDraw(){ const el = document.getElementById('teamBody'); const me = 
   const sel = (name, cur, list) => `<select data-k="${name}" onchange="teamChange(this)" ${name === 'kubun' || name === 'perm' ? '' : ''}>${list.map(v => `<option ${v === cur ? 'selected' : ''}>${v}</option>`).join('')}</select>`;
   const rows = team.map(x => `<tr class="${x.retired ? 'ret' : ''}" data-uid="${esc(x.uid)}"><td><b>${esc(x.no)}</b></td><td>${esc(x.name)}${x.no === me.no ? '<small>（自分）</small>' : ''}</td><td>${x.retired ? '退職' : sel('kubun', x.kubun, ['重役', '事務責任者', 'IT責任者', '職人'])}</td><td>${x.retired ? '' : sel('perm', x.perm, ['管理者', '設定係', '職人'])}</td><td>${x.no === me.no || x.no === '01' ? '' : (x.retired ? `<button class="sm" onclick="teamRetire('${esc(x.uid)}', false)">戻す</button>` : `<button class="sm" onclick="teamRetire('${esc(x.uid)}', true)">退職</button>`)}</td></tr>`).join('');
   const names = team.filter(x => !x.retired).map(x => `<option value="${esc(x.no)}">職人 ${esc(x.no)} ${esc(x.name)}</option>`).join('');
-  el.innerHTML = `<p class="hint" style="margin:0 0 6px">番号は名札です（序列ではありません）。番号は一生もので、辞めても使い回しません。区分と権限は番号と別に直せます。</p>
+  el.innerHTML = `<p class="hint" style="margin:0 0 6px">職人番号はランダムに発行され、再発行や変更はできません。</p>
     <div class="tcodes"><div><b>職人用のチームコード</b><span class="code">${esc(codes.worker || '未発行')}</span><button class="sm" onclick="teamCode('worker')">${codes.worker ? '作り直す' : '発行する'}</button></div>
     <div><b>管理者用のチームコード</b><span class="code">${esc(codes.admin || '未発行')}</span><button class="sm" onclick="teamCode('admin')">${codes.admin ? '作り直す' : '発行する'}</button></div>
-    <p class="hint" style="margin:4px 0 0">新しい人は、LINEでこのアプリを開き「チームに参加する」でコードと名前を入れます。管理者用で入った人は 01〜10 の番号、職人用は 11〜99 の番号になります。</p></div>
+    <p class="hint" style="margin:4px 0 0">参加する人は、LINEでこのアプリを開き「チームに参加する」でコードと名前を入れます。</p></div>
     <table class="tteam"><thead><tr><th>番号</th><th>名前</th><th>区分</th><th>権限</th><th></th></tr></thead><tbody>${rows || '<tr><td colspan="5">まだ自分だけです</td></tr>'}</tbody></table>
     ${admin ? `<div class="treas"><b>担当の付け替え（引き継ぎ）</b><div class="row"><select id="reasFrom"><option value="">（元の職人）</option>${names}</select><span>→</span><select id="reasTo"><option value="">（先の職人）</option>${names}</select></div><div class="row"><select id="reasWhat"><option value="all">お客様・現場・書類・入金の全部</option><option value="customers">お客様だけ</option><option value="cases">現場だけ</option><option value="docs">書類だけ</option><option value="payments">入金だけ</option></select><button class="sm" onclick="teamReassign()">付け替える</button></div><p class="hint" style="margin:2px 0 0">元の職人の担当を、先の職人の担当に書き換えます（辞める人の引き継ぎ）。</p></div>
     <div class="tdup"><b>重複の疑い（同じ名前・同じ電話のお客様）</b> <button class="sm" onclick="dupLoad()">しらべる</button><div id="dupBody" class="hint"></div></div>
@@ -3191,7 +3192,10 @@ function renderLists(){
 }
 function dueNoticeSet(n){ if (DEMO) { toast('お試し中は変えられません'); return; } S.dueNotice = n; dueNoticeDraw(); run('liffDueNotifySave', [UID, n], () => toast(n ? `支払期限の${n}日前の朝に知らせます` : '通知しません')); }
 function dueNoticeDraw(){ const n = +(S.dueNotice || 0); document.querySelectorAll('#dueSeg button').forEach(b => b.classList.toggle('on', b.textContent === (n ? n + '日前' : 'しない'))); }
-function renderOwn(){ try { teamDraw(); } catch (e) {} try { const bt = document.getElementById('bootTime'); if (bt) bt.innerHTML = bootTimeText(); } catch (e) {} const ds = document.getElementById('demoSec'); if (ds) ds.style.display = DEMO ? 'none' : ''; dueNoticeDraw(); const tt = document.getElementById('thanksTpl'); if (tt) tt.value = (S.thanksTpl || '').trim() || THANKS_DEFAULT;
+/** 設定の各項目の開閉（更新234 三浦さん）。見出しを押すと開く・閉じる。状態は端末に覚える。はじめは全部閉じている */
+function accInit(){ document.querySelectorAll('#own .sec.acc').forEach(sec => { if (sec.dataset.accReady) return; sec.dataset.accReady = '1'; const h = sec.querySelector('h2'); if (!h) return; h.addEventListener('click', e => { if (e.target.closest('button,a,input,select')) return; accToggle(sec); }); let open = false; try { open = localStorage.getItem(LS_NS + 'acc_' + sec.dataset.acc) === '1'; } catch (e) {} sec.classList.toggle('closed', !open); }); }
+function accToggle(sec, force){ const open = typeof force === 'boolean' ? force : sec.classList.contains('closed'); sec.classList.toggle('closed', !open); try { localStorage.setItem(LS_NS + 'acc_' + sec.dataset.acc, open ? '1' : '0'); } catch (e) {} }
+function renderOwn(){ try { accInit(); } catch (e) {} try { teamDraw(); } catch (e) {} try { const bt = document.getElementById('bootTime'); if (bt) bt.innerHTML = bootTimeText(); } catch (e) {} const ds = document.getElementById('demoSec'); if (ds) ds.style.display = DEMO ? 'none' : ''; dueNoticeDraw(); const tt = document.getElementById('thanksTpl'); if (tt) tt.value = (S.thanksTpl || '').trim() || THANKS_DEFAULT;
   const iss = S.iss || {};
   document.getElementById('ownPv').innerHTML = issuerBlockHtml(iss, false) || '<span class="pph">まだ入っていません</span>';
   document.getElementById('ownBank').innerHTML = '<b>お振込先</b><br>' + (iss.bank ? bankLines(iss.bank) : '（未入力）');
