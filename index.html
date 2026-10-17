@@ -254,6 +254,7 @@
   <div class="ordh"><button onclick="closeEd()">✕</button><b id="edT">書類の編集</b></div>
   <div class="ordb">
   <div class="banner" id="banner" style="display:none"><b id="bannerTxt"></b></div>
+  <div class="hint" id="edFrom" style="display:none;margin:0 0 6px;padding:6px 10px;border-radius:8px;background:var(--paper,#F6F8FA)"></div>
   <div class="ptools">
     <div class="ptools2"><div class="seg"><button id="segS" class="on s" onclick="setMode('元請')">下請け</button><button id="segJ" onclick="setMode('施主')">自社請け</button></div><button class="pzoom" id="pzb" onclick="toggleZoom()">🔍 拡大</button></div>
     <div class="hint" id="edHint">緑の点線のところをタップすると入力できます。点線はPDFには出ません。</div>
@@ -316,7 +317,7 @@
     <div class="row" style="margin-top:8px"><button class="pri" onclick="openIssuer(true)">自社情報とロゴを直す</button></div>
     <div class="row" style="margin-top:6px"><button onclick="termsShow()">📖 利用規約を読む</button></div>
   </div>
-  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新241</b>（2026-10-17）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
+  <div class="hint" style="text-align:center;margin:14px 0 4px">画面の版：<b>更新242</b>（2026-10-17）。古い画面が出るときは、LINEのトークを閉じて開き直してください<br><span id="bootTime" style="font-size:11px"></span></div>
   <div class="sec acc" id="teamSec" data-acc="team" style="margin-top:12px"><h2>👥 チームの設定</h2>
     <div id="teamBody" style="font-size:13px;line-height:1.7"></div>
   </div>
@@ -392,11 +393,11 @@ let D = emptyDraft();
 let originId = '', originNo = '', FROM_ID = '';
 let lastDeleted = null, SORT = false;
 /** 単位の書き方をそろえる（m2→㎡、m3→㎥） */
-const unitN = u => String(u || '').trim().replace(/^(m2|m²|ｍ2|ｍ²|平米|平方メートル)$/i, '㎡').replace(/^(m3|m³|ｍ3|ｍ³|立米|立方メートル)$/i, '㎥');
-const UNITS = ['式', '㎡', 'm', '㎥', 'か所', '個', '枚', '本', '台', '人工', '回'];
+const unitN = u => String(u || '').trim().replace(/^(m2|m²|ｍ2|ｍ²|平米|平方メートル)$/i, '㎡').replace(/^(m3|m³|ｍ3|ｍ³|立米|立方メートル)$/i, '㎥').replace(/^(式|1式|１式)$/, '一式');   // 標準は一式（更新242）
+const UNITS = ['一式', '㎡', 'm', '㎥', 'か所', '個', '枚', '本', '台', '人工', '回'];
 const yen = n => '¥' + Math.round(n).toLocaleString('ja-JP');
 
-function emptyDraft(){ return { doc_type:'', customer:{id:'',name:'',kubun:'元請'}, subject:'', tax_included:false, notes:'', sites:[{case_id:'',owner:'',name:'',items:[{item_id:'',name:'',qty:1,unit:'式',unit_price:0,note:''}]}] }; }
+function emptyDraft(){ return { doc_type:'', customer:{id:'',name:'',kubun:'元請'}, subject:'', tax_included:false, notes:'', sites:[{case_id:'',owner:'',name:'',items:[{item_id:'',name:'',qty:1,unit:'一式',unit_price:0,note:''}]}] }; }
 
 // ---------- 起動
 /** 固定表示の位置（上のバーの高さ）を測る（2026-10-06） */
@@ -430,7 +431,7 @@ function snapRebuild(){ spin(true); run('liffSnapRebuild', [UID, true], () => { 
 // ② 前回の台帳をスマホに覚えさせ、まず前回の内容で画面を出す（外の置き場だけ。Google側は uid を信じる作りなので使わない）2026-10-11
 let STALE = false, FRESH_PENDING = null, CUR_TAB = 'cases';
 let SEL_T = (function () { try { return localStorage.getItem(LS_NS + 't') || ''; } catch (e) { return ''; } })();   // 選んだ台帳（親方ID。空＝自分の台帳）更新235
-const PAGE_VER = '241';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
+const PAGE_VER = '242';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
 function cacheKey(){ return LS_NS + 'cache_p' + PAGE_VER + (SEL_T ? '_' + SEL_T : ''); }
 function cacheRead(){ try { const o = JSON.parse(localStorage.getItem(cacheKey()) || 'null'); return o && o.uid && o.S && o.S.labels ? o : null; } catch (e) { return null; } }
 function cacheWrite(uid, data){ try { const s = JSON.stringify({ uid, at: Date.now(), S: data }); if (s.length < 4000000) localStorage.setItem(cacheKey(), s); } catch (e) { /* 入らなければ覚えない */ } }
@@ -668,9 +669,27 @@ function teamColorApply(col){ const r = document.documentElement.style; if (col)
 function myColorSet(col){ spin(true, '直しています…'); run('liffMyColor', [UID, col], () => { spin(false); S.me.color = col; cacheWrite(UID, S); tenDraw(); teamDraw(); toast('色を変えました'); }, () => spin(false)); }
 function teamNameSet(){ const v = (document.getElementById('teamNameIn') || {}).value || ''; spin(true, '直しています…'); run('liffTeamName', [UID, v.trim()], r => { spin(false); if (S.tenant) S.tenant.name = r.team || S.tenant.name; (S.tenants || []).forEach(t => { if (t.id === (S.tenant || {}).id) t.name = r.team || t.name; }); cacheWrite(UID, S); tenDraw(); teamDraw(); toast('チーム名を直しました'); }, () => spin(false)); }
 function tenChange(v){ if (v === '+') { tenDraw(); joinDialog(); return; }
+  if (document.getElementById('edv').classList.contains('on')) { tenDraw(); draftMoveAsk(); return; }   // 編集中は「別の台帳へ移す」の案内を出す（更新242）
   tenSwitch(v); }
-function tenSwitch(tid){ const ts = S && S.tenants || []; const t = ts.filter(x => x.id === tid)[0]; SEL_T = t && !t.own ? tid : ''; try { if (SEL_T) localStorage.setItem(LS_NS + 't', SEL_T); else localStorage.removeItem(LS_NS + 't'); } catch (e) {} ACT_AS = ''; try { localStorage.removeItem(LS_NS + 'as'); } catch (e) {}
-  spin(true, '台帳を切り替えています…'); run('liffLoad', [UID, ''], data => { cacheWrite(UID, data); S = data; L = labelsOf(data.labels); STALE = false; boot(); spin(false); try { showTab('cases'); } catch (e) {} toast(data.tenant && !data.tenant.own ? 'チーム「' + (data.tenant.name || '') + '」の書類です' : '自分の書類です'); }, () => spin(false)); }
+function tenSwitch(tid, cb){ const ts = S && S.tenants || []; const t = ts.filter(x => x.id === tid)[0]; SEL_T = t && !t.own ? tid : ''; try { if (SEL_T) localStorage.setItem(LS_NS + 't', SEL_T); else localStorage.removeItem(LS_NS + 't'); } catch (e) {} ACT_AS = ''; try { localStorage.removeItem(LS_NS + 'as'); } catch (e) {}
+  spin(true, '台帳を切り替えています…'); run('liffLoad', [UID, ''], data => { cacheWrite(UID, data); S = data; L = labelsOf(data.labels); STALE = false; boot(); spin(false); try { showTab('cases'); } catch (e) {} toast(data.tenant && !data.tenant.own ? 'チーム「' + (data.tenant.name || '') + '」の書類です' : '自分の書類です'); if (cb) cb(); }, () => spin(false)); }
+/** 書類をどの台帳で作っているか（台帳が2つ以上あるときだけ）。別の台帳へ移せる（更新242） */
+function edFromDraw(){ const el = document.getElementById('edFrom'); if (!el) return; const ts = (S && S.tenants) || []; if (ts.length < 2) { el.style.display = 'none'; return; }
+  const t = S.tenant || {}; const nm = t.own ? '自分：' + ((S.iss || {}).name || t.name || '自分の書類') : '👥 ' + (t.name || 'チーム');
+  el.style.display = ''; el.innerHTML = `この書類の台帳：<b>${esc(nm)}</b>　<button class="sm" onclick="draftMoveAsk()">別の台帳へ移す</button>`; }
+let DRAFT_CARRY = null;
+function draftMoveAsk(){ const ts = ((S && S.tenants) || []).filter(t => t.id !== ((S.tenant || {}).own ? '' : (S.tenant || {}).id) && !(t.own && (S.tenant || {}).own));
+  if (!ts.length) { toast('移せる台帳がありません'); return; }
+  const opts = ts.map(t => `<option value="${esc(t.id)}">${t.own ? '自分：' + (esc(t.name) || '自分の書類') : '👥 ' + esc(t.name)}</option>`).join('');
+  dialog(`<h3>⚠ 別の台帳へ移す</h3><ul class="dl"><li>いま書いている内容（お客様の名前・${L.siteWord}名・明細・備考）を持って、別の台帳に切り替えます</li><li>お客様と${L.siteWord}は、切り替え先で選び直します（名前は入ったままです）</li>${originId ? `<li class="red">元の書類（${esc(originNo)}）はこの台帳に残ります。不要なら「取りやめ」にしてください</li>` : ''}</ul>
+    <select id="dmTo" style="width:100%;font-size:15px;padding:8px;border:1px solid var(--line);border-radius:8px;margin:4px 0 10px">${opts}</select>
+    <div class="row"><button onclick="closeDlg()">やめる</button><button class="pri" onclick="draftMoveGo()">移す</button></div>`); }
+function draftMoveGo(){ const to = (document.getElementById('dmTo') || {}).value || ''; closeDlg();
+  const d = JSON.parse(JSON.stringify(currentDraft())); d.customer = { id: '', name: d.customer ? d.customer.name : '', kubun: d.customer ? d.customer.kubun : '元請' };
+  (d.sites || []).forEach(x => { x.case_id = ''; (x.items || []).forEach(it => { it.item_id = ''; }); }); delete d._link;
+  DRAFT_CARRY = { d, view: VIEW, mode: MODE }; originId = ''; originNo = ''; FROM_ID = '';
+  document.getElementById('edv').classList.remove('on');
+  tenSwitch(to, () => { const c = DRAFT_CARRY; DRAFT_CARRY = null; if (!c) return; D = c.d; VIEW = c.view; MODE = c.mode; try { openEd(); } catch (e) {} toast('書きかけを持って切り替えました。お客様と' + L.siteWord + 'を選び直してください'); }); }
 /** ＋チームを追加：チームコードと名前 */
 function joinDialog(){ dialog(`<h3>チームに参加する</h3><p style="font-size:13px;color:var(--muted)">親方（管理者）から聞いた6桁のチームコードと、あなたの名前を入れてください。参加すると、ヘッダーの切替でそのチームの書類を作れます（あなたの担当だけが見えます）。</p>
     <label style="font-size:12.5px;color:var(--muted)">チームコード（6桁）</label><input id="jnCode" inputmode="numeric" maxlength="6" style="width:100%;font-size:18px;letter-spacing:.15em;padding:8px;border:1px solid var(--line);border-radius:8px;margin:4px 0 8px" placeholder="123456">
@@ -1072,6 +1091,7 @@ function render(){
   edMemo();
   document.getElementById('edGo').textContent = '📄 ' + kShort(VIEW) + 'PDFプレビュー・送る';
   document.getElementById('edT').textContent = (VIEW === '見積' && D.change_no ? (D.change_full ? '見積書（受注後の変更）' : '追加・変更の見積書') : kShort(VIEW) + '書') + (originId ? 'の編集（' + originNo + '）' : 'をつくる');
+  edFromDraw();
   const ban = document.getElementById('banner');
   if (originId) { const o0 = S.docs.find(x => x.id === originId) || {}; const keep = o0.kind === '見積' && o0.sentN > 0; ban.style.display = 'block'; document.getElementById('bannerTxt').textContent = keep ? `第${o0.ver || 1}版（${originNo}）を元に、次の版を作成中（保存すると新しい版。第${o0.ver || 1}版は残ります）` : `${originNo} を編集中（保存すると新しい番号になり、${originNo} は「訂正前」に）`; } else ban.style.display = 'none';
   const c = cust(), moto = MODE === '元請';
@@ -1143,7 +1163,7 @@ function applyCaseItems(items){ if (!items.length) return; const old = {}; D.sit
 const ciKey = m => m.id + '|' + m.name;
 const ciItem = x => { const s = String(x || ''), k = s.indexOf('|'), id = k > 0 ? s.slice(0, k) : '', nm = k > 0 ? s.slice(k + 1) : s; return (S.items || []).find(m => id && m.id === id) || (S.items || []).find(m => m.name === nm) || { name: nm }; };
 const ciName = x => ciItem(x).name;
-function itemRow(n){ const m = ciItem(n); return { item_id: m.id || '', name: m.name, qty: 1, unit: unitN(m.unit || '式'), unit_price: m.price || 0, note: '' }; }
+function itemRow(n){ const m = ciItem(n); return { item_id: m.id || '', name: m.name, qty: 1, unit: unitN(m.unit || '一式'), unit_price: m.price || 0, note: '' }; }
 function fit(){
   const f = document.getElementById('pfit'), sh = document.getElementById('psheet'), st = document.getElementById('pstage'); if (!f || !st.clientWidth) return;
   const w = st.clientWidth - 16, sc = ZOOM ? 1 : Math.min(1, w / 600);
@@ -1161,7 +1181,7 @@ function bsSet(html){ document.getElementById('bsh').innerHTML = html; }
   function fit(){ const a = document.activeElement, typing = !!(a && b.contains(a) && /^(INPUT|TEXTAREA)$/.test(a.tagName) && !/^(number|date)$/.test(a.type || ''));
     const kb = Math.max(0, Math.round(window.innerHeight - vh() - vt()));
     if (typing) {   // 文字を打っている間は、枠を画面の上に付け替える（キーボードの高さが測れない機種でも、入力欄と候補が見える）
-      KB = true; b.classList.add('kb'); b.style.bottom = 'auto'; b.style.top = Math.round(vt()) + 'px'; b.style.maxHeight = Math.round(kb > 0 ? vh() - 6 : window.innerHeight * 0.46) + 'px';
+      KB = true; b.classList.add('kb'); b.style.bottom = 'auto'; b.style.top = Math.round(vt()) + 'px'; b.style.maxHeight = Math.max(Math.round(kb > 0 ? vh() - 6 : window.innerHeight * 0.46), Math.round(window.innerHeight * 0.46)) + 'px';   // 読みが小さすぎても46%は確保（更新242）
       setTimeout(() => { try { a.scrollIntoView({ block: 'nearest' }); } catch (e) {} }, 60); return; }
     if (KB) { KB = false; b.classList.remove('kb'); b.style.top = ''; }
     b.style.bottom = kb + 'px'; b.style.maxHeight = Math.round(vh() * (kb > 0 ? 0.95 : 0.82)) + 'px';
@@ -1329,7 +1349,7 @@ function trPick(i, k, on){ const x = tradesOf()[i], nm = x.items[k].name;
   if (on && !TP.sel[x.t]) { TP.sel[x.t] = true; TP.off[x.t] = {}; x.items.forEach(it => { if (it.name !== nm) TP.off[x.t][it.name] = 1; }); }
   else { const o = TP.off[x.t] || (TP.off[x.t] = {}); if (on) delete o[nm]; else o[nm] = 1; if (!trOn(x)) { TP.sel[x.t] = false; TP.off[x.t] = {}; } }
   drawTrades(); }
-function tradeItems(){ const seen = new Set(), out = []; tradesOf().filter(x => TP.sel[x.t] || x.t === '共通').forEach(x => x.items.forEach(it => { if (seen.has(it.name) || (x.t !== '共通' && !trInc(x, it))) return; seen.add(it.name); out.push({ name: it.name, unit: it.unit, price: 0, cat: x.t, keep: true }); })); return out; }
+function tradeItems(){ const seen = new Set(), out = []; tradesOf().filter(x => TP.sel[x.t] || x.t === '共通').forEach(x => x.items.forEach(it => { if (seen.has(it.name) || (x.t !== '共通' && !trInc(x, it))) return; seen.add(it.name); out.push({ name: it.name, unit: '一式', price: 0, cat: x.t, keep: true }); })); return out; }   // 単位は一式で入れる（更新242）
 function saveTrades(){ const list = tradeItems(); if (!list.length) { toast('業種にチェックを付けてください'); return; }
   spin(true, '料金表に入れています…');
   run('liffItemsAdd', [UID, list], r => { spin(false); S.items = r.items; closeBs(); renderItems(); guideDraw(); toast(r.added ? `${r.added}品目を入れました。単価を「品目編集・料金設定」で入れてください` : '新しく入る品目はありませんでした（すべて登録済み）'); }); }
@@ -1501,7 +1521,7 @@ function openSite(si){ const s = D.sites[si];
     + sec(2, L.siteWord + '名', `<input id="stN" value="${esc(s.name)}" placeholder="例：${L.siteEx}" oninput="wordMark('stN')"><div id="stW">${wordChips('stN', s.owner)}</div>`)
     + bsBtns(`D.sites[${si}].name=document.getElementById('stN').value.trim();D.sites[${si}].owner=document.getElementById('stO').value.trim();closeBs();render()`, D.sites.length > 1 ? `delSite(${si})` : ''));
 }
-function addSite(){ D.sites.push({ case_id: '', owner: '', name: '', items: [{ item_id: '', name: '', qty: 1, unit: '式', unit_price: 0, note: '' }] }); render(); openSite(D.sites.length - 1); }
+function addSite(){ D.sites.push({ case_id: '', owner: '', name: '', items: [{ item_id: '', name: '', qty: 1, unit: '一式', unit_price: 0, note: '' }] }); render(); openSite(D.sites.length - 1); }
 function delSite(si){ D.sites.splice(si, 1); if (!D.sites.length) D.sites = emptyDraft().sites; closeBs(); render(); }
 
 // 明細の1行
@@ -1542,7 +1562,7 @@ function openRow(si, i){
       + (S.items.length ? `<input class="csq" id="rQ2" type="search" autocomplete="off" placeholder="🔍 料金表から探す（名前の一部でOK）" style="margin-top:8px" oninput="itemPickDraw(this.value)"><div id="rPick">${itemPickHtml('')}</div>` : `<div class="hint">料金表に品目がありません。<u onclick="closeBs();showTab('items')">設定 → 料金表</u>で入れると、ここから選べます。</div>`), S.items.length ? '料金表から選ぶ／自由入力' : '') +
     (bdOn() ? sec(3, '費目 <span class="qi" onclick="bdInfo()">？</span>', `<div class="seg" id="rK">${KINDS.map(k => `<button class="${kindOf(r) === k ? 'on' : ''}" onclick="ROW.r.kind='${k}';document.querySelectorAll('#rK button').forEach(b=>b.classList.toggle('on',b.textContent==='${k}'))">${k}</button>`).join('')}</div>`, '内訳の集計に使う') : '') +
     sec(2, '数量と単価', `<div class="pg3"><div>${lb('数量')}<input id="rQ" type="number" inputmode="decimal" value="${r.qty}" oninput="ROW.r.qty=+this.value||0;rowAmt()"></div>
-    <div>${lb('単位')}<div class="ucombo"><input id="rU" value="${esc(unitN(r.unit || '式'))}" oninput="ROW.r.unit=unitN(this.value)"><span class="uarr">▼</span><select aria-label="単位を選ぶ" onchange="if(this.value){ROW.r.unit=this.value;document.getElementById('rU').value=this.value;}this.value=''"><option value="">単位を選ぶ</option>${UNITS.map(u => `<option value="${u}">${u}</option>`).join('')}</select></div></div>
+    <div>${lb('単位')}<div class="ucombo"><input id="rU" value="${esc(unitN(r.unit || '一式'))}" oninput="ROW.r.unit=unitN(this.value)"><span class="uarr">▼</span><select aria-label="単位を選ぶ" onchange="if(this.value){ROW.r.unit=this.value;document.getElementById('rU').value=this.value;}this.value=''"><option value="">単位を選ぶ</option>${UNITS.map(u => `<option value="${u}">${u}</option>`).join('')}</select></div></div>
     <div>${lb('単価（税抜）')}<input id="rP" type="number" inputmode="numeric" value="${r.unit_price || ''}" oninput="ROW.r.unit_price=+this.value||0;rowAmt()"></div></div><div class="pamt" id="rA"></div>`) +
     `<div class="rmv"><button onclick="moveRow(-1)" ${i === 0 ? 'disabled' : ''}>⬆ 1つ上へ</button><button onclick="moveRow(1)" ${i >= D.sites[si].items.length - 1 ? 'disabled' : ''}>⬇ 1つ下へ</button></div>` +
     bsBtns('saveRow()', 'delRow()'));
@@ -1553,8 +1573,9 @@ function mvRow(si, i, dir){ const it = D.sites[si].items, j = i + dir; if (j < 0
 function moveRow(dir){ const it = D.sites[ROW.si].items, i = ROW.i, j = i + dir; if (j < 0 || j >= it.length) return;
   it[i] = Object.assign({}, it[i], ROW.r); [it[i], it[j]] = [it[j], it[i]]; closeBs(); render(); toast(dir < 0 ? '1つ上へ移しました' : '1つ下へ移しました'); }
 function pickItem(k){ const m = typeof k === 'number' ? S.items[k] : S.items.find(x => x.id === k); if (!m) return;
-  Object.assign(ROW.r, { item_id: m.id, name: m.name, unit: unitN(m.unit || '式'), unit_price: m.price || 0, kind: m.kind || '' }); document.querySelectorAll('#rK button').forEach(b => b.classList.toggle('on', b.textContent === kindOf(ROW.r)));
-  document.getElementById('rN').value = m.name; document.getElementById('rU').value = unitN(m.unit || '式'); document.getElementById('rP').value = m.price || '';
+  const mu = (+m.price > 0) ? unitN(m.unit || '一式') : '一式';   // 単価のない品目は一式（更新242）
+  Object.assign(ROW.r, { item_id: m.id, name: m.name, unit: mu, unit_price: m.price || 0, kind: m.kind || '' }); document.querySelectorAll('#rK button').forEach(b => b.classList.toggle('on', b.textContent === kindOf(ROW.r)));
+  document.getElementById('rN').value = m.name; document.getElementById('rU').value = mu; document.getElementById('rP').value = m.price || '';
   recentItemPush(m.id); itemPickMark(); rowAmt(); }
 /** 選んでいる品目に印を付ける */
 function itemPickMark(){ const id = ROW && ROW.r ? ROW.r.item_id : ''; document.querySelectorAll('#rPick button[data-k]').forEach(b => b.classList.toggle('on', !!id && b.dataset.k === id)); }
@@ -1591,9 +1612,9 @@ function rowAmt(){ const p = netPrice(ROW.r);
 function saveRow(){ const r = ROW.r; r.name = String(r.name || '').trim(); if (!r.item_id) { const m = S.items.find(x => x.name === r.name); if (m) r.item_id = m.id; }
   D.sites[ROW.si].items[ROW.i] = r; closeBs(); render(); }
 function delRow(){ const it = D.sites[ROW.si].items; lastDeleted = { si: ROW.si, i: ROW.i, row: it[ROW.i] }; it.splice(ROW.i, 1);
-  if (!it.length) it.push({ item_id: '', name: '', qty: 1, unit: '式', unit_price: 0, note: '' }); closeBs(); render(); toast('行を消しました（「消した行を戻す」で戻せます）'); }
+  if (!it.length) it.push({ item_id: '', name: '', qty: 1, unit: '一式', unit_price: 0, note: '' }); closeBs(); render(); toast('行を消しました（「消した行を戻す」で戻せます）'); }
 function addRow(si){ const it = D.sites[si].items; const empty = it.findIndex(r => !r.name && !r.unit_price);
-  if (empty < 0) it.push({ item_id: '', name: '', qty: 1, unit: '式', unit_price: 0, note: '' }); render(); openRow(si, empty < 0 ? it.length - 1 : empty); }
+  if (empty < 0) it.push({ item_id: '', name: '', qty: 1, unit: '一式', unit_price: 0, note: '' }); render(); openRow(si, empty < 0 ? it.length - 1 : empty); }
 function undo(){ if (lastDeleted) { const it = D.sites[lastDeleted.si].items; if (it.length === 1 && !it[0].name && !it[0].unit_price) it.splice(0, 1); it.splice(Math.min(lastDeleted.i, it.length), 0, lastDeleted.row); lastDeleted = null; render(); } }
 
 // 備考（定型文のチェック＋自由入力）
@@ -1713,7 +1734,8 @@ function finalize2(kind){
   const d = currentDraft();
   const c = cust(); const n = d.sites.length;
   const msg = (kind === '請求' && c && c.kubun === '元請' && n > 1) ? `${c.name} あての締め請求（${L.siteWord}${n}件）を作ります。` : `${kShort(kind)}書を作ります。`;
-  dialog(`<h3>💾 番号を付けて下書き保存</h3><ul class="dl">${(c ? `<li>${esc(c.name)} あて${(kind === '請求' && c.kubun === '元請' && n > 1) ? `（締め請求・${L.siteWord}${n}件）` : ''}</li>` : '')}<li>番号を付けて保存します（お客様には送りません）</li>${originId ? `<li>${esc(originNo)} は「訂正前」に</li>` : ''}<li>あとで「${kind}PDFを送る」で送れます</li></ul>
+  const tl = ((S.tenants || []).length > 1) ? `<li>台帳：<b>${esc((S.tenant || {}).own ? '自分：' + ((S.iss || {}).name || '') : '👥 ' + ((S.tenant || {}).name || ''))}</b></li>` : '';
+  dialog(`<h3>💾 番号を付けて下書き保存</h3><ul class="dl">${tl}${(c ? `<li>${esc(c.name)} あて${(kind === '請求' && c.kubun === '元請' && n > 1) ? `（締め請求・${L.siteWord}${n}件）` : ''}</li>` : '')}<li>番号を付けて保存します（お客様には送りません）</li>${originId ? `<li>${esc(originNo)} は「訂正前」に</li>` : ''}<li>あとで「${kind}PDFを送る」で送れます</li></ul>
     <div class="row"><button onclick="closeDlg()">やめる</button><button class="pri" onclick="doFinalize('${kind}')">保存する</button></div>`);
 }
 let LAST_CUST = '';
@@ -2552,7 +2574,7 @@ function newDocForCase(caseId, kind, items, force){
   if (kind === '請求' && !force && cu.kubun !== '元請') { const ds = docsOf(caseId).filter(live); const okd = ds.some(d => d.kind === '注文' || (d.kind === '契約' && d.okAt) || (d.kind === '見積' && (d.okAt || d.okBy || d.result === '受注')));
     if (!okd) { dialog(`<h3>見積書の承認なしで請求書を作ります</h3><p style="font-size:13px;line-height:1.7">この${L.siteWord}には、承認された見積書も注文書もありません。<br>このまま請求書を作ることはできますが、金額の「言った・言わない」になったとき、${L.userWord}に不利です。<br><b>おすすめ：</b>先に見積書を作って、承認を記録してから請求書へ。</p><div class="row"><button onclick="closeDlg()">やめる</button><button onclick="closeDlg();newDocForCase('${caseId}','請求',null,true)">このまま作る</button></div>`); return; } }
   newDoc(kind, () => { MODE = cu.kubun === '元請' ? '元請' : '施主'; D.customer = { id: cu.id || '', name: cu.name || '', kubun: MODE };
-    D.sites = [{ case_id: c.id, owner: c.owner || cu.name || '', name: c.name, items: items && items.length ? items : [{ item_id: '', name: '', qty: 1, unit: '式', unit_price: 0, note: '' }] }];
+    D.sites = [{ case_id: c.id, owner: c.owner || cu.name || '', name: c.name, items: items && items.length ? items : [{ item_id: '', name: '', qty: 1, unit: '一式', unit_price: 0, note: '' }] }];
     if (MODE === '施主') D.subject = c.name;
     if (kind === '見積' && c.pay) { const p = ppFrom([], '', c.pay); D.stages = ppStages(p, 0); D.done_method = p.done.method; } });
 }
@@ -3120,7 +3142,7 @@ function pickDo(){ const dn = document.getElementById('pkDn'), done = PK.needDon
   step2(); }
 function pickDo2(){ const d = PK.draft; const dc = document.getElementById('pkDisc');
   if (PK.mode !== 'rest') { const x = d.stages[PK.mode]; const s0 = d.sites[0] || {};
-    d.sites = [{ case_id: s0.case_id || '', owner: s0.owner || '', name: s0.name || '', items: [{ item_id: '', name: x.name + '（' + (d.subject || s0.name || L.workWord) + '）', qty: 1, unit: '式', unit_price: stgAmt(x), note: '分割:' + x.name }] }];
+    d.sites = [{ case_id: s0.case_id || '', owner: s0.owner || '', name: s0.name || '', items: [{ item_id: '', name: x.name + '（' + (d.subject || s0.name || L.workWord) + '）', qty: 1, unit: '一式', unit_price: stgAmt(x), note: '分割:' + x.name }] }];
     d.tax_included = false; d.incl_total = true;   // 入れた税込金額をそのまま請求額に。消費税は税込からの割り戻し（2026-10-12）
     if (x.method === '現金') d.notes = [d.notes || '', 'お支払いは現金でお願いいたします。'].filter(String).join('\n');
     d.discount = null; d.stages = []; delete d.discount_billed; delete d.advance; closeBs(); invOpen(PK, false, x.name);
