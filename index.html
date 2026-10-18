@@ -5607,7 +5607,7 @@
         <h2>🔧 動作の記録（保守用）</h2>
         <div class="hint" style="margin: 0 0 4px">
           画面の版：
-          <b>更新277</b>
+          <b>更新278</b>
           （2026-10-18）。古い画面が出るときは、LINEのトークを閉じて開き直してください
         </div>
         <div class="hint" id="bootTime" style="font-size: 11px; line-height: 1.7"></div>
@@ -6063,7 +6063,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwSWnGcrw-UOU72HIo0soyh
           return '';
         }
       })(); // 選んだ台帳（親方ID。空＝自分の台帳）更新235
-      const PAGE_VER = '277'; // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
+      const PAGE_VER = '278'; // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
       function cacheKey() {
         return LS_NS + 'cache_p' + PAGE_VER + (SEL_T ? '_' + SEL_T : '');
       }
@@ -18453,7 +18453,8 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
           w: allDue ? '期日' : '今日',
           a: '全額',
           rest: '継続',
-          manual: false
+          manual: false,
+          sel: list.map((d) => d.id) // 更新278：対象の請求書（標準は全部）。一覧の☑で外せる
         };
         const chip = (g, v, lbl, dis) =>
           `<button data-g="${g}" data-v="${v}" ${dis ? 'disabled style="opacity:.45"' : ''} onclick="cpPick('${g}','${v}')">${lbl}</button>`;
@@ -18463,20 +18464,28 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
             .filter(Boolean);
           return `<div class="pyc"><span><b>${esc(cs.length > 1 ? '締め請求（' + cs.length + L.siteWord + '）' : cs[0] || d.subject || '')}</b><small>${esc(d.no)}${d.due ? '・期限 ' + esc(d.due.slice(5).replace('-', '/')) : ''}・残り ${yen(bal(d))}</small></span><input type="number" inputmode="numeric" id="cpR${i}" data-max="${bal(d)}" placeholder="0" oninput="CP.manual=true;cpSum()"><button onclick="cpRowFill(${i},'all')">全部</button><button onclick="cpRowFill(${i},'rest')">余り全部</button></div>`;
         };
-        dialog(`<h3>💴 入金を記録</h3><p style="font-size:12.5px;color:var(--muted);margin:0">${esc(cu.name || '')}　未入金 ${list.length}件　<b style="color:var(--danger)">${yen(total)}</b>${list.length > 1 ? `<br>${list.map((d) => esc(d.no) + (d.due ? '（期限 ' + esc(d.due.slice(5).replace('-', '/')) + '）' : '')).join('・')}` : ''}</p>${stagePaysHtml(list)}
+        // 更新278（三浦さん）：対象の請求書の一覧を一番上に。☑ 番号・現場名・金額／完成日／送信日→期限。2枚以上のときだけ
+        const md = (v) => (v ? esc(String(v).slice(5).replace('-', '/')) : '');
+        const selRow = (d, i) => {
+          const cs = docCases(d).map((id) => S.cases.find((c) => c.id === id) || {});
+          const nm = cs.length > 1 ? '締め請求（' + cs.length + L.siteWord + '）' : cs[0] && cs[0].name ? cs[0].name : d.subject || '';
+          const dn = cs.length ? (cs.every((c) => c.done) ? L.doneDate + ' ' + md(cs.length > 1 ? cs[cs.length - 1].done : cs[0].done) : `<span style="color:var(--danger)">${L.doneDate} 未登録</span>`) : '';
+          return `<label class="pck cpSel" style="margin:0 0 4px;align-items:flex-start"><input type="checkbox" ${CP.sel.includes(d.id) ? 'checked' : ''} onchange="cpSelToggle('${d.id}',this.checked)"><span style="flex:1"><b>${esc(nm)}</b>　<b style="float:right">${yen(bal(d))}</b><br><small style="color:var(--muted)">${esc(d.no)}　${dn}${d.sentAt ? '　送信 ' + md(d.sentAt) : ''}${d.due ? ' → 期限 ' + md(d.due) : ''}</small></span></label>`;
+        };
+        dialog(`<h3>💴 入金を記録</h3><p style="font-size:12.5px;color:var(--muted);margin:0">${esc(cu.name || '')}　<span id="cpHead">未入金 ${list.length}件　<b style="color:var(--danger)">${yen(total)}</b></span></p>${list.length > 1 ? `<div class="ppst">対象の請求書<small style="font-weight:400;color:var(--muted)">（今回は記録しない請求書は☑を外す）</small></div><div id="cpSelL">${list.map(selRow).join('')}</div>` : ''}${stagePaysHtml(list)}
     <div class="ppst">① 方法</div><div class="pchips pch3">${chip('M', '振込', '口座振込')}${chip('M', '現金', '現金')}${chip('M', 'その他', 'その他')}</div>
     <div id="cpOw" style="display:none;margin-top:4px"><input type="text" id="cpO" placeholder="方法（例：でんさい・相殺）" maxlength="20"></div>
     <div class="ppst">② 入金日</div><div class="pchips" style="flex-direction:column;align-items:stretch">${chip('W', '期日', '請求期日に入金' + (list.length > 1 ? '（請求書ごと）' : list[0].due ? '（' + esc(list[0].due.slice(5).replace('-', '/')) + '）' : ''), !allDue)}${chip('W', '今日', '今日入金（' + today.slice(5).replace('-', '/') + '）')}${chip('W', '別', '別日入金（日付を選ぶ）')}</div><input type="date" id="cpD" max="${today}" style="margin-top:6px;display:none" onclick="try{this.showPicker()}catch(e){}">
     <div class="pn" style="font-size:11.5px;color:#7A5A00;background:#FFF8E1;border:1px solid #F0D27A;border-radius:8px;padding:5px 8px;margin-top:6px">⚠️ 入金日は通帳の日付どおりに。税務調査・融資審査で最初に確認される記録です</div>
-    <div class="ppst">③ 入金額</div><div class="pchips" style="flex-direction:column;align-items:stretch">${chip('A', '全額', '☐ 請求どおり全額入金（' + yen(total) + '）')}${chip('A', '手数料', '☐ 振込手数料引きで入金（' + yen(total) + '－手数料）')}<div style="border-top:1px dashed var(--line);margin:4px 0"></div>${chip('A', '一部', '☐ 一部入金')}</div>
+    <div class="ppst">③ 入金額</div><div class="pchips" style="flex-direction:column;align-items:stretch">${chip('A', '全額', '☐ 請求どおり全額入金（<span class="cpTot">' + yen(total) + '</span>）')}${chip('A', '手数料', '☐ 振込手数料引きで入金（<span class="cpTot">' + yen(total) + '</span>－手数料）')}<div style="border-top:1px dashed var(--line);margin:4px 0"></div>${chip('A', '一部', '☐ 一部入金')}</div>
     <div id="cpPart" style="display:none">
       <div class="drow" style="margin-top:6px"><span style="flex:none;font-size:13px">入金額</span><input type="number" inputmode="numeric" id="cpA" placeholder="通帳に入った金額" oninput="cpAuto()"></div>
       <div class="drow" style="margin-top:4px"><span style="flex:none;font-size:13px">残金</span><b id="cpRest" style="flex:1;text-align:right">${yen(total)}</b></div>
       <div class="ppst" style="margin-top:8px">残金について</div><div class="pchips" style="flex-direction:column;align-items:stretch">${chip('R', '継続', '☐ 改めて請求を継続')}${chip('R', '値引', '☐ 値引発生 → 値引のお知らせを送る')}${chip('R', '免除', '☐ 免除発生 → 債務免除通知書を送る')}</div>
       <div id="cpAdjW" style="display:none"><div class="drow" style="margin-top:6px"><span style="flex:none;font-size:13px" id="cpAdjL">値引の金額</span><input type="number" inputmode="numeric" id="cpAdj" placeholder="金額" oninput="cpSum()"></div><div class="ppst" style="margin-top:8px">お知らせに書く理由<small style="font-weight:400;color:var(--muted)">（決まった文から選ぶ）</small></div><div class="pchips" id="cpWhy"></div></div>
       <details style="margin-top:6px"><summary style="font-size:12px;color:var(--muted)">値引・免除とは</summary><div class="hint" style="margin:4px 0 0">値引き：取引の値段を下げる。依頼主への値引きのお知らせ（文）を送れます。<br>免除：回収をあきらめて請求を消す。書面の「債務免除通知書」（PDF）を作って送ります。<br>どちらも記録のあとに、送るかどうかを決められます。</div></details>
-      ${list.length > 1 ? `<div class="ppst" style="margin-top:8px">どの請求書の分？<small style="font-weight:400;color:var(--muted)">（期日の古い順に自動で入れます）</small></div><button id="cpOpenBtn" style="width:100%;margin:0 0 6px" onclick="document.getElementById('cpRows').style.display='block';this.style.display='none'">✏️ 請求書ごとに金額を入れる</button>` : ''}
-      <div id="cpRows" style="display:none">${list.map(row).join('')}</div>
+      ${list.length > 1 ? `<div class="ppst" style="margin-top:8px">請求書ごとの金額<small style="font-weight:400;color:var(--muted)">（期日の古い順に自動で入れます。直せます）</small></div>` : ''}
+      <div id="cpRows" style="display:${list.length > 1 ? 'block' : 'none'}">${list.map(row).join('')}</div>
     </div>
     <p id="cpR" style="margin-top:8px;font-weight:800"></p>
     <div class="row"><button onclick="closeDlg()">やめる</button><button class="pri" onclick="cpSave()">記録する</button></div>`);
@@ -18510,7 +18519,7 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
         document.querySelectorAll('#dlg button[data-g]').forEach((x) => {
           const on = cur[x.dataset.g] === x.dataset.v;
           x.classList.toggle('on', on);
-          if (x.dataset.g === 'A' || x.dataset.g === 'R') x.textContent = (on ? '☑' : '☐') + x.textContent.slice(1);
+          if (x.dataset.g === 'A' || x.dataset.g === 'R') x.innerHTML = (on ? '☑' : '☐') + x.innerHTML.slice(1);
         });
         q('cpOw').style.display = CP.m === 'その他' ? 'block' : 'none';
         q('cpD').style.display = CP.w === '別' ? 'block' : 'none';
@@ -18525,8 +18534,28 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
             .join('');
         cpSum();
       }
+      /** 更新278：対象の請求書（一覧の☑）。1枚のときは常に対象 */
+      const cpOn = (d) => !CP.sel || CP.sel.includes(d.id);
+      const cpSelList = () => CP.list.filter(cpOn);
+      function cpSelToggle(id, on) {
+        CP.sel = CP.list.map((d) => d.id).filter((x) => (x === id ? on : CP.sel.includes(x)));
+        const tot = cpSelList().reduce((a, d) => a + bal(d), 0);
+        const h = document.getElementById('cpHead');
+        if (h) h.innerHTML = `対象 ${cpSelList().length}件　<b style="color:var(--danger)">${yen(tot)}</b>`;
+        document.querySelectorAll('#dlg .cpTot').forEach((e) => (e.textContent = yen(tot)));
+        CP.list.forEach((d, i) => {
+          const el = document.getElementById('cpR' + i);
+          if (el) {
+            el.closest('.pyc').style.display = cpOn(d) ? '' : 'none';
+            if (!cpOn(d)) el.value = '';
+          }
+        });
+        const a = document.getElementById('cpA');
+        if (a && a.value) cpAuto();
+        else cpSum();
+      }
       function cpRestAmt() {
-        const total = CP.list.reduce((a, d) => a + bal(d), 0);
+        const total = cpSelList().reduce((a, d) => a + bal(d), 0);
         return Math.max(0, total - (+(document.getElementById('cpA') || {}).value || 0));
       }
       function cpAuto() {
@@ -18534,7 +18563,7 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
         let rest = +document.getElementById('cpA').value || 0;
         CP.list.forEach((d, i) => {
           const el = document.getElementById('cpR' + i),
-            v = Math.min(bal(d), Math.max(0, rest));
+            v = cpOn(d) ? Math.min(bal(d), Math.max(0, rest)) : 0;
           el.value = v || '';
           rest -= v;
         });
@@ -18544,10 +18573,14 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
       }
       function cpSum() {
         const el = document.getElementById('cpR'),
-          total = CP.list.reduce((a, d) => a + bal(d), 0);
+          total = cpSelList().reduce((a, d) => a + bal(d), 0);
         if (!el) return;
+        if (!cpSelList().length) {
+          el.innerHTML = `<span style="color:var(--danger)">対象の請求書を1枚以上☑してください</span>`;
+          return;
+        }
         if (CP.a !== '一部') {
-          el.innerHTML = `<span style="color:var(--ok)">記録すると、${CP.list.length}件すべて入金済になります</span>`;
+          el.innerHTML = `<span style="color:var(--ok)">記録すると、${cpSelList().length}件すべて入金済になります${CP.list.length > cpSelList().length ? `（☑を外した ${CP.list.length - cpSelList().length}件は未入金のまま）` : ''}</span>`;
           return;
         }
         const a = +document.getElementById('cpA').value || 0,
@@ -18556,6 +18589,7 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
         let s = 0,
           over = '';
         CP.list.forEach((d, i) => {
+          if (!cpOn(d)) return;
           const v = +document.getElementById('cpR' + i).value || 0;
           s += v;
           if (v > bal(d)) over = d.no;
@@ -18576,7 +18610,11 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
       function cpSave() {
         const q = (id) => document.getElementById(id),
           today = ymdStr(new Date()),
-          total = CP.list.reduce((a, d) => a + bal(d), 0);
+          total = cpSelList().reduce((a, d) => a + bal(d), 0);
+        if (!cpSelList().length) {
+          toast('対象の請求書を1枚以上☑してください');
+          return;
+        }
         const method = CP.m === 'その他' ? (q('cpO').value || '').trim() || 'その他' : CP.m;
         const other = CP.w === '別' ? q('cpD').value : '';
         if (CP.w === '別' && !other) {
@@ -18592,7 +18630,7 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
         ]
           .filter(String)
           .join('／');
-        if (CP.a !== '一部') items = CP.list.map((d) => ({ docId: d.id, amount: bal(d) }));
+        if (CP.a !== '一部') items = cpSelList().map((d) => ({ docId: d.id, amount: bal(d) }));
         else {
           const a = +q('cpA').value || 0;
           if (a <= 0) {
@@ -18600,7 +18638,7 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
             return;
           }
           items = CP.list
-            .map((d, i) => ({ docId: d.id, amount: Math.round(+q('cpR' + i).value || 0) }))
+            .map((d, i) => ({ docId: d.id, amount: cpOn(d) ? Math.round(+q('cpR' + i).value || 0) : 0 }))
             .filter((x) => x.amount > 0);
           const s = items.reduce((t, x) => t + x.amount, 0);
           if (s !== a) {
@@ -18761,7 +18799,7 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
       function cpAllocRest(amt, paidItems) {
         let rest = amt;
         const out = [];
-        CP.list.forEach((d0) => {
+        cpSelList().forEach((d0) => {
           const d = S.docs.find((x) => x.id === d0.id);
           const paid = paidItems ? (paidItems.find((x) => x.docId === d0.id) || {}).amount || 0 : 0;
           const b = d ? bal(d) - paid : 0;
@@ -18783,7 +18821,7 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
           const got = +document.getElementById('cpA').value || 0;
           let others = 0;
           CP.list.forEach((d, j) => {
-            if (j !== i) others += +document.getElementById('cpR' + j).value || 0;
+            if (j !== i && cpOn(d)) others += +document.getElementById('cpR' + j).value || 0;
           });
           el.value = Math.max(0, Math.min(max, got - others)) || '';
         }
