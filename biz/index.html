@@ -346,7 +346,7 @@
     <div class="row"><button class="pri" onclick="demoStart()">🎓 お試しを始める</button></div>
   </div>
   <div class="sec acc" data-acc="eng" style="margin-top:12px" id="engSec"><h2>🔧 動作の記録（保守用）</h2>
-    <div class="hint" style="margin:0 0 4px">画面の版：<b>更新256</b>（2026-10-18）。古い画面が出るときは、LINEのトークを閉じて開き直してください</div>
+    <div class="hint" style="margin:0 0 4px">画面の版：<b>更新257</b>（2026-10-18）。古い画面が出るときは、LINEのトークを閉じて開き直してください</div>
     <div class="hint" id="bootTime" style="font-size:11px;line-height:1.7"></div>
   </div>
 </div>
@@ -439,7 +439,7 @@ function snapRebuild(){ spin(true); run('liffSnapRebuild', [UID, true], () => { 
 // ② 前回の台帳をスマホに覚えさせ、まず前回の内容で画面を出す（外の置き場だけ。Google側は uid を信じる作りなので使わない）2026-10-11
 let STALE = false, FRESH_PENDING = null, CUR_TAB = 'cases';
 let SEL_T = (function () { try { return localStorage.getItem(LS_NS + 't') || ''; } catch (e) { return ''; } })();   // 選んだ台帳（親方ID。空＝自分の台帳）更新235
-const PAGE_VER = '256';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
+const PAGE_VER = '257';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
 function cacheKey(){ return LS_NS + 'cache_p' + PAGE_VER + (SEL_T ? '_' + SEL_T : ''); }
 function cacheRead(){ try { const o = JSON.parse(localStorage.getItem(cacheKey()) || 'null'); return o && o.uid && o.S && o.S.labels ? o : null; } catch (e) { return null; } }
 function cacheWrite(uid, data){ try { const s = JSON.stringify({ uid, at: Date.now(), S: data }); if (s.length < 4000000) localStorage.setItem(cacheKey(), s); } catch (e) { /* 入らなければ覚えない */ } }
@@ -925,6 +925,9 @@ function todoRows(){ const today = ymdStr(new Date()), rows = [];
   const grp = d => { const c = S.cases.find(x => x.id === docCases(d)[0]); return c ? caseGroup(c) : ''; };
   S.docs.filter(d => live(d) && d.kind === '請求' && bal(d) > 0 && d.paidReport).forEach(d => rows.push({ key: d.id, cls: 'ok', tag: '振込の報告', t: `${nm(d)}が「振り込みました」`, s: `${d.no}　${yen(bal(d))}　${d.paidReport.slice(5, 16).replace('-', '/')}`, b: '💴 入金を記録', fn: `payDialog('${d.id}')` }));
   S.docs.filter(d => live(d) && d.kind === '請求' && bal(d) > 0 && d.due && d.due < today && !d.paidReport).forEach(d => rows.push({ key: d.id, cls: 'red', tag: '期限超え', t: `${nm(d)}　${yen(bal(d))}`, s: `${d.no}　期限 ${d.due.slice(5).replace('-', '/')}`, b: '📨 お願い', fn: `remindDoc('${d.id}')` }));
+  if (L.contract) { const now = new Date(), ym = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0'), mon = `${now.getFullYear()}年${now.getMonth() + 1}月分`;   // 月額の案件：25日から「今月分の請求書」（更新257）
+    if (now.getDate() >= 25) S.cases.filter(c => c.contract && c.contract.kind && (modelOf(c) === '月額' || c.contract.plusMonthly) && ['工事中', '請求中'].includes(caseGroup(c)) && c.status !== '取りやめ' && c.status !== '中断' && !docsOf(c.id).some(d => live(d) && d.kind === '請求' && (d.subject || '').includes(mon)))
+      .forEach(c => rows.push({ key: 'mon_' + c.id, cls: 'blue', tag: '月額の請求', t: `${esc(c.name)}　${mon}の請求書がまだです`, s: `月額 ${yen(c.contract.monthlyFee || c.contract.feeAmount || 0)}（税込）`, b: '🧾 今月分の請求書', fn: `monthlyInvoice('${c.id}','${ym}')` })); }
   S.cases.filter(c => caseGroup(c) === '工事中' && !(c.term && (c.term.start || c.term.days)) && c.status !== L.done).forEach(c => rows.push({ key: 'term_' + c.id, cls: 'blue', tag: `${L.workWord}予定日`, t: `${esc(c.name)}　${L.workWord}の予定日がまだです`, s: `お客様が確認した${L.siteWord}。いつ始めるか入れておくと、やり残しから消えます`, b: '📅 予定を入れる', fn: `editCase('${c.id}',4)` }));   // 受注のあとの不意打ちを防ぐ（2026-10-12）
   S.docs.filter(d => live(d) && d.kind === '注文' && d.okAt && (() => { const cid = docCases(d)[0]; const c = S.cases.find(x => x.id === cid); return c && caseGroup(c) === '工事中' && !docsOf(cid).some(x => live(x) && x.kind === '請求') && !(c.term && (c.term.start || c.term.days)); })()).forEach(d => rows.push({ key: d.id + ':ok', cls: 'ok', tag: '注文確定', t: `${nm(d)}が注文書を承認`, s: `${d.no}　${d.okAt.slice(5).replace('-', '/')}　次は着手金の請求か${L.workWord}の予定日`, b: `${L.siteWord}を開く`, fn: `openCase('${docCases(d)[0]}')` }));
   S.docs.filter(d => live(d) && d.kind === '見積' && d.sub !== '追加変更' && d.okAt && !d.result && grp(d) === '見積中').forEach(d => rows.push({ key: d.id, cls: 'ok', tag: '確認済', t: `${nm(d)}が見積を確認`, s: `${d.no}　${d.okAt.slice(5).replace('-', '/')}`, b: '✅ 受注へ', fn: `openCase('${docCases(d)[0]}')` }));
@@ -996,7 +999,7 @@ function planPay(c, g){ const inv = unpaidInv(c); if (inv.length === 1) return `
 /** 「完成日を入力」の小さな画面：日付（はじめは今日）＋見積書を見る＋「請求書はあとで」「この書類から請求書を作る」（2026-10-10） */
 function doneAsk(id){ const c = S.cases.find(x => x.id === id); if (!c) return; const today = ymdStr(new Date()); const est = S.docs.find(d => d.id === invSrcOf(id)); const hasInv = docsOf(id).filter(live).some(d => d.kind === '請求');
   dialog(`<h3>${L.done}日を入力</h3><p><b>${esc(c.name)}</b>　${yen(caseAmt(c))}</p>
-    <div class="drow"><span style="flex:none;font-size:13px">${L.done}日</span><input type="date" id="dnD" value="${c.done && c.done <= today ? c.done : today}" max="${today}" onclick="try{this.showPicker()}catch(e){}"></div>
+    <div class="drow"><span style="flex:none;font-size:13px">${L.done}日</span><input type="date" id="dnD" value="${c.done && c.done <= today ? c.done : (c.contract && c.contract.due && c.contract.due <= today ? c.contract.due : today)}" max="${today}" onclick="try{this.showPicker()}catch(e){}"></div>
     <div class="pn" style="font-size:11.5px;color:#7A5A00;background:#FFF8E1;border:1px solid #F0D27A;border-radius:8px;padding:5px 8px;margin-top:6px">⚠️ ${L.done}日と入金日は、税務調査・融資審査で最初に確認される記録です。実際の日付を入れてください</div>
     ${est && est.pdf ? `<div class="row" style="margin-top:6px"><button onclick="previewDoc('${est.id}')">📄 見積書を見る</button></div>` : ''}
     ${hasInv ? `<div class="row" style="margin-top:8px"><button class="pri" onclick="doneGo('${id}',false)">${L.done}日を${c.done ? '直す' : '記録する'}</button></div>` : `<div class="row" style="margin-top:8px"><button onclick="doneGo('${id}',false)">${L.done}にして、請求書はあとで</button></div>
@@ -2372,15 +2375,23 @@ function caseSheetHtml(id){
     + (hist2.length ? `<details class="dhist"${HIST_OPEN ? ' open' : ''} ontoggle="HIST_OPEN=this.open"><summary>📜 過去の書類・編集履歴を見る（${hist2.length}件）</summary><div class="dlist">${hist2.map(d => docCard(d)).join('')}</div></details>` : '');
 }
 /* ===== 案件メモ（契約内容）と契約書（2026-10-16 Mybiz ③-2〜③-4）。L.contract のある型だけ。建設では呼ばれない ===== */
+const MODELS = ['納品', '月額', '成果報酬', '時間', '回数'];   // 報酬の型（更新257）
+const MODEL_WORDS = { '納品': { unit: '式', qty: '', name: '納品（一式）', hint: 'HP制作・デザイン・動画・システム開発など、成果物を納めて1回で請求' }, '月額': { unit: '月', qty: '', name: '月額', hint: '顧問・保守・ジム月会費・経理代行など、毎月定額を請求' }, '成果報酬': { unit: '件', qty: '件数', name: '成果報酬', hint: '営業代行・紹介など、成果の件数×単価を毎月請求（フルコミット）' }, '時間': { unit: '時間', qty: '時間', name: '時間・稼働', hint: 'エンジニアの準委任・コンサルの時間制など、時間×単価を毎月請求' }, '回数': { unit: '回', qty: '回数', name: '回数・従量', hint: '撮影1回・レッスン1回・翻訳1文字など、回数×単価をその都度請求' } };
+const modelOf = c => (c && c.contract && MODELS.includes(c.contract.model)) ? c.contract.model : '納品';
+const modelChips = (id, cur, onpick) => `<div class="seg" id="${id}" style="flex-wrap:wrap">${MODELS.map(k => `<button class="${k === cur ? 'on' : ''}" onclick="document.querySelectorAll('#${id} button').forEach(b=>b.classList.toggle('on',b===this));${onpick}">${MODEL_WORDS[k].name}</button>`).join('')}</div>`;
 const CTR_KIND_HINT = { '請負': '成果物を完成させて納めることを約束する型（制作物・システム開発の納品など）。紙で渡すときは収入印紙が要ります', '準委任': '作業や助言そのものを提供する型（ITエンジニアの技術提供・コンサル・経理代行・保守など）。収入印紙は要りません' };
 /** 案件の画面に出す「案件メモ・契約書」の枠 */
 function contractBox(c){
   if (!L.contract || c.status === '取りやめ') return '';
-  const m = c.contract || null, id = c.id;
+  const m = c.contract && c.contract.kind ? c.contract : null, id = c.id, mo = modelOf(c), plus = !!(c.contract && c.contract.plusMonthly);
   const ctrs = docsOf(id).filter(d => d.kind === '契約').sort((a, b) => b.id.localeCompare(a.id)), cur = ctrs.find(live);
-  const sum = m ? [m.kind, m.work ? m.work.replace(/\s+/g, ' ').slice(0, 28) : '', m.fee ? m.fee + '（税込）' : ''].filter(Boolean).join('　') : '';
-  const estA = adoptedEst(id); const gap = m && m.feeAmount && estA && estA.total && m.feeAmount !== estA.total ? `<div class="hint" style="color:#B42318;margin:2px 0 4px">⚠ 案件メモの報酬 ${yen(m.feeAmount)} と見積書の合計 ${yen(estA.total)} が違います（どちらかを直してください）</div>` : '';
-  const memoRow = `<div class="cafter" onclick="contractMemoEdit('${id}')"><span class="k">📝 案件メモ（契約内容）</span>${m ? esc(sum) : '<span style="color:var(--muted)">まだ書いていない（タップで入力）</span>'}</div>${gap}`;
+  const sum = m ? [MODEL_WORDS[mo].name + (plus ? '＋月額' : ''), m.kind, m.work ? m.work.replace(/\s+/g, ' ').slice(0, 28) : '', m.fee ? m.fee + '（税込）' : ''].filter(Boolean).join('　') : '';
+  const estA = adoptedEst(id); const gap = m && mo === '納品' && m.feeAmount && estA && estA.total && m.feeAmount !== estA.total ? `<div class="hint" style="color:#B42318;margin:2px 0 4px">⚠ 案件メモの報酬 ${yen(m.feeAmount)} と見積書の合計 ${yen(estA.total)} が違います（どちらかを直してください）</div>` : '';
+  const memoRow = `<div class="cafter" onclick="contractMemoEdit('${id}')"><span class="k">📝 案件メモ（契約内容）</span>${m ? esc(sum) : `<span style="color:var(--muted)">${esc(MODEL_WORDS[mo].name)}${plus ? '＋月額' : ''}　まだ書いていない（タップで入力）</span>`}</div>${gap}`;
+  // 実績から請求書（成果報酬・時間・回数）／今月分の請求書（月額・＋月額）更新257
+  const active = c.status !== '取りやめ' && c.status !== '中断' && caseGroup(c) !== '相談中';
+  const perfRow = m && active && (mo === '成果報酬' || mo === '時間' || mo === '回数') ? `<div class="csb"><button class="pri" style="flex:1 1 100%" onclick="perfInvoice('${id}')">🧾 実績から請求書<small style="display:block;font-weight:400;font-size:11px">${esc(MODEL_WORDS[mo].qty)}を入れると ${esc(MODEL_WORDS[mo].qty)}×単価で請求書を作ります</small></button></div>` : '';
+  const monRow = m && active && (mo === '月額' || plus) ? `<div class="csb"><button class="pri" style="flex:1 1 100%;background:var(--blue);border-color:var(--blue)" onclick="monthlyInvoice('${id}')">🧾 今月分の請求書（月額）<small style="display:block;font-weight:400;font-size:11px">月額 ${yen(m.monthlyFee || (mo === '月額' ? m.feeAmount : 0))}（税込）。月を選んで請求書を作ります</small></button></div>` : '';
   let ctrRow = '';
   if (cur) {
     const st = cur.okAt ? `<span class="tag" style="background:#E3F4E8;color:${L.colorHex}">✓ 同意 ${esc(cur.okAt.slice(5).replace('-', '/'))}</span>` : cur.sentN ? sentTag(cur) + '<span class="tag" style="background:#FFF4E0;color:#7A5A00">同意待ち</span>' : '<span class="tag" style="background:#EEF2F6;color:#4B5563">未送信</span>';
@@ -2392,32 +2403,89 @@ function contractBox(c){
     ctrRow = `<div class="csb"><button class="pri" style="flex:1 1 100%" onclick="contractDraftOpen('${id}')">📑 ${dr ? '契約書の下書きを開く' : '契約書の下書きを作る'}<small style="display:block;font-weight:400;font-size:11px">${dr ? '保存した下書きがあります。直して正書にできます' : m ? '案件メモの内容から業務委託契約書の条文を作ります' : '先に案件メモ（契約内容）を書くと、条文に流し込めます'}</small></button></div>`;
   }
   const toInv = caseGroup(c) === '工事中' && c.status !== L.done && !adoptedEst(id) && !docsOf(id).some(d => live(d) && d.kind === '請求') ? `<div class="csb"><button class="pri" style="background:var(--blue);border-color:var(--blue);flex:1 1 100%" onclick="doneAsk('${id}')">✅ ${L.done}にする → 請求書を作る<small style="display:block;font-weight:400;font-size:11px">見積書がない${L.siteWord}は、ここから${L.done}日を入れて請求書へ</small></button></div>` : '';   // 契約だけで受注した案件の請求（2026-10-16）
-  return `<div class="slot"><div class="slh">案件メモ・契約書</div>${memoRow}${ctrRow}${toInv}</div>`;
+  return `<div class="slot"><div class="slh">案件メモ・契約書</div>${memoRow}${ctrRow}${perfRow}${monRow}${toInv}</div>`;
 }
+/** 実績から請求書（更新257）：件数・時間・回数 × 単価。税込の単価なので「税込固定（incl_total）」で開く */
+function perfInvoice(id){ const c = S.cases.find(x => x.id === id); if (!c || !c.contract) return; const m = c.contract, mo = modelOf(c), W = MODEL_WORDS[mo];
+  const now = new Date(), ym = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+  dialog(`<h3>🧾 実績から請求書</h3><p style="font-size:13px"><b>${esc(c.name)}</b>　${esc(m.fee || '')}</p>
+    <label class="fl" style="display:block;font-size:12.5px;font-weight:700">対象の月</label><input type="month" id="pfYm" value="${ym}">
+    <label class="fl" style="display:block;margin-top:8px;font-size:12.5px;font-weight:700">${esc(W.qty)}</label><div style="display:flex;gap:6px;align-items:center"><input type="number" id="pfQty" min="0" step="${mo === '時間' ? '0.5' : '1'}" placeholder="例：${mo === '時間' ? '160' : '3'}" style="flex:1"><span>${esc(mo === '回数' ? (m.unitName || '回') : W.unit)}</span></div>
+    ${mo === '成果報酬' && m.rate > 0 ? `<label class="fl" style="display:block;margin-top:8px;font-size:12.5px;font-weight:700">対象の売上（税抜・合計）</label><input type="number" id="pfSales" min="0" placeholder="例：1000000">` : ''}
+    <div class="hint" style="margin:6px 0 0">単価は案件メモの ${esc(m.fee || '')}。${mo === '時間' && m.hoursCap ? `月${m.hoursCap}時間を超えた分は超過単価 ${yen(m.overPrice || m.unitPrice)}。` : ''}${mo === '成果報酬' && m.minFee ? `最低保証 ${yen(m.minFee)}。` : ''}請求書の画面で明細は直せます。</div>
+    <div class="row" style="margin-top:10px"><button onclick="closeDlg()">やめる</button><button class="pri" onclick="perfInvoiceGo('${id}')">請求書を作る</button></div>`); }
+function perfInvoiceGo(id){ const c = S.cases.find(x => x.id === id); const m = c.contract, mo = modelOf(c), W = MODEL_WORDS[mo];
+  const ym = (document.getElementById('pfYm') || {}).value || '', qty = +(document.getElementById('pfQty') || {}).value || 0, sales = +(document.getElementById('pfSales') || {}).value || 0;
+  if (!qty && !(mo === '成果報酬' && m.rate > 0 && sales)) { toast(W.qty + 'を入れてください'); return; }
+  const mon = ym ? `${+ym.slice(0, 4)}年${+ym.slice(5, 7)}月分` : ''; const unit = mo === '回数' ? (m.unitName || '回') : W.unit; const items = [];
+  if (mo === '成果報酬' && m.rate > 0) items.push({ item_id: '', name: `${m.work || c.name}（成果報酬 売上×${m.rate}％）`, qty: 1, unit: '式', unit_price: Math.round(sales * m.rate / 100), note: `${mon} 対象売上 ${yen(sales)}（税抜）・${qty}件` });
+  else if (mo === '時間' && m.hoursCap > 0 && qty > m.hoursCap) { items.push({ item_id: '', name: `${m.work || c.name}（${mon}）`, qty: m.hoursCap, unit, unit_price: m.unitPrice, note: '月の稼働枠' }); items.push({ item_id: '', name: '超過分', qty: Math.round((qty - m.hoursCap) * 100) / 100, unit, unit_price: m.overPrice || m.unitPrice, note: '' }); }
+  else items.push({ item_id: '', name: `${m.work || c.name}（${mon}）`, qty, unit, unit_price: m.unitPrice, note: '' });
+  if (mo === '成果報酬' && m.minFee > 0) { const sub = items.reduce((a, r) => a + Math.round(r.qty * r.unit_price), 0); if (sub < m.minFee) items.push({ item_id: '', name: '最低保証との差額', qty: 1, unit: '式', unit_price: m.minFee - sub, note: `最低保証 ${yen(m.minFee)}` }); }
+  closeDlg(); newDocForCase(id, '請求', items, true); D.tax_included = false; D.incl_total = true; D.subject = `${mon} ${m.work || c.name}`.trim(); render(); }
+/** 今月分の請求書（月額・＋月額）更新257 */
+function monthlyInvoice(id, ym0){ const c = S.cases.find(x => x.id === id); if (!c || !c.contract) return; const m = c.contract, mo = modelOf(c);
+  const fee = m.monthlyFee || (mo === '月額' ? m.feeAmount : 0); const now = new Date(), ym = ym0 || (now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0'));
+  dialog(`<h3>🧾 今月分の請求書（月額）</h3><p style="font-size:13px"><b>${esc(c.name)}</b>　月額 ${yen(fee)}（税込）</p>
+    <label class="fl" style="display:block;font-size:12.5px;font-weight:700">対象の月</label><input type="month" id="pfYm" value="${ym}">
+    <div class="hint" style="margin:6px 0 0">同じ月の請求書がすでにあれば、作る前に教えます。</div>
+    <div class="row" style="margin-top:10px"><button onclick="closeDlg()">やめる</button><button class="pri" onclick="monthlyInvoiceGo('${id}')">請求書を作る</button></div>`); }
+function monthlyInvoiceGo(id){ const c = S.cases.find(x => x.id === id); const m = c.contract, mo = modelOf(c); const fee = m.monthlyFee || (mo === '月額' ? m.feeAmount : 0);
+  const ym = (document.getElementById('pfYm') || {}).value || ''; const mon = ym ? `${+ym.slice(0, 4)}年${+ym.slice(5, 7)}月分` : '';
+  if (docsOf(id).some(d => live(d) && d.kind === '請求' && (d.subject || '').includes(mon))) { if (!confirm(`${mon}の請求書はもうあります。もう1枚作りますか？`)) return; }
+  closeDlg(); newDocForCase(id, '請求', [{ item_id: '', name: `${m.work || c.name}（${mon}）`, qty: 1, unit: '月', unit_price: fee, note: '' }], true); D.tax_included = false; D.incl_total = true; D.subject = `${mon} ${m.work || c.name}`.trim(); render(); }
 /** 案件メモ（契約内容）の入力 */
+/** 報酬の型ごとの項目（更新257）。案件メモの中で型を切り替えると描き直す */
+function cmModelBox(model, m){
+  const v = k => esc(m[k] == null ? '' : m[k]); const F = (label, inner, hint) => `<label class="fl" style="display:block;margin-top:8px;font-size:12.5px;font-weight:700">${label}</label>${inner}${hint ? `<div class="hint" style="margin:2px 0 0">${hint}</div>` : ''}`;
+  const REQ = '<span class="tag" style="background:#FDE8E8;color:#B42318;margin-left:6px;font-size:10.5px">必須</span>';
+  const monthly = `${F('月額（税込）' + REQ, `<input type="number" id="cmMonthlyFee" min="0" value="${v('monthlyFee') || ''}" placeholder="例：55000">`)}
+    ${F('開始月', `<input type="month" id="cmStartMonth" value="${v('startMonth')}">`)}<div class="tog" style="margin-top:6px"><input type="checkbox" id="cmProrate" ${m.prorate ? 'checked' : ''}><label for="cmProrate">月の途中の開始・終了は日割り</label></div>`;
+  let h = '';
+  if (model === '納品') h = F('報酬（税込）' + REQ, `<input id="cmFee" maxlength="120" value="${v('fee')}" placeholder="例：一式 330,000円">`, '金額の数字は請求書の目安になります');
+  else if (model === '月額') h = monthly;
+  else if (model === '成果報酬') h = `${F('成果1件の単価（税込）' + REQ, `<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><input type="number" id="cmUnitPrice" min="0" value="${v('unitPrice') || ''}" placeholder="例：30000" style="flex:1"><span style="font-size:12.5px">円　または 売上の</span><input type="number" id="cmRate" min="0" max="100" step="0.1" value="${v('rate') || ''}" style="width:70px"><span style="font-size:12.5px">％</span></div>`, '率を入れたときは率が優先')}
+    ${F('成果の定義' + REQ, `<input id="cmResultDef" maxlength="120" value="${v('resultDef') || (m.resultDef === undefined ? '乙の活動により、甲とその顧客との間で契約が締結されたとき' : '')}">`, '「契約締結時」が初期値。入金時にするならここを直す')}
+    ${F('成果の報告', `<div style="display:flex;gap:6px;align-items:center"><span style="font-size:12.5px">甲が翌月</span><input type="number" id="cmReportDay" min="1" max="31" value="${v('reportDay') || 5}" style="width:70px"><span style="font-size:12.5px">日までに件数を乙へ通知</span></div>`, '集計は毎月1日〜末日')}
+    ${F('最低保証（月・税込）', `<input type="number" id="cmMinFee" min="0" value="${v('minFee') || ''}" placeholder="なければ空">`)}
+    ${F('成約後の解約・返金の扱い', `<input id="cmReversal" maxlength="120" value="${v('reversal')}" placeholder="例：成約から30日以内の解約は成果に数えない">`)}`;
+  else if (model === '時間') h = `${F('1時間の単価（税込）' + REQ, `<input type="number" id="cmUnitPrice" min="0" value="${v('unitPrice') || ''}" placeholder="例：6000">`)}
+    ${F('月の稼働枠と超過', `<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><span style="font-size:12.5px">月</span><input type="number" id="cmHoursCap" min="0" value="${v('hoursCap') || ''}" placeholder="例：160" style="width:80px"><span style="font-size:12.5px">時間まで。超過は1時間</span><input type="number" id="cmOverPrice" min="0" value="${v('overPrice') || ''}" placeholder="同じ単価" style="width:100px"><span style="font-size:12.5px">円</span></div>`, '枠がなければ空（時間×単価だけ）')}
+    ${F('稼働の報告', `<div style="display:flex;gap:6px;align-items:center"><span style="font-size:12.5px">乙が翌月</span><input type="number" id="cmReportDay" min="1" max="31" value="${v('reportDay') || 3}" style="width:70px"><span style="font-size:12.5px">日までに稼働時間を報告</span></div>`, '契約書に「指揮命令を受けない」の文が入ります（偽装請負の予防）')}`;
+  else if (model === '回数') h = `${F('1回の単価（税込）' + REQ, `<div style="display:flex;gap:6px;align-items:center"><span style="font-size:12.5px">1</span><input id="cmUnitName" maxlength="10" value="${v('unitName') || '回'}" style="width:70px"><span style="font-size:12.5px">につき</span><input type="number" id="cmUnitPrice" min="0" value="${v('unitPrice') || ''}" placeholder="例：15000" style="flex:1"><span style="font-size:12.5px">円</span></div>`, '単位は 回・件・文字・本 など')}
+    ${F('予約の変更・キャンセル', `<input id="cmCancelFee" maxlength="120" value="${v('cancelFee')}" placeholder="例：前日まで無料、当日は50％">`)}`;
+  if (model !== '月額') h += `<div class="tog" style="margin-top:8px"><input type="checkbox" id="cmPlus" ${m.plusMonthly ? 'checked' : ''} onchange="document.getElementById('cmPlusBox').style.display=this.checked?'block':'none'"><label for="cmPlus">＋月額もある（制作＋保守、入会金＋月会費 など）</label></div><div id="cmPlusBox" style="display:${m.plusMonthly ? 'block' : 'none'};border-left:3px solid var(--line);padding-left:8px">${monthly}</div>`;
+  return h;
+}
+function cmModelSet(k){ CM_MODEL = k; const box = document.getElementById('cmModelBox'); if (box) box.innerHTML = cmModelBox(k, CM_M || {}); const n = document.getElementById('cmNapin'); if (n) n.style.display = k === '納品' ? 'block' : 'none'; document.querySelectorAll('[data-napin]').forEach(e => { e.style.display = k === '納品' ? 'block' : 'none'; });
+  if (k === '月額' && !(CM_M && CM_M.payRule)) { document.querySelectorAll('#cmPayRule button').forEach(b => b.classList.toggle('on', b.textContent === '月末締め翌月末')); }
+  if (k !== '納品' && !(CM_M && CM_M.kind)) { document.querySelectorAll('#cmKind button').forEach(b => b.classList.toggle('on', b.textContent === '準委任')); } const h = document.getElementById('cmMH'); if (h) h.textContent = MODEL_WORDS[k].hint; }
+let CM_MODEL = '納品', CM_M = null;
 function contractMemoEdit(id){
   const c = S.cases.find(x => x.id === id); if (!c) return; const m0 = c.contract || {};
   // 見積書からの転記（更新255）：案件メモがまだないときは、採用した見積の合計を報酬に、着手金があれば支払期日を「着手時・完了時」に
   const est = adoptedEst(id); const m = Object.assign({}, m0);
   if (!m0.fee && est && est.total) { m.fee = '一式 ' + yen(est.total).replace('¥', '') + '円'; m.feeAmount = est.total; }
   const v = k => esc(m[k] || '');
+  CM_MODEL = MODELS.includes(m.model) ? m.model : '納品'; CM_M = m;
   const REQ = '<span class="tag" style="background:#FDE8E8;color:#B42318;margin-left:6px;font-size:10.5px">必須</span>';
   const eom = id2 => `<button class="sm" type="button" onclick="(function(e){const d=e.value?new Date(e.value+'T00:00:00'):new Date();const z=new Date(d.getFullYear(),d.getMonth()+1,0);e.value=z.getFullYear()+'-'+String(z.getMonth()+1).padStart(2,'0')+'-'+String(z.getDate()).padStart(2,'0');})(document.getElementById('${id2}'))">月末</button>`;
   const seg = (name, opts, cur) => `<div class="seg" id="${name}" style="margin-bottom:4px">${opts.map(o => `<button class="${o === cur ? 'on' : ''}" onclick="document.querySelectorAll('#${name} button').forEach(b=>b.classList.toggle('on',b===this));${name === 'cmKind' ? 'document.getElementById(\'cmKH\').textContent=CTR_KIND_HINT[this.textContent]||\'\'' : ''}">${o}</button>`).join('')}</div>`;
   const F = (label, inner, hint) => `<label class="fl" style="display:block;margin-top:8px;font-size:12.5px;font-weight:700">${label}</label>${inner}${hint ? `<div class="hint" style="margin:2px 0 0">${hint}</div>` : ''}`;
   dialog(`<h3>📝 案件メモ（契約内容）</h3><div style="max-height:62vh;overflow:auto;padding-right:2px">
     <div class="hint" style="margin:0 0 4px">フリーランス法で発注者に明示が求められる項目に <span class="tag" style="background:#FDE8E8;color:#B42318;font-size:10.5px">必須</span> を付けています${est ? '。報酬は見積書から転記しました' : ''}</div>
-    ${F('契約の種類' + REQ, seg('cmKind', ['請負', '準委任'], m.kind || ''), `<span id="cmKH">${esc(CTR_KIND_HINT[m.kind] || 'ITエンジニアは、同じ仕事でも「請負（納品型）」と「準委任（技術提供型）」に分かれます。契約書の印紙の要否に使います')}</span>`)}
+    ${F('報酬の型' + REQ, modelChips('cmModel', CM_MODEL, "cmModelSet(MODELS.find(k=>MODEL_WORDS[k].name===this.textContent)||'納品')"), `<span id="cmMH">${esc(MODEL_WORDS[CM_MODEL].hint)}</span>`)}
+    ${F('契約の種類' + REQ, seg('cmKind', ['請負', '準委任'], m.kind || (CM_MODEL === '納品' ? '' : '準委任')), `<span id="cmKH">${esc(CTR_KIND_HINT[m.kind] || 'ITエンジニアは、同じ仕事でも「請負（納品型）」と「準委任（技術提供型）」に分かれます。契約書の印紙の要否に使います')}</span>`)}
     ${F('業務の内容' + REQ, `<textarea id="cmWork" rows="3" maxlength="400" placeholder="例：○○のホームページ制作一式／毎月の経理代行（記帳・請求書発行）">${v('work')}</textarea>`)}
     ${F('期間（役務提供の期間）', `<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><input type="date" id="cmFrom" value="${v('from')}" style="flex:1 1 38%"><span>〜</span><input type="date" id="cmTo" value="${v('to')}" style="flex:1 1 38%">${eom('cmTo')}</div><div class="tog" style="margin-top:4px"><input type="checkbox" id="cmMonthly" ${m.monthly ? 'checked' : ''}><label for="cmMonthly">月額（1か月ごとに自動更新）</label></div><input id="cmPeriodNote" maxlength="100" value="${v('periodNote')}" placeholder="補足（例：納期は11月末）" style="margin-top:4px">`)}
-    ${F('納期・完了日（成果物を納める日＝受領日）' + REQ, `<div style="display:flex;gap:6px;align-items:center"><input type="date" id="cmDue" value="${v('due')}" style="flex:1">${eom('cmDue')}</div>`, '「月末」でその月の末日が入ります。準委任で納める物がないときは、期間を入れればここは空でよい')}
-    ${F('成果物', `<input id="cmDeliver" maxlength="200" value="${v('deliver')}" placeholder="例：ホームページ一式（HTML・画像）／納品物なし">`)}
+    <div id="cmNapin" style="display:${CM_MODEL === '納品' ? 'block' : 'none'}">${F('納期・完了日（成果物を納める日＝受領日）' + REQ, `<div style="display:flex;gap:6px;align-items:center"><input type="date" id="cmDue" value="${v('due')}" style="flex:1">${eom('cmDue')}</div>`, '「月末」でその月の末日が入ります。準委任で納める物がないときは、期間を入れればここは空でよい')}
+    ${F('成果物', `<input id="cmDeliver" maxlength="200" value="${v('deliver')}" placeholder="例：ホームページ一式（HTML・画像）／納品物なし">`)}</div>
     ${F('納入場所・納め方' + REQ, `<input id="cmPlace" maxlength="120" value="${v('place')}" placeholder="例：PDFをLINEで／甲の事務所／オンライン（Zoom）">`)}
-    ${F('報酬（税込）' + REQ, `<input id="cmFee" maxlength="120" value="${v('fee')}" placeholder="例：月額 55,000円／一式 330,000円">`, '金額の数字は請求書の目安になります')}
+    <div id="cmModelBox">${cmModelBox(CM_MODEL, m)}</div>
     ${F('支払期日' + REQ, seg('cmPayRule', ['受領日から', '月末締め翌月末', '着手時・完了時', 'その他'], m.payRule || (m.pay ? 'その他' : '受領日から')) + `<div style="display:flex;gap:6px;align-items:center;margin-top:4px;flex-wrap:wrap"><span style="font-size:12.5px">受領日から</span><input type="number" id="cmPayDays" min="1" max="60" value="${esc(m.payDays || 30)}" style="width:70px"><span style="font-size:12.5px">日以内（上限60日）</span><input id="cmPayFirst" maxlength="60" value="${v('payFirst')}" placeholder="着手時の分（例：50%／100,000円）" style="flex:1 1 100%"></div>`, 'フリーランス法では、支払期日は受領日から60日以内に定めます。「月末締め翌月末」は60日を超える月があるので、超えるときはその前日まで、の文になります')}
     ${F('支払条件の補足', `<input id="cmPay" maxlength="200" value="${v('pay')}" placeholder="例：請求書の受領後／分割の内訳">`)}
     ${F('支払方法', seg('cmPayMethod', ['振込（手数料は甲の負担）', '振込（手数料は乙の負担）', 'その他'], m.payMethod || '振込（手数料は甲の負担）') + `<input id="cmPayMethodNote" maxlength="100" value="${v('payMethodNote')}" placeholder="その他のとき（例：現金／カード決済）" style="margin-top:4px">`)}
-    ${F('知的財産（成果物の権利）', seg('cmIp', ['移転', '留保'], m.ip || '移転'), '移転＝報酬の支払いをもって甲のものに（制作物の一般的な形）。留保＝乙に残し、甲は利用できる')}
+    <div style="display:${CM_MODEL === '納品' ? 'block' : 'none'}" data-napin>${F('知的財産（成果物の権利）', seg('cmIp', ['移転', '留保'], m.ip || '移転'), '移転＝報酬の支払いをもって甲のものに（制作物の一般的な形）。留保＝乙に残し、甲は利用できる')}</div>
     ${F('追加・変更の扱い', `<input id="cmChange" maxlength="200" value="${v('change') || (m.change === undefined ? '別途お見積りのうえ、合意して進める。' : '')}">`)}
     ${F('再委託', seg('cmSub', ['可', '不可', '要相談'], m.sub || ''))}
     <div class="tog" style="margin-top:8px"><input type="checkbox" id="cmNda" ${m.nda === false ? '' : 'checked'}><label for="cmNda">秘密保持の条を入れる</label></div>
@@ -2430,14 +2498,22 @@ function contractMemoEdit(id){
 function contractMemoSave(id, mode){
   const g = k => (document.getElementById(k) || {}).value || '';
   const on = name => { const b = document.querySelector(`#${name} button.on`); return b ? b.textContent : ''; };
-  const fee = g('cmFee').trim(), num = (fee.replace(/,/g, '').match(/\d+/g) || []).map(Number).sort((a, b) => b - a)[0] || 0;
+  const model = CM_MODEL || '納品'; const n = k => +g(k) || 0;
+  let fee = g('cmFee').trim(), num = (fee.replace(/,/g, '').match(/\d+/g) || []).map(Number).sort((a, b) => b - a)[0] || 0;
+  const unitPrice = n('cmUnitPrice'), rate = +g('cmRate') || 0, monthlyFee = n('cmMonthlyFee');
+  if (model === '月額') { fee = monthlyFee ? '月額 ' + yen(monthlyFee).replace('¥', '') + '円' : ''; num = monthlyFee; }
+  else if (model === '成果報酬') { fee = rate > 0 ? '成果1件につき売上の' + rate + '％' : unitPrice ? '成果1件 ' + yen(unitPrice).replace('¥', '') + '円' : ''; num = unitPrice; }
+  else if (model === '時間') { fee = unitPrice ? '1時間 ' + yen(unitPrice).replace('¥', '') + '円' : ''; num = unitPrice; }
+  else if (model === '回数') { fee = unitPrice ? '1' + (g('cmUnitName') || '回') + ' ' + yen(unitPrice).replace('¥', '') + '円' : ''; num = unitPrice; }
   const m = { kind: on('cmKind'), work: g('cmWork'), from: g('cmFrom'), to: g('cmTo'), monthly: document.getElementById('cmMonthly').checked, periodNote: g('cmPeriodNote'), fee, feeAmount: num, pay: g('cmPay'), deliver: g('cmDeliver'), change: g('cmChange'), sub: on('cmSub'), nda: document.getElementById('cmNda').checked, cancel: g('cmCancel'), note: g('cmNote'),
-    due: g('cmDue'), place: g('cmPlace'), inspect: '', inspectDays: 0, payRule: on('cmPayRule'), payDays: +g('cmPayDays') || 30, payFirst: g('cmPayFirst'), payMethod: on('cmPayMethod'), payMethodNote: g('cmPayMethodNote'), ip: on('cmIp') };
+    due: g('cmDue'), place: g('cmPlace'), inspect: '', inspectDays: 0, payRule: on('cmPayRule'), payDays: +g('cmPayDays') || 30, payFirst: g('cmPayFirst'), payMethod: on('cmPayMethod'), payMethodNote: g('cmPayMethodNote'), ip: on('cmIp'),
+    model, plusMonthly: model !== '月額' && !!(document.getElementById('cmPlus') || {}).checked, unitPrice, rate, unitName: g('cmUnitName'), resultDef: g('cmResultDef'), reportDay: n('cmReportDay'), minFee: n('cmMinFee'), reversal: g('cmReversal'), hoursCap: n('cmHoursCap'), overPrice: n('cmOverPrice'), cancelFee: g('cmCancelFee'), monthlyFee, startMonth: g('cmStartMonth'), prorate: !!(document.getElementById('cmProrate') || {}).checked };
+  if (model === '月額' && !m.monthly && !(m.from && m.to)) m.monthly = true;   // 月額は自動更新の継続契約として扱う
   if ((m.payRule === '受領日から' || m.payRule === '着手時・完了時') && m.payDays > 60) { toast('支払期日は、受領日から60日以内にしてください（フリーランス法）'); const e = document.getElementById('cmPayDays'); if (e) { e.style.borderColor = 'var(--danger)'; e.focus(); } return; }
   const c = S.cases.find(x => x.id === id); if (c && c.contract && c.contract.draft) m.draft = c.contract.draft;   // 条文の下書きは残す
   if (!m.kind) { toast('契約の種類（請負／準委任）を選んでください'); return; }
   if (mode) {   // 契約書を作るときは、明示事項がそろっているか（更新255）
-    const miss = []; if (!m.work.trim()) miss.push('業務の内容'); if (!m.due && !(m.from && m.to) && !m.monthly) miss.push('納期・完了日（または期間）'); if (!m.place.trim()) miss.push('納入場所・納め方'); if (!m.fee) miss.push('報酬'); if (!m.payRule || (m.payRule === 'その他' && !m.pay.trim())) miss.push('支払期日');
+    const miss = []; if (!m.work.trim()) miss.push('業務の内容'); if (model === '納品' && !m.due && !(m.from && m.to) && !m.monthly) miss.push('納期・完了日（または期間）'); if (model !== '納品' && !m.from && !m.startMonth && !m.monthly) miss.push('期間（開始日）'); if (!m.place.trim()) miss.push('納入場所・納め方'); if (!m.fee) miss.push(model === '納品' ? '報酬' : model === '月額' ? '月額' : '単価'); if (!m.payRule || (m.payRule === 'その他' && !m.pay.trim())) miss.push('支払期日');
     if (miss.length) { toast('必須の項目が空です：' + miss.join('・')); return; }
   }
   closeDlg(); spin(true, mode ? '契約書を作っています…' : '保存しています…', mode ? 'PDFも作ります' : '');
@@ -2618,7 +2694,7 @@ function newDocForCase(caseId, kind, items, force){
   if (kind === '請求' && !force && cu.kubun !== '元請') { const ds = docsOf(caseId).filter(live); const okd = ds.some(d => d.kind === '注文' || (d.kind === '契約' && d.okAt) || (d.kind === '見積' && (d.okAt || d.okBy || d.result === '受注')));
     if (!okd) { dialog(`<h3>見積書の承認なしで請求書を作ります</h3><p style="font-size:13px;line-height:1.7">この${L.siteWord}には、承認された見積書も注文書もありません。<br>このまま請求書を作ることはできますが、金額の「言った・言わない」になったとき、${L.userWord}に不利です。<br><b>おすすめ：</b>先に見積書を作って、承認を記録してから請求書へ。</p><div class="row"><button onclick="closeDlg()">やめる</button><button onclick="closeDlg();newDocForCase('${caseId}','請求',null,true)">このまま作る</button></div>`); return; } }
   newDoc(kind, () => { MODE = cu.kubun === '元請' ? '元請' : '施主'; D.customer = { id: cu.id || '', name: cu.name || '', kubun: MODE };
-    D.sites = [{ case_id: c.id, owner: c.owner || cu.name || '', name: c.name, items: items && items.length ? items : [{ item_id: '', name: '', qty: 1, unit: '式', unit_price: 0, note: '' }] }];
+    D.sites = [{ case_id: c.id, owner: c.owner || cu.name || '', name: c.name, items: items && items.length ? items : [{ item_id: '', name: '', qty: 1, unit: L.contract ? MODEL_WORDS[modelOf(c)].unit : '式', unit_price: 0, note: '' }] }];
     if (MODE === '施主') D.subject = c.name;
     if (kind === '見積' && c.pay) { const p = ppFrom([], '', c.pay); D.stages = ppStages(p, 0); D.done_method = p.done.method; } });
 }
@@ -3026,6 +3102,7 @@ function drawNewCase2(){
   const html = bsHead('＋ ' + L.siteWord + 'を足す')
     + sec(1, '誰の仕事？', chips + (needPick ? `<div>${csHtml({ list, word, sel: NC.custId, q: NC.q || NC.newName || '', neu: NC.newName || '', pick, add })}</div>` : ''))
     + sec(2, L.siteWord + '名', `<input id="ncS" placeholder="例：${L.siteEx}" value="${esc(NC.site || '')}" oninput="NC.site=this.value;wordMark('ncS')"><div id="ncW"></div>`, 'ここまでで登録できます')
+    + (L.contract ? sec('★', '報酬の型', modelChips('ncModel', NC.model || '納品', "NC.model=this.textContent===MODEL_WORDS['納品'].name?'納品':MODELS.find(k=>MODEL_WORDS[k].name===this.textContent)||'納品';document.getElementById('ncMH').textContent=MODEL_WORDS[NC.model].hint;document.getElementById('ncPM').style.display=NC.model==='月額'?'none':'block'") + `<div class="hint" id="ncMH" style="margin:4px 0 0">${esc(MODEL_WORDS[NC.model || '納品'].hint)}</div><div class="tog" id="ncPM" style="margin-top:4px;display:${(NC.model || '納品') === '月額' ? 'none' : 'block'}"><input type="checkbox" id="ncPlus" ${NC.plusMonthly ? 'checked' : ''} onchange="NC.plusMonthly=this.checked"><label for="ncPlus">＋月額もある（例：制作＋保守、入会金＋月会費）</label></div>`, '見積・契約・請求の作り方が変わります。あとから案件メモで直せます') : '')
     + ncPhotoHtml()
     + `<details class="ncmore" ${NC.moreOpen ? 'open' : ''} ontoggle="NC.moreOpen=this.open"><summary>くわしく（${moto ? L.ownerWord + '名・' : ''}品目・住所・${L.termWord}・メモ・支払の希望）</summary>`
     + (moto ? sec(3, L.ownerWord + '名', `<input id="ncO" placeholder="例：山田 太郎" value="${esc(NC.owner || '')}" oninput="NC.owner=this.value;ncWords()">`, '任意') : '')
@@ -3058,7 +3135,7 @@ function saveNewCase(next){
   const c = S.customers.find(x => x.id === NC.custId); const nm = (NC.newName || '').trim();
   if (!c && !nm) { toast(NC.edit ? (NC.mode === '元請' ? L.ownerKubun : 'お客様') + 'を選ぶか、「＋新しい…」を押してください' : '「誰の仕事？」で' + (NC.mode === '元請' ? L.ownerKubun : 'お客様') + 'を選ぶか、名前を入れてください'); return; }
   if (!(NC.site || '').trim()) { toast(L.siteWord + '名を入れてください'); return; }
-  const arg = { customer: c ? { id: c.id, name: c.name, kubun: c.kubun } : { id: '', name: nm, kubun: NC.mode }, name: NC.site.trim(), owner: (NC.owner || '').trim(), memo: (NC.memo || '').trim().slice(0, CASE_MEMO_MAX), place: (NC.place || '').trim(), term: NC.term, pay: NC.payOpen ? NC.pay : {}, items: NC.items || [], photos_new: NC.edit ? [] : (NC.photos_new || []) };
+  const arg = { customer: c ? { id: c.id, name: c.name, kubun: c.kubun } : { id: '', name: nm, kubun: NC.mode }, name: NC.site.trim(), owner: (NC.owner || '').trim(), memo: (NC.memo || '').trim().slice(0, CASE_MEMO_MAX), place: (NC.place || '').trim(), term: NC.term, pay: NC.payOpen ? NC.pay : {}, items: NC.items || [], photos_new: NC.edit ? [] : (NC.photos_new || []), model: L.contract ? (NC.model || '納品') : '', plusMonthly: !!(L.contract && NC.plusMonthly) };
   if (NC.edit) { const id = NC.edit, fromEd = NC.fromEd, apply = NC.apply; spin(true, '保存しています…');
     run('liffCaseUpdate', [UID, id, arg], res => { spin(false); S.cases = res.cases; S.customers = res.customers; renderCases();
       if (fromEd) { closeBs(); if (apply) applyCaseItems(arg.items || []); MEMO_OPEN = true; render(); toast(apply ? '相談の内容を保存し、品目を書類に反映しました' : '相談の内容を保存しました'); return; }
