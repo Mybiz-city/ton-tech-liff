@@ -351,7 +351,7 @@
     <div class="row"><button class="pri" onclick="demoStart()">🎓 お試しを始める</button></div>
   </div>
   <div class="sec acc" data-acc="eng" style="margin-top:12px" id="engSec"><h2>🔧 動作の記録（保守用）</h2>
-    <div class="hint" style="margin:0 0 4px">画面の版：<b>更新266</b>（2026-10-18）。古い画面が出るときは、LINEのトークを閉じて開き直してください</div>
+    <div class="hint" style="margin:0 0 4px">画面の版：<b>更新267</b>（2026-10-18）。古い画面が出るときは、LINEのトークを閉じて開き直してください</div>
     <div class="hint" id="bootTime" style="font-size:11px;line-height:1.7"></div>
   </div>
 </div>
@@ -383,7 +383,7 @@ const DEV_UID = new URLSearchParams(location.search).get('uid') || '';
 const ACC = 'image/' + '*';   // 写真の入力欄の accept（点検 2026-10-10）。「/」と「*」を続けて書くと、配信時にコメントと誤認されて後ろが消えるため分けて書く（2026-10-09）
 /** 業種の型の言葉（建設）。サーバーの labels が届くまで、また古い台帳のキャッシュに足りないキーを補う（2026-10-14 商業版 ②-1） */
 const L_DEFAULT = { statuses: ['相談', '施工', '完成', '回収済', '中断'], docs: ['見積', '請求', '領収'], done: '完成', doneBtn: '完成にする', start: '施工', startBtn: '着工にする', memberWord: '職人', itemEx: '外壁塗装', workContent: '請負内容', workAmount: '請負金額', siteWord: '現場', ownerWord: '施主',
-  ownerKubun: '元請', kubunPair: ['下請け', '自社請け'], workWord: '工事', extraWord: '追加工事', workGroup: '工事中', doneDate: '完成日', doneWhen: '工事完成時', doneAfter: '工事完成後', periodNote: '施工完了分', kubunLabels: ['元請（下請けの仕事）', '施主（直接の依頼主）'], kubunTags: ['元請', '自請'], dlvWord: '納品書', dlvShort: '納品', dlvTitle: '納 品 書', dlvAmount: '納品金額', dlvDate: '納品日', plan3: '未着工・未完成・未回収', startWord: '着工', nostart: '未着工', termWord: '工期', groups: ['相談中', '見積中', '受注・工事中', '請求中', '済・過去'], siteSuffix: '様邸', siteEx: '山田様邸 屋根', placeWords: null,
+  ownerKubun: '元請', kubunPair: ['下請け', '自社請け'], workWord: '工事', extraWord: '追加工事', workGroup: '工事中', doneDate: '完成日', doneWhen: '工事完成時', doneAfter: '工事完成後', periodNote: '施工完了分', kubunLabels: ['元請（下請けの仕事）', '施主（直接の依頼主）'], kubunTags: ['元請', '自請'], dlvWord: '納品書', dlvShort: '納品', dlvTitle: '納 品 書', dlvAmount: '納品金額', dlvDate: '納品日', plan3: '未着工・未完成・未回収', startWord: '着工', nostart: '未着工', termWord: '工期', groups: ['相談中', '見積中', '受注・工事中', '請求中', '済・過去'], siteSuffix: '様邸', siteEx: '山田様邸 屋根', placeWords: null, placeWord: '場所', custWord: '施主（依頼主）', nameWord: '現場名',
   userWord: '親方', guardian: '地鎮さま', brand: 'Ton-Tech', color: 'グリーン', colorHex: '#1F7A33', colorMid: '#3DAE4A', colorLight: '#E9F6EC', colorLine: '#BFE3C6', colorSoft: '#F6FBF7', chara: '木葉かんな', prepay: true, order: true, breakdown: true, visit: true };
 const labelsOf = x => Object.assign({}, L_DEFAULT, x || {});
 /** 起動時の先出し（2026-10-15 更新221）：サーバーの labels が届く前は L_DEFAULT（建設）の文と絵が出てしまうので、配信時に業種の型を埋め込み、最初からその型の言葉で始める。建設は L_TYPES にないので前と同じ */
@@ -392,8 +392,8 @@ const L_TYPES = {   // 起動時に先出しする型の言葉（GASの INV_LABE
     ownerKubun: '取引先', kubunPair: ['主要取引先', '一般取引先'], whoFrom: ['主要取引先', '一般取引先'], workWord: '仕事', extraWord: '追加分', workGroup: '対応中', doneDate: '完了日', doneWhen: '完了時', doneAfter: '完了後', periodNote: '完了分', kubunLabels: ['主要取引先（掛け・締め払い）', '一般取引先（その場で支払い）'], kubunTags: ['主要', '一般'],   // 2026-10-15 三浦さん：取引先から／依頼主から直接 → 主要取引先／一般取引先
     dlvWord: '完了報告書', dlvShort: '完了報告', dlvTitle: '完 了 報 告 書', dlvAmount: '合計金額', dlvDate: '完了日',   // 書類の種類は内部では「納品」のまま（番号 DLV）。見せる名前だけ完了報告書（2026-10-15）
     plan3: '未着手・未完了・未回収', startWord: '着手', nostart: '未着手', termWord: '納期',
-    groups: ['相談中', '見積中', '受注・対応中', '請求中', '済・過去'], siteSuffix: '', siteEx: '○○の制作 一式',
-    placeWords: ['サービス／作業', 'サービス／点検', 'サービス／修理', 'サービス／代行', '制作／デザイン', '制作／ページ', '相談／打合せ', '相談／顧問', '月額／顧問料', '月額／保守', '出張／訪問', '出張／講師'],   // 仮。テスト先が決まったら差し替え
+    groups: ['相談中', '見積中', '受注・対応中', '請求中', '済・過去'], siteSuffix: '', siteEx: '秋の感謝祭 イベント', placeWord: '対象・時期', custWord: '案件元（依頼主）', nameWord: '現場名', nameHint: '何の・いつの・どこの案件かが分かる名前に（作業の種類は品目で選びます）',
+    placeWords: ['対象／ホームページ', '対象／ランディングページ', '対象／ロゴ', '対象／チラシ・パンフ', '対象／名刺', '対象／動画', '対象／写真', '対象／SNS', '対象／システム', '対象／原稿・記事', '対象／イベント', '対象／セミナー・研修', '対象／会社案内', '対象／採用', '時期／春', '時期／夏', '時期／秋', '時期／冬', '時期／年末', '時期／年度末'],   // 案件名は「何の・いつの」案件か（品目＝作業の種類とは分ける。更新267）
     userWord: 'ご利用者', guardian: '恵比寿様', brand: 'Mybiz', color: 'ネイビー', colorHex: '#1E3A5F', colorMid: '#2B4C7E', colorLight: '#EAF0F8', colorLine: '#C5D3E8', colorSoft: '#F4F7FB', chara: '水瀬みお', prepay: true, order: false, breakdown: false, visit: false }
 };
 const TYPE_PRESET = '建設';
@@ -446,7 +446,7 @@ function snapRebuild(){ spin(true); run('liffSnapRebuild', [UID, true], () => { 
 // ② 前回の台帳をスマホに覚えさせ、まず前回の内容で画面を出す（外の置き場だけ。Google側は uid を信じる作りなので使わない）2026-10-11
 let STALE = false, FRESH_PENDING = null, CUR_TAB = 'cases';
 let SEL_T = (function () { try { return localStorage.getItem(LS_NS + 't') || ''; } catch (e) { return ''; } })();   // 選んだ台帳（親方ID。空＝自分の台帳）更新235
-const PAGE_VER = '266';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
+const PAGE_VER = '267';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
 function cacheKey(){ return LS_NS + 'cache_p' + PAGE_VER + (SEL_T ? '_' + SEL_T : ''); }
 function cacheRead(){ try { const o = JSON.parse(localStorage.getItem(cacheKey()) || 'null'); return o && o.uid && o.S && o.S.labels ? o : null; } catch (e) { return null; } }
 function cacheWrite(uid, data){ try { const s = JSON.stringify({ uid, at: Date.now(), S: data }); if (s.length < 4000000) localStorage.setItem(cacheKey(), s); } catch (e) { /* 入らなければ覚えない */ } }
@@ -994,7 +994,7 @@ function planDraw(){ const box = document.getElementById('planBox'); if (!box ||
   const dt = v => v ? esc(jpd(v)) : '未入力';
   // 4つのボタンの枠は固定（戻る・注文・完成・入金）。使えないものは薄く（案B 2026-10-10）
   const B = (cls, txt, fn) => fn ? `<button class="${cls}" onclick="${fn}">${txt}</button>` : `<button class="${cls} off" disabled>${txt}</button>`;
-  const row = (c, g, l3, note) => `<div class="pr"><div class="pt" onclick="openCase('${c.id}')"><b>${esc(c.name)}</b><small>${kv(L.order ? '注文者' : '依頼主', who(c))}　${kv(L.order ? '請負代金' : '金額', yen(g === 'unpaid' ? invSum(c) : caseAmt(c)))}</small>${l3}</div><div class="bt">${B('back', '戻る', planBack(c, g))}${B('ord', L.order ? '注文' : '受注', planOrd(c, g))}${B('done', L.done, `doneAsk('${c.id}')`)}${B('pay', '入金', planPay(c, g))}</div>${note || ''}</div>`;
+  const row = (c, g, l3, note) => `<div class="pr"><div class="pt" onclick="openCase('${c.id}')"><b>${esc(c.name)}</b><small>${kv(L.order ? '注文者' : (L.custWord || '依頼主'), who(c))}　${kv(L.order ? '請負代金' : '金額', yen(g === 'unpaid' ? invSum(c) : caseAmt(c)))}</small>${l3}</div><div class="bt">${B('back', '戻る', planBack(c, g))}${B('ord', L.order ? '注文' : '受注', planOrd(c, g))}${B('done', L.done, `doneAsk('${c.id}')`)}${B('pay', '入金', planPay(c, g))}</div>${note || ''}</div>`;
   const l3 = (done, sent, due) => `<small>${kv(L.done + '日', dt(done))}　${kv('送信日', dt(sent))}</small><small>${kv('振込期限', dt(due))}</small>`;
   const fn = { nostart: c => row(c, 'nostart', l3('', '', '')), work: c => row(c, 'work', l3('', '', '')), done: c => row(c, 'done', l3(c.done, '', '')),
     unpaid: c => { const inv = unpaidInv(c); const sent = inv.map(d => d.sentAt).filter(Boolean).sort().pop() || ''; const due = inv.map(d => d.due).filter(Boolean).sort()[0] || '';
@@ -1130,7 +1130,7 @@ function render(){
   const subj = auto ? esc(subjAuto()) + '<span class="pmut">（自動）</span>' : D.subject ? esc(D.subject) : pph('件名を入れる');
   let rows = '', n = 0, accNet = 0;
   D.sites.forEach((s, si) => {
-    if (moto || D.sites.length > 1) rows += `<tr class="psite"><td colspan="5"><span class="ped" onclick="openSite(${si})">■ ${s.name ? esc(s.name) : pph(L.siteWord + '名')}${s.owner ? '（' + L.ownerWord + '：' + esc(s.owner) + ' 様）' : ''}</span></td></tr>`;
+    if (moto || D.sites.length > 1) rows += `<tr class="psite"><td colspan="5"><span class="ped" onclick="openSite(${si})">■ ${s.name ? esc(s.name) : pph((L.nameWord || L.siteWord + '名'))}${s.owner ? '（' + L.ownerWord + '：' + esc(s.owner) + ' 様）' : ''}</span></td></tr>`;
     s.items.forEach((r, i) => { n++; const p = D.incl_total && i === s.items.length - 1 && si === D.sites.length - 1 ? k.sub - accNet : netPrice(r); accNet += Math.round(p * (r.qty || 0));
       rows += `<tr class="prow${SORT ? ' srt' : ''}"${SORT ? '' : ` onclick="openRow(${si},${i})"`}><td class="pc">${SORT ? `<button class="smv" onclick="mvRow(${si},${i},-1)"${i ? '' : ' disabled'}>▲</button><button class="smv" onclick="mvRow(${si},${i},1)"${i < s.items.length - 1 ? '' : ' disabled'}>▼</button>` : n}</td><td>${r.name ? esc(r.name) : pph('品目を入れる')}</td><td class="pr">${r.qty} ${esc(unitN(r.unit))}</td><td class="pr">${p || !r.name ? yen(p) : '<span class="pzero">単価を入れる</span>'}</td><td class="pr">${yen(Math.round(p * (r.qty || 0)))}</td></tr>`; });
     rows += SORT ? `<tr class="padd srt"><td colspan="5" onclick="SORT=false;render()">✓ 並べ替えを終わる</td></tr>` : `<tr class="padd">${s.items.length > 1 ? `<td class="psrt" onclick="SORT=true;render()">↕<br>並べ替え</td>` : ''}<td colspan="${s.items.length > 1 ? 4 : 5}" onclick="addRow(${si})">＋ 行を足す</td></tr>`;
@@ -1258,26 +1258,26 @@ const placeWords = () => (S.placeWords && S.placeWords.length) ? S.placeWords : 
 /** 場所の言葉を 大分類 → 中分類 の木にする（「大分類／中分類」の形。大分類なしの言葉は先頭にそのまま） */
 function placeTree(){ const T = [], at = {}; placeWords().forEach(w => { const b = catBig(w), m = catMid(w); if (!m) return; if (!(b in at)) { at[b] = T.length; T.push({ big: b, words: [] }); } if (!T[at[b]].words.includes(m)) T[at[b]].words.push(m); }); return T; }
 let WC_OPEN = {};   // 開いている大分類（この画面のあいだ）
-function wordChips(inpId, who){ const house = surname(who) && L.siteSuffix ? surname(who) + L.siteSuffix : '';
+function wordChips(inpId, who){ const house = surname(who) && L.siteSuffix ? surname(who) + L.siteSuffix : (!L.siteSuffix && surname(who) ? surname(who).replace(/^(株式会社|有限会社|合同会社)/, '').replace(/(株式会社|有限会社|合同会社)$/, '') : '');   // 建設は「山田様邸」、商業は依頼主の名前（更新267）
   const b = (w, full) => `<button data-w="${esc(w)}" onclick="wordTap('${inpId}',this)">${esc(w)}${full ? `<i class="lx" onclick="event.stopPropagation();wordDelAsk('${esc(full)}','${inpId}')" aria-label="削除">×</i>` : ''}</button>`;
   const inp = document.getElementById(inpId), parts = inp ? inp.value.split(/[\s　]+/) : [];
   setTimeout(() => wordMark(inpId), 0);
   const T = placeTree(), flat = T.filter(x => !x.big).flatMap(x => x.words), bigs = T.filter(x => x.big);
-  return `<div class="wchips" id="wc_${inpId}">${house ? b(house) : ''}${flat.length ? `<span class="wg">場所</span>${flat.map(w => b(w, w)).join('')}` : ''}
+  return `<div class="wchips" id="wc_${inpId}">${house ? b(house) : ''}${flat.length ? `<span class="wg">${esc(L.placeWord || '場所')}</span>${flat.map(w => b(w, w)).join('')}` : ''}
     ${bigs.map(B => `<details class="wbig" ${WC_OPEN[B.big] || B.words.some(w => parts.includes(w)) ? 'open' : ''} ontoggle="WC_OPEN['${esc(B.big)}']=this.open"><summary>${esc(B.big)}<small>${B.words.length}</small></summary><div class="wmid">${B.words.map(w => b(w, catJoin(B.big, w))).join('')}</div></details>`).join('')}
-    <u class="wed" onclick="editPlaceWords()">✏️ 場所を編集</u></div>`; }
+    <u class="wed" onclick="editPlaceWords()">✏️ ${esc(L.placeWord || '場所')}の言葉を編集</u></div>`; }
 /** 言葉の × → 場所の言葉から削除。2026-10-11 */
 function wordDelAsk(full, inpId){ const m = catMid(full), big = catBig(full);
-  dialog(`<h3>場所の言葉から削除しますか？</h3><p>「${esc(m)}」${big ? '（' + esc(big) + '）' : ''}が、${L.siteWord}名の候補から消えます。書いた${L.siteWord}名は変わりません。</p><div class="row"><button onclick="closeDlg()">いいえ</button><button class="warn" onclick="wordDelGo('${esc(full)}','${inpId}')">はい、削除</button></div>`); }
+  dialog(`<h3>${esc(L.placeWord || '場所')}の言葉から削除しますか？</h3><p>「${esc(m)}」${big ? '（' + esc(big) + '）' : ''}が、${L.nameWord || L.siteWord + '名'}の候補から消えます。書いた${L.nameWord || L.siteWord + '名'}は変わりません。</p><div class="row"><button onclick="closeDlg()">いいえ</button><button class="warn" onclick="wordDelGo('${esc(full)}','${inpId}')">はい、削除</button></div>`); }
 function wordDelGo(full, inpId){ closeDlg(); const w = placeWords().filter(x => x !== full); spin(true);
   run('liffPlaceWordsSave', [UID, w], r => { spin(false); S.placeWords = r; const who = document.getElementById(inpId === 'ncS' ? 'ncO' : 'stO'); const box = document.getElementById(inpId === 'ncS' ? 'ncW' : 'stW'); if (box) box.innerHTML = wordChips(inpId, inpId === 'ncS' ? ncWho() : (who ? who.value : '')); toast('削除しました'); }); }
 /** 場所の言葉を直す（カンマや空白で区切る） */
 function editPlaceWords(){ const txt = placeTree().map(B => (B.big ? B.big + '：' : '') + B.words.join('、')).join('\n');
-  dialog(`<h3>✏️ 場所の言葉</h3><p style="font-size:12.5px">${L.siteWord}名で押す言葉です。1行に「大分類：言葉、言葉…」。大分類がいらない行は言葉だけ書いてください。</p><textarea id="pwT" rows="8" style="font-size:13px">${esc(txt)}</textarea><div class="row" style="margin-top:8px"><button onclick="closeDlg()">やめる</button><button class="pri" onclick="savePlaceWords()">保存</button></div>`); }
+  dialog(`<h3>✏️ ${esc(L.placeWord || '場所')}の言葉</h3><p style="font-size:12.5px">${L.nameWord || L.siteWord + '名'}で押す言葉です。1行に「大分類：言葉、言葉…」。大分類がいらない行は言葉だけ書いてください。</p><textarea id="pwT" rows="8" style="font-size:13px">${esc(txt)}</textarea><div class="row" style="margin-top:8px"><button onclick="closeDlg()">やめる</button><button class="pri" onclick="savePlaceWords()">保存</button></div>`); }
 function savePlaceWords(){ const w = []; document.getElementById('pwT').value.split(/\n/).forEach(line => { line = line.trim(); if (!line) return; const i = line.search(/[:：]/); const big = i >= 0 ? line.slice(0, i).trim().slice(0, 8) : '', rest = i >= 0 ? line.slice(i + 1) : line;
     rest.split(/[,、\s　／]+/).map(x => x.trim().slice(0, 12)).filter(String).forEach(m => { const v = catJoin(big, m); if (!w.includes(v)) w.push(v); }); });
   closeDlg(); spin(true);
-  run('liffPlaceWordsSave', [UID, w], r => { spin(false); S.placeWords = r; if (NC) ncWords(); toast('場所の言葉を保存しました'); }); }
+  run('liffPlaceWordsSave', [UID, w], r => { spin(false); S.placeWords = r; if (NC) ncWords(); toast((L.placeWord || '場所') + 'の言葉を保存しました'); }); }
 /** 相談の③品目：料金表から選ぶ（業種ごと）。選んだ品目は見積の明細になる */
 function itemChips(){ const sel = (NC.items || []).map(x => ciItem(x).id).filter(Boolean), groups = {}; itemGroups().forEach(G => { groups[(catBig(G.cat) ? catBig(G.cat) + ' › ' : '') + (catMid(G.cat) || 'そのほか')] = G.items; });
   const keys = Object.keys(groups); if (!keys.length) return `<div class="hint">料金表に品目がありません。<u onclick="closeBs();showTab('items')">設定 → 料金表</u>で入れてください。</div>`;
@@ -1292,8 +1292,8 @@ function wordMark(inpId){ const inp = document.getElementById(inpId); if (!inp) 
 
 function openCust(){
   if (tiedToCase() && D.customer && D.customer.id) { toast('この書類は' + L.siteWord + 'に結びついています。依頼主は変えられません（相談から作り直してください）'); return; }
-  const moto = MODE === '元請'; const word = moto ? L.ownerKubun : '依頼主'; const list = S.customers.filter(x => !x.del && (x.kubun === '元請') === moto);
-  bsOpen(bsHead(moto ? `${L.ownerKubun}を選ぶ` : '依頼主を選ぶ') + csHtml({ list, word, sel: D.customer.id, q: !D.customer.id ? (D.customer.name || '') : '', neu: !D.customer.id ? D.customer.name : '', pick: id => pickCust(id), add: nm => pickNewCust(nm) })
+  const moto = MODE === '元請'; const word = moto ? L.ownerKubun : (L.custWord || '依頼主'); const list = S.customers.filter(x => !x.del && (x.kubun === '元請') === moto);
+  bsOpen(bsHead(moto ? `${L.ownerKubun}を選ぶ` : (L.custWord || '依頼主') + 'を選ぶ') + csHtml({ list, word, sel: D.customer.id, q: !D.customer.id ? (D.customer.name || '') : '', neu: !D.customer.id ? D.customer.name : '', pick: id => pickCust(id), add: nm => pickNewCust(nm) })
     + `<div class="hint">名前を打つと候補が出ます。一覧にない名前は、そのまま使えます（書類を確定したときに一覧に入ります）。${moto ? '締め日・支払日は「設定 → 依頼主」で決められます。' : ''}</div>`);
   csDraw(); }
 /** 候補の × → 設定（依頼主リスト）から削除（書類・現場は消えない）。2026-10-11 */
@@ -1549,7 +1549,7 @@ function applyPeriod(save){
 // 現場（下請けの締め請求）
 function openSite(si){ const s = D.sites[si];
   bsOpen(bsHead(L.siteWord) + sec(1, L.ownerWord + '名', `<input id="stO" value="${esc(s.owner)}" placeholder="例：山田 太郎" oninput="document.getElementById('stW').innerHTML=wordChips('stN',this.value)">`)
-    + sec(2, L.siteWord + '名', `<input id="stN" value="${esc(s.name)}" placeholder="例：${L.siteEx}" oninput="wordMark('stN')"><div id="stW">${wordChips('stN', s.owner)}</div>`)
+    + sec(2, (L.nameWord || L.siteWord + '名'), `${L.nameHint ? `<p class="hint" style="margin:0 0 4px">${esc(L.nameHint)}</p>` : ''}<input id="stN" value="${esc(s.name)}" placeholder="例：${L.siteEx}" oninput="wordMark('stN')"><div id="stW">${wordChips('stN', s.owner)}</div>`)
     + bsBtns(`D.sites[${si}].name=document.getElementById('stN').value.trim();D.sites[${si}].owner=document.getElementById('stO').value.trim();closeBs();render()`, D.sites.length > 1 ? `delSite(${si})` : ''));
 }
 function addSite(){ D.sites.push({ case_id: '', owner: '', name: '', items: [{ item_id: '', name: '', qty: 1, unit: '式', unit_price: 0, note: '' }] }); render(); openSite(D.sites.length - 1); }
@@ -2197,7 +2197,7 @@ function sqDateRow(key, lbl){ const x = SQ[key];
 function sqMode(key, m){ sqRead(); SQ[key].m = m; if (m === 'day') SQ[key].b = ''; document.getElementById('sqd_' + key).outerHTML = sqDateRow(key, { date: '書類の発行日', done: L.done + '日', due: '振込期限' }[key]); }
 function sqPlaceHtml(){ const T = placeTree(), flat = T.filter(x => !x.big).flatMap(x => x.words), bigs = T.filter(x => x.big);
   const b = w => `<button class="${SQ.place.includes(w) ? 'on' : ''}" onclick="sqPlace('${esc(w)}',this)">${esc(w)}</button>`;
-  return `<div class="wchips" id="sqPlace">${flat.length ? `<span class="wg">場所</span>${flat.map(b).join('')}` : ''}${bigs.map(B => `<details class="wbig" ${SQ_OPEN[B.big] || B.words.some(w => SQ.place.includes(w)) ? 'open' : ''} ontoggle="SQ_OPEN['${esc(B.big)}']=this.open"><summary>${esc(B.big)}<small>${B.words.length}</small></summary><div class="wmid">${B.words.map(b).join('')}</div></details>`).join('')}</div>`; }
+  return `<div class="wchips" id="sqPlace">${flat.length ? `<span class="wg">${esc(L.placeWord || '場所')}</span>${flat.map(b).join('')}` : ''}${bigs.map(B => `<details class="wbig" ${SQ_OPEN[B.big] || B.words.some(w => SQ.place.includes(w)) ? 'open' : ''} ontoggle="SQ_OPEN['${esc(B.big)}']=this.open"><summary>${esc(B.big)}<small>${B.words.length}</small></summary><div class="wmid">${B.words.map(b).join('')}</div></details>`).join('')}</div>`; }
 function sqPlace(w, el){ const i = SQ.place.indexOf(w); if (i >= 0) SQ.place.splice(i, 1); else SQ.place.push(w); el.classList.toggle('on', i < 0); }
 function renderSearch(){ const f = document.getElementById('sqForm'); if (!f) return; try { accInit(); } catch (e) {}
   const v = id => document.getElementById(id) ? document.getElementById(id).value : '';
@@ -2208,7 +2208,7 @@ function renderSearch(){ const f = document.getElementById('sqForm'); if (!f) re
     if (on) teamListDraw(); else if (adm) { const tb = document.getElementById('teamListBody'); if (tb) tb.innerHTML = `<p class="hint" style="color:#C0392B">いまは「${L.memberWord} ${esc(ACT_AS)}」として見ています（その${L.memberWord}の分だけ）。${L.memberWord}リスト・担当の絞り込み・全員分の検索は、管理者に戻すと使えます。</p><div class="row"><button class="pri" onclick="actAsSet('')">管理者（全員分）に戻す</button></div>`; } }
   f.innerHTML = sec(1, '誰の・何の', `${tantoSel}${lb(`依頼主・${L.ownerKubun}の名前`)}<input id="sq_cust" value="${esc(SQ.cust)}" placeholder="名前の一部・読みがなでもOK">${lb('件名')}<input id="sq_subj" value="${esc(SQ.subj)}" placeholder="書類の件名の一部">${lb('品名（書類の明細）')}<input id="sq_item" value="${esc(SQ.item)}" placeholder="例：${L.itemEx}（🔍のとき照会します）">`)
     + sec(2, '日付', sqDateRow('date', '書類の発行日') + sqDateRow('done', L.done + '日') + sqDateRow('due', '振込期限'))
-    + sec(3, L.siteWord + '・場所', `${lb(L.siteWord + '名')}<input id="sq_site" value="${esc(SQ.site)}" placeholder="${L.siteWord}名の一部（${L.ownerWord}名でも）">${sqPlaceHtml()}`)
+    + sec(3, L.siteWord + '・場所', `${lb((L.nameWord || L.siteWord + '名'))}<input id="sq_site" value="${esc(SQ.site)}" placeholder="${L.nameWord || L.siteWord + '名'}の一部（${L.ownerWord}名でも）">${sqPlaceHtml()}`)
     + sec(4, '金額（書類の合計・税込）', `<div class="dprange"><input type="number" inputmode="numeric" id="sq_amin" value="${esc(SQ.amin)}" placeholder="円以上"><span>〜</span><input type="number" inputmode="numeric" id="sq_amax" value="${esc(SQ.amax)}" placeholder="円以下"></div>`)
     + sec(5, '状態（チェックしたどれか）', `<div class="pchips">${G.map(([k, cls, ic, sub, a1, a2, disp]) => `<button class="${SQ.st[k] ? 'on' : ''}" onclick="SQ.st['${k}']=!SQ.st['${k}'];this.classList.toggle('on',SQ.st['${k}'])">${ic} ${disp || k}</button>`).join('')}</div>`)
     + `<div class="row" style="margin:10px 0 14px"><button onclick="sqClear()">条件をクリア</button><button class="pri" onclick="sqRun()">🔍 この条件でさがす</button></div>`;
@@ -2345,7 +2345,7 @@ function caseSheetHtml(id){
   const ctrBox = contractBox(c);
   const noDoc = !all.some(live), past = caseGroup(c) === '済・過去', gone = c.status === '取りやめ';
   const ed = gone ? '' : ` onclick="editCase('${id}',this.dataset.f)"`, row = (f, k, v) => `<div data-f="${f}"${gone ? '' : ` onclick="event.stopPropagation();editCase('${id}',${f})"`}><span class="k">${k}</span>${v}</div>`;
-  const info0 = `<div class="cinfo${gone ? '' : ' tap'}"${ed}>${gone ? '' : '<span class="cpen">✏️ メモ編集</span>'}${row(1, cu.kubun === '元請' ? L.ownerKubun : '依頼主', esc((cu.name || '') + ' ' + (cu.honor || '')))}${row(2, L.siteWord, esc(c.name) + (c.owner && cu.kubun === '元請' ? '（' + L.ownerWord + '：' + esc(c.owner) + '）' : ''))}${row(3, '品目', (c.items || []).length ? esc(c.items.map(ciName).join('・')) : '<span style="color:var(--muted)">（未選択）</span>')}${row(4, `${L.siteWord}住所`, c.address ? esc(c.address) : '<span style="color:var(--muted)">（未定）</span>')}${termText(c.term) ? row(4, `${L.termWord}（見込・予定）`, esc(termText(c.term))) : ''}${row(5, '内容メモ', c.memo ? esc(c.memo).replace(/\n/g, '<br>') : '<span style="color:var(--muted)">（まだありません）</span>')}${payMemoText(c.pay) ? row(5, '支払の希望', esc(payMemoText(c.pay))) : ''}</div>`;
+  const info0 = `<div class="cinfo${gone ? '' : ' tap'}"${ed}>${gone ? '' : '<span class="cpen">✏️ メモ編集</span>'}${row(1, cu.kubun === '元請' ? L.ownerKubun : (L.custWord || '依頼主'), esc((cu.name || '') + ' ' + (cu.honor || '')))}${row(2, L.siteWord, esc(c.name) + (c.owner && cu.kubun === '元請' ? '（' + L.ownerWord + '：' + esc(c.owner) + '）' : ''))}${row(3, '品目', (c.items || []).length ? esc(c.items.map(ciName).join('・')) : '<span style="color:var(--muted)">（未選択）</span>')}${row(4, `${L.siteWord}住所`, c.address ? esc(c.address) : '<span style="color:var(--muted)">（未定）</span>')}${termText(c.term) ? row(4, `${L.termWord}（見込・予定）`, esc(termText(c.term))) : ''}${row(5, '内容メモ', c.memo ? esc(c.memo).replace(/\n/g, '<br>') : '<span style="color:var(--muted)">（まだありません）</span>')}${payMemoText(c.pay) ? row(5, '支払の希望', esc(payMemoText(c.pay))) : ''}</div>`;
   const info = cdet(id, 'memo', `📝 ${L.done}前メモ`, c.memo ? esc(c.memo).slice(0, 24) : `相談内容・品目・住所・${L.termWord}`, info0);   // 開閉（2026-10-09）
   const head = `<h3>${esc(c.name)} ${statusTag(past && c.status === '相談' ? '失注' : ST_LABEL(caseSt(c)))}<button class="more" onclick="caseMore('${id}')" aria-label="その他">︙</button><button class="x" onclick="closeBs()">×</button></h3>
     ${c.done ? `<div class="hint" style="margin-top:0">${c.status === '中止' ? '中止' : L.done} ${jpd(c.done)}</div>` : ''}`;
@@ -2619,7 +2619,7 @@ function caseInfoInv(c, cu){ const ds = docsOf(c.id).filter(live), est = S.docs.
   const amt = fv ? fv.total : ords.length ? ords.reduce((a, d) => a + d.total, 0) : est ? est.total + ds.filter(d => d.kind === '見積' && d.sub === '追加変更' && d.result === '受注').reduce((a, d) => a + d.total, 0) : 0;
   const work = est && est.top ? esc(est.top) + (est.lines > 1 ? ' ほか' : '') : '<span style="color:var(--muted)">（なし）</span>';
   const r = (k, v) => `<div><span class="k">${k}</span>${v}</div>`;
-  return `<div class="cinfo2"><div class="tap2" onclick="editCaseMemo('${c.id}')"><span class="k">内容メモ</span>${c.memo ? esc(c.memo).replace(/\n/g, '<br>') : '<span style="color:var(--muted)">（なし）</span>'}<span class="cpen2">✏️ メモ編集</span></div>${r(cu.kubun === '元請' ? L.ownerWord : '依頼主', esc(cu.kubun === '元請' ? (c.owner || '') : (cu.name || '') + ' ' + (cu.honor || '様')))}${r(L.contract ? L.workContent : '施工内容', work)}${r(L.contract ? L.workAmount : '請負代金額', amt ? '<b>' + yen(amt) + '</b>（税込）' : '—')}</div>
+  return `<div class="cinfo2"><div class="tap2" onclick="editCaseMemo('${c.id}')"><span class="k">内容メモ</span>${c.memo ? esc(c.memo).replace(/\n/g, '<br>') : '<span style="color:var(--muted)">（なし）</span>'}<span class="cpen2">✏️ メモ編集</span></div>${r(cu.kubun === '元請' ? L.ownerWord : (L.custWord || '依頼主'), esc(cu.kubun === '元請' ? (c.owner || '') : (cu.name || '') + ' ' + (cu.honor || '様')))}${r(L.contract ? L.workContent : '施工内容', work)}${r(L.contract ? L.workAmount : '請負代金額', amt ? '<b>' + yen(amt) + '</b>（税込）' : '—')}</div>
     <div class="hint">請求書の送信・編集・入金は、一覧の「${esc(cu.name || '')}」の枠から</div>`; }
 /** 現場の写真（2026-10-07）：撮るか選ぶ → スマホで縮めて保存。見積・請求のPDFに「現場写真」のページとして付けられる */
 const PH_CACHE = {};
@@ -3126,7 +3126,7 @@ function editCase(id, focus, fromEd){ const c = S.cases.find(x => x.id === id); 
 function ncWho(){ const c = S.customers.find(x => x.id === NC.custId); return NC.mode === '元請' ? (NC.owner || '') : (c ? c.name : (NC.newName || '')); }
 function drawNewCase(){
   if (!NC.edit) { drawNewCase2(); return; }   // 新しく足すときは、短い画面（2026-10-07）
-  const moto = NC.mode === '元請', word = moto ? L.ownerKubun : '依頼主'; const list = S.customers.filter(x => !x.del && (x.kubun === '元請') === moto);
+  const moto = NC.mode === '元請', word = moto ? L.ownerKubun : (L.custWord || '依頼主'); const list = S.customers.filter(x => !x.del && (x.kubun === '元請') === moto);
   const pick = id => { NC.custId = id; NC.newName = ''; CS.sel = id; CS.neu = ''; csDraw(); ncWords(); };
   const add = nm => { NC.custId = ''; NC.newName = nm; CS.sel = ''; CS.neu = nm; csDraw(); ncWords(); };
   const lockCust = NC.edit && NC.lock; const cur = S.customers.find(x => x.id === NC.custId) || {};
@@ -3134,8 +3134,8 @@ function drawNewCase(){
     : csHtml({ list, word, sel: NC.custId, q: NC.q || NC.newName || '', neu: NC.newName || '', pick, add });
   const html = bsHead(NC.edit ? L.siteWord + 'の内容を直す' : '＋ ' + L.siteWord + 'を足す') + (lockCust ? '' : `<div class="seg" style="margin-bottom:4px"><button class="${moto ? 'on s' : ''}" onclick="NC.mode='${L.ownerKubun}';NC.custId='';NC.newName='';NC.q='';drawNewCase()">${L.kubunPair[0]}</button><button class="${!moto ? 'on' : ''}" onclick="NC.mode='施主';NC.custId='';NC.newName='';NC.q='';drawNewCase()">${L.kubunPair[1]}</button></div>`)
     + sec(1, word, custBlock)
-    + sec(2, L.siteWord, (moto ? lb(L.ownerWord + '名') + `<input id="ncO" placeholder="例：山田 太郎" value="${esc(NC.owner || '')}" oninput="NC.owner=this.value;ncWords()">` + lb(L.siteWord + '名') : '')
-      + `<input id="ncS" placeholder="例：${L.siteEx}" value="${esc(NC.site || '')}" oninput="NC.site=this.value;wordMark('ncS')"><div id="ncW"></div>`)
+    + sec(2, L.siteWord, (moto ? lb(L.ownerWord + '名') + `<input id="ncO" placeholder="例：山田 太郎" value="${esc(NC.owner || '')}" oninput="NC.owner=this.value;ncWords()">` + lb((L.nameWord || L.siteWord + '名')) : '')
+      + `${L.nameHint ? `<p class="hint" style="margin:0 0 4px">${esc(L.nameHint)}</p>` : ''}<input id="ncS" placeholder="例：${L.siteEx}" value="${esc(NC.site || '')}" oninput="NC.site=this.value;wordMark('ncS')"><div id="ncW"></div>`)
     + sec(3, '品目', itemChips() + '', '<span id="ncIc">' + ((NC.items || []).length ? NC.items.length + '件' : '') + '</span>')
     + sec(4, `${L.siteWord}・${L.termWord}（見込・予定）`, `<input id="ncP" placeholder="${L.siteWord}住所（例：〇〇市△△町1-2-3）" value="${esc(NC.place || '')}" oninput="NC.place=this.value">${lb(`${L.termWord}（見込・予定）`)}` + termEd('NC.term', 'drawNewCase()', 'ncT'))
     + sec(5, '内容メモ', `<textarea id="ncM" rows="4" maxlength="${CASE_MEMO_MAX}" placeholder="${L.contract ? '例：会社案内サイト5ページ。来週火曜にオンラインで打合せ。見積は10月中に' : '例：2階ベランダの雨漏り。来週火曜の午後に下見。見積は10月中に'}" oninput="NC.memo=this.value;cntUp(this,'ncMc',${CASE_MEMO_MAX})">${esc(NC.memo || '')}</textarea><div class="cnt2" id="ncMc">${(NC.memo || '').length} / ${CASE_MEMO_MAX}文字</div>`
@@ -3153,14 +3153,14 @@ function drawNewCase(){
 function drawNewCase2(){
   const moto = NC.mode === '元請';
   // 2026-10-11：まず「元請から／依頼主から直接」の2択 → 下に候補（最近使った5件・名前を打つと絞り込み・一覧にない名前はそのまま）
-  const chips = `<div class="seg" style="margin-bottom:8px"><button class="${moto ? 'on s' : ''}" onclick="ncWhoMode('new')">🏢 ${L.whoFrom ? L.whoFrom[0] : L.ownerKubun + 'から'}</button><button class="${!moto ? 'on' : ''}" onclick="ncWhoMode('施主')">🏠 ${L.whoFrom ? L.whoFrom[1] : '依頼主から直接'}</button></div>`;
+  const chips = `<div class="seg" style="margin-bottom:8px"><button class="${moto ? 'on s' : ''}" onclick="ncWhoMode('new')">🏢 ${L.whoFrom ? L.whoFrom[0] : L.ownerKubun + 'から'}</button><button class="${!moto ? 'on' : ''}" onclick="ncWhoMode('施主')">🏠 ${L.whoFrom ? L.whoFrom[1] : (L.custWord || '依頼主') + 'から直接'}</button></div>`;
   const needPick = true;
-  const list = S.customers.filter(x => !x.del && (x.kubun === '元請') === moto), word = moto ? L.ownerKubun : '依頼主';
+  const list = S.customers.filter(x => !x.del && (x.kubun === '元請') === moto), word = moto ? L.ownerKubun : (L.custWord || '依頼主');
   const pick = id => { NC.custId = id; NC.newName = ''; CS.sel = id; CS.neu = ''; csDraw(); ncWords(); };
   const add = nm => { NC.custId = ''; NC.newName = nm; CS.sel = ''; CS.neu = nm; csDraw(); ncWords(); };
   const html = bsHead('＋ ' + L.siteWord + 'を足す')
     + sec(1, '誰の仕事？', chips + (needPick ? `<div>${csHtml({ list, word, sel: NC.custId, q: NC.q || NC.newName || '', neu: NC.newName || '', pick, add })}</div>` : ''))
-    + sec(2, L.siteWord + '名', `<input id="ncS" placeholder="例：${L.siteEx}" value="${esc(NC.site || '')}" oninput="NC.site=this.value;wordMark('ncS')"><div id="ncW"></div>`, 'ここまでで登録できます')
+    + sec(2, (L.nameWord || L.siteWord + '名'), `${L.nameHint ? `<p class="hint" style="margin:0 0 4px">${esc(L.nameHint)}</p>` : ''}<input id="ncS" placeholder="例：${L.siteEx}" value="${esc(NC.site || '')}" oninput="NC.site=this.value;wordMark('ncS')"><div id="ncW"></div>`, 'ここまでで登録できます')
     + (L.contract ? sec('★', '報酬の型', modelChips('ncModel', NC.model || '納品', "NC.model=this.dataset.k||'納品';document.getElementById('ncMH').textContent=MODEL_WORDS[NC.model].hint;document.getElementById('ncPM').style.display=NC.model==='月額'?'none':'block'") + `<div class="hint" id="ncMH" style="margin:4px 0 0">${esc(MODEL_WORDS[NC.model || '納品'].hint)}</div><div class="tog" id="ncPM" style="margin-top:4px;display:${(NC.model || '納品') === '月額' ? 'none' : 'block'}"><input type="checkbox" id="ncPlus" ${NC.plusMonthly ? 'checked' : ''} onchange="NC.plusMonthly=this.checked"><label for="ncPlus">＋月額もある（例：制作＋保守、入会金＋月会費）</label></div>`, '見積・契約・請求の作り方が変わります。あとから案件メモで直せます') : '')
     + ncPhotoHtml()
     + `<details class="ncmore" ${NC.moreOpen ? 'open' : ''} ontoggle="NC.moreOpen=this.open"><summary>くわしく（${moto ? L.ownerWord + '名・' : ''}品目・住所・${L.termWord}・メモ・支払の希望）</summary>`
@@ -3192,7 +3192,7 @@ function ncWhoMode(m){ const to = m === '施主' ? '施主' : '元請'; if (NC.m
 function ncWords(){ const w = document.getElementById('ncW'); if (w) w.innerHTML = wordChips('ncS', ncWho()); }
 function saveNewCase(next){
   const c = S.customers.find(x => x.id === NC.custId); const nm = (NC.newName || '').trim();
-  if (!c && !nm) { toast(NC.edit ? (NC.mode === '元請' ? L.ownerKubun : '依頼主') + 'を選ぶか、「＋新しい…」を押してください' : '「誰の仕事？」で' + (NC.mode === '元請' ? L.ownerKubun : '依頼主') + 'を選ぶか、名前を入れてください'); return; }
+  if (!c && !nm) { toast(NC.edit ? (NC.mode === '元請' ? L.ownerKubun : (L.custWord || '依頼主')) + 'を選ぶか、「＋新しい…」を押してください' : '「誰の仕事？」で' + (NC.mode === '元請' ? L.ownerKubun : (L.custWord || '依頼主')) + 'を選ぶか、名前を入れてください'); return; }
   if (!(NC.site || '').trim()) { toast(L.siteWord + '名を入れてください'); return; }
   const arg = { customer: c ? { id: c.id, name: c.name, kubun: c.kubun } : { id: '', name: nm, kubun: NC.mode }, name: NC.site.trim(), owner: (NC.owner || '').trim(), memo: (NC.memo || '').trim().slice(0, CASE_MEMO_MAX), place: (NC.place || '').trim(), term: NC.term, pay: NC.payOpen ? NC.pay : {}, items: NC.items || [], photos_new: NC.edit ? [] : (NC.photos_new || []), model: L.contract ? (NC.model || '納品') : '', plusMonthly: !!(L.contract && NC.plusMonthly) };
   if (NC.edit) { const id = NC.edit, fromEd = NC.fromEd, apply = NC.apply; spin(true, '保存しています…');
@@ -3431,8 +3431,8 @@ function closeDates(c, today, off){
 // ---------- 依頼主・備考
 let LS_MODE = '元請', LS_DISP = '税込', LS_EDIT = '';
 function lsMode(m){ LS_MODE = m; document.getElementById('lsJ').className = m === '施主' ? 'on' : ''; document.getElementById('lsS').className = m === '元請' ? 'on s' : ''; document.getElementById('csMoto').style.display = m === '元請' ? 'block' : 'none';
-  document.getElementById('csNewBtn').textContent = L.whoFrom ? `＋ ${m === '元請' ? L.kubunPair[0] : L.kubunPair[1]}を新規作成` : m === '元請' ? `＋ ${L.kubunPair[0]}の依頼主（${L.ownerKubun}）を新規作成` : `＋ ${L.kubunPair[1]}の依頼主を新規作成`;
-  document.getElementById('csNewTitle').textContent = L.whoFrom ? `${m === '元請' ? L.kubunPair[0] : L.kubunPair[1]}を新規作成` : m === '元請' ? `${L.kubunPair[0]}の依頼主（${L.ownerKubun}）を新規作成` : `${L.kubunPair[1]}の依頼主を新規作成`;
+  document.getElementById('csNewBtn').textContent = L.whoFrom ? `＋ ${m === '元請' ? L.kubunPair[0] : L.kubunPair[1]}を新規作成` : m === '元請' ? `＋ ${L.kubunPair[0]}の依頼主（${L.ownerKubun}）を新規作成` : `＋ ${L.kubunPair[1]}の${L.custWord || '依頼主'}を新規作成`;
+  document.getElementById('csNewTitle').textContent = L.whoFrom ? `${m === '元請' ? L.kubunPair[0] : L.kubunPair[1]}を新規作成` : m === '元請' ? `${L.kubunPair[0]}の依頼主（${L.ownerKubun}）を新規作成` : `${L.kubunPair[1]}の${L.custWord || '依頼主'}を新規作成`;
   document.getElementById('csName').placeholder = m === '元請' ? (L.contract ? '名前（例：○○商事）' : '名前（例：○○工務店）') : '名前（例：田中 太郎）';
   CS_EDIT = ''; if (document.getElementById('lists').style.display === 'block') renderLists(); }
 function lsDisp(d){ LS_DISP = d; document.getElementById('dispIn').className = d === '税込' ? 'on' : ''; document.getElementById('dispOut').className = d === '税抜' ? 'on s' : ''; }
