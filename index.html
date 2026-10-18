@@ -5344,6 +5344,23 @@
       .dlg.cf > :not(#payCf) {
         display: none;
       }
+
+      /* 更新280：済・過去へ移す の記録の欄。見出しの幅をそろえ、文字を均等に。入力枠は同じ幅 */
+      .clrow {
+        margin-top: 4px;
+      }
+      .clrow > span {
+        flex: none;
+        width: 5em;
+        font-size: 13px;
+        text-align: justify;
+        text-align-last: justify;
+      }
+      .clrow > input {
+        flex: 1;
+        min-width: 0;
+        width: auto;
+      }
     </style>
   </head>
   <body>
@@ -5612,7 +5629,7 @@
         <h2>🔧 動作の記録（保守用）</h2>
         <div class="hint" style="margin: 0 0 4px">
           画面の版：
-          <b>更新279</b>
+          <b>更新280</b>
           （2026-10-18）。古い画面が出るときは、LINEのトークを閉じて開き直してください
         </div>
         <div class="hint" id="bootTime" style="font-size: 11px; line-height: 1.7"></div>
@@ -6068,7 +6085,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwSWnGcrw-UOU72HIo0soyh
           return '';
         }
       })(); // 選んだ台帳（親方ID。空＝自分の台帳）更新235
-      const PAGE_VER = '279'; // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
+      const PAGE_VER = '280'; // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
       function cacheKey() {
         return LS_NS + 'cache_p' + PAGE_VER + (SEL_T ? '_' + SEL_T : '');
       }
@@ -12428,7 +12445,7 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
       function askCancel(docId) {
         askEnd('doc', docId);
       }
-      /* ===== 済・過去へ移す（更新279 三浦さん）：理由を1つ選んで済・過去へ。記録（日付・金額）は任意。日付を省略すると空のまま（今日を入れない） ===== */
+      /* ===== 済・過去へ移す（更新279 三浦さん）：理由を1つ選んで済・過去へ。記録（日付・金額）は任意。省略した日付は空のまま記録する（今日の日付で埋めない） ===== */
       let CL = null;
       const caseUncollected = (c) => {
         const ids = docsOf(c.id)
@@ -12460,13 +12477,13 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
         `<button data-i="${i}" ${dis(x[0], x[1]) ? 'disabled style="opacity:.45;text-align:left"' : 'style="text-align:left"'} onclick="closePick(${i})">☐ ${x[2]}<small style="display:block;font-weight:400;font-size:11px;color:var(--muted)">${esc(x[3])}</small></button>`
     ).join('')}</div>
     <div id="clRec" style="display:none">
-      <div class="ppst">② 記録<small style="font-weight:400;color:var(--muted)">（任意。税務調査・融資審査の対策）</small></div>
-      <div id="clAmtW" class="drow" style="display:none;margin-top:4px"><span style="flex:none;font-size:13px">${esc(L.workAmount)}（税込）</span><input type="number" inputmode="numeric" id="clAmt" placeholder="請求書を作る金額"></div>
-      <div id="clPayW" class="drow" style="display:none;margin-top:4px"><span style="flex:none;font-size:13px">入金額</span><input type="number" inputmode="numeric" id="clPay" placeholder="入った金額（残り ${yen(rest)}）"></div>
-      <div id="clDoneW" class="drow" style="display:none;margin-top:4px"><span style="flex:none;font-size:13px" id="clDoneL">${esc(L.doneDate)}</span><input type="date" id="clDone" max="${ymdStr(new Date())}" onclick="try{this.showPicker()}catch(e){}"></div>
-      <div id="clPayDW" class="drow" style="display:none;margin-top:4px"><span style="flex:none;font-size:13px">入金日</span><input type="date" id="clPayD" max="${ymdStr(new Date())}" onclick="try{this.showPicker()}catch(e){}"></div>
+      <div class="ppst">② 記録<small style="font-weight:400;color:var(--muted)">（任意）</small></div>
+      <div id="clAmtW" class="drow clrow" style="display:none"><span>請求金額</span><input type="number" inputmode="numeric" id="clAmt" placeholder="請求書を1枚作る金額"></div>
+      <div id="clPayW" class="drow clrow" style="display:none"><span>入金額</span><input type="number" inputmode="numeric" id="clPay" placeholder="入った金額（残り ${yen(rest)}）"></div>
+      <div id="clDoneW" class="drow clrow" style="display:none"><span id="clDoneL">${esc(L.doneDate)}</span><input type="date" id="clDone" max="${ymdStr(new Date())}" onclick="try{this.showPicker()}catch(e){}"></div>
+      <div id="clPayDW" class="drow clrow" style="display:none"><span>入金日</span><input type="date" id="clPayD" max="${ymdStr(new Date())}" onclick="try{this.showPicker()}catch(e){}"></div>
       <input type="text" id="clMemo" maxlength="100" placeholder="メモ（任意）" style="margin-top:6px">
-      <div class="pn" style="font-size:11.5px;color:#7A5A00;background:#FFF8E1;border:1px solid #F0D27A;border-radius:8px;padding:5px 8px;margin-top:6px">日付は空のまま記録できます（今日の日付は入れません。あとで税理士が書類の日付と移した日から推測します）。<b>日付を省略したときの税務・財務のリスクは自己責任です。</b></div>
+      <div class="pn" style="font-size:11.5px;color:#7A5A00;background:#FFF8E1;border:1px solid #F0D27A;border-radius:8px;padding:5px 8px;margin-top:6px">税務調査・融資審査の対策として記録が有効となります。<b>金額や日付を省略したときの法的リスクは自己責任となります。</b></div>
     </div>
     <div class="row" style="margin-top:10px"><button onclick="closeDlg()">やめる</button><button class="pri" onclick="closeGo()">済・過去へ移す</button></div>`);
       }
@@ -12511,7 +12528,7 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
           memo: r === '失注' ? '' : q('clMemo').value.trim()
         };
         if (r === '完成' && !CL.hasFinal && o.amount <= 0) {
-          toast(L.workAmount + '（税込）を入れてください（請求書がないので1枚作ります）');
+          toast('請求金額を入れてください（請求書がないので1枚作ります）');
           return;
         }
         if (pay === '一部' && (o.payAmount <= 0 || o.payAmount > CL.rest)) {
@@ -12531,7 +12548,7 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
                 ? [['書類', '取消']]
                 : [
                     [r === '完成' ? L.doneDate : '中止日', o.doneDate ? esc(o.doneDate.replace(/-/g, '/')) : '<span style="color:#B26A00">省略（空）</span>'],
-                    ...(o.amount ? [[L.workAmount, yen(o.amount) + '（請求書を1枚作る）']] : []),
+                    ...(o.amount ? [['請求金額', yen(o.amount) + '（請求書を1枚作る）']] : []),
                     ...(pay !== '未入金' ? [['入金', yen(pay === '全部' ? rest : o.payAmount) + '　入金日 ' + (o.payDate ? esc(o.payDate.replace(/-/g, '/')) : '<span style="color:#B26A00">省略（空）</span>')]] : []),
                     ...(unpaid > 0 ? [['未回収', '<b style="color:var(--danger)">' + yen(unpaid) + '</b>（請求は閉じる。相手への通知なし）']] : [])
                   ]
