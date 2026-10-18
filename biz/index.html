@@ -59,7 +59,8 @@
   .pertop{display:flex;align-items:center;gap:8px;margin-bottom:8px}.pertop span{font-size:12px;color:var(--muted);font-weight:800;flex:none}.pertop select{padding:8px 10px;font-size:15px}
   details.cgrp{margin-bottom:12px}details.cgrp>summary{list-style:none;cursor:pointer;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;padding:8px 4px;border-bottom:2px solid var(--line);margin-bottom:8px}
   details.cgrp>summary::-webkit-details-marker{display:none}details.cgrp>summary::before{content:'▸';color:var(--muted)}details.cgrp[open]>summary::before{content:'▾'}
-  .crow{position:relative;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 30px 10px 12px;margin-bottom:8px;cursor:pointer}.crow:active{background:#F2F8F3}
+  .crow{position:relative;background:#fff;border:1px solid var(--line);border-radius:12px;padding:0;margin-bottom:8px}.crow .crh{position:relative;padding:10px 30px 10px 12px;cursor:pointer;border-radius:12px}.crow .crh:active{background:#F2F8F3}.crow.open{border-color:var(--gc,#8A929A);box-shadow:0 1px 4px rgba(0,0,0,.06)}.crow.open .crh{border-bottom:1px dashed var(--line);border-radius:12px 12px 0 0}
+  .cinl{padding:2px 8px 8px}.cinl .cfr{margin:8px 0}.cinl .dhist{margin:4px 0 0}.cinl .inlbar{display:flex;justify-content:flex-end;gap:6px;margin:6px 0 0}.cinl .inlbar button{font-size:12px;padding:5px 10px;border:1px solid var(--line);background:#fff;border-radius:8px;color:var(--muted)}
   .cr1{display:flex;align-items:center;gap:6px}.cr1 b{font-size:15px;flex:1;min-width:0}.cr2{font-size:12px;color:var(--muted);margin-top:2px}.cr3{font-size:12.5px;margin-top:4px;display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center}
   .cr3 .due{color:var(--danger);font-weight:800}.cr3 .paid{color:var(--ok);font-weight:800}.cr3 .more{color:var(--muted);font-size:11.5px}.crow .chev{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:22px;color:#B8BEC5}
   .csb{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 4px}.csb button{padding:9px 12px;border-radius:10px;border:1.5px solid var(--line);background:#fff;font-size:13px;font-weight:800;font-family:inherit}.csb button.pri{border-color:var(--y);background:var(--y);color:#fff}.csb button.warn{border-color:var(--danger);color:var(--danger)}
@@ -258,6 +259,7 @@
   <div class="ordb">
   <div class="banner" id="banner" style="display:none"><b id="bannerTxt"></b></div>
   <div class="hint" id="edFrom" style="display:none;margin:0 0 6px;padding:6px 10px;border-radius:8px;background:var(--paper,#F6F8FA)"></div>
+  <div class="hint" id="laborHint" style="display:none;margin:0 0 6px;padding:6px 10px;border-radius:8px;background:#FFF8E1;border:1px solid #F0D27A;color:#8A5A00"></div>
   <div class="ptools">
     <div class="ptools2"><div class="seg"><button id="segS" class="on s" onclick="setMode('元請')">下請け</button><button id="segJ" onclick="setMode('施主')">自社請け</button></div><button class="pzoom" id="pzb" onclick="toggleZoom()">🔍 拡大</button></div>
     <div class="hint" id="edHint">緑の点線のところをタップすると入力できます。点線はPDFには出ません。</div>
@@ -349,7 +351,7 @@
     <div class="row"><button class="pri" onclick="demoStart()">🎓 お試しを始める</button></div>
   </div>
   <div class="sec acc" data-acc="eng" style="margin-top:12px" id="engSec"><h2>🔧 動作の記録（保守用）</h2>
-    <div class="hint" style="margin:0 0 4px">画面の版：<b>更新258</b>（2026-10-18）。古い画面が出るときは、LINEのトークを閉じて開き直してください</div>
+    <div class="hint" style="margin:0 0 4px">画面の版：<b>更新264</b>（2026-10-18）。古い画面が出るときは、LINEのトークを閉じて開き直してください</div>
     <div class="hint" id="bootTime" style="font-size:11px;line-height:1.7"></div>
   </div>
 </div>
@@ -394,7 +396,7 @@ const L_TYPES = {   // 起動時に先出しする型の言葉（GASの INV_LABE
     placeWords: ['サービス／作業', 'サービス／点検', 'サービス／修理', 'サービス／代行', '制作／デザイン', '制作／ページ', '相談／打合せ', '相談／顧問', '月額／顧問料', '月額／保守', '出張／訪問', '出張／講師'],   // 仮。テスト先が決まったら差し替え
     userWord: 'ご利用者', guardian: '恵比寿様', brand: 'Mybiz', color: 'ネイビー', colorHex: '#1E3A5F', colorMid: '#2B4C7E', colorLight: '#EAF0F8', colorLine: '#C5D3E8', colorSoft: '#F4F7FB', chara: '水瀬みお', prepay: true, order: false, breakdown: false, visit: false }
 };
-const TYPE_PRESET = '業務委託';   // 置き場ごとの業種の型（起動時の先出し 2026-10-15）
+const TYPE_PRESET = '業務委託';
 /** この端末に覚える名前の頭（2026-10-15 更新222）：建設と Mybiz を同じドメイン（app.mybiz-city.net）に置いているため、前回の内容・足あと・合言葉が混ざっていた。建設は今までどおり inv_、ほかの型は inv_型名_ */
 const LS_NS = 'inv_' + (L_TYPES[TYPE_PRESET] ? TYPE_PRESET + '_' : '');
 /** 水瀬みお（Biz city）のアイコン（2026-10-14 三浦さんの画像から96px）。かんなはHTMLに直書きのまま */
@@ -444,7 +446,7 @@ function snapRebuild(){ spin(true); run('liffSnapRebuild', [UID, true], () => { 
 // ② 前回の台帳をスマホに覚えさせ、まず前回の内容で画面を出す（外の置き場だけ。Google側は uid を信じる作りなので使わない）2026-10-11
 let STALE = false, FRESH_PENDING = null, CUR_TAB = 'cases';
 let SEL_T = (function () { try { return localStorage.getItem(LS_NS + 't') || ''; } catch (e) { return ''; } })();   // 選んだ台帳（親方ID。空＝自分の台帳）更新235
-const PAGE_VER = '258';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
+const PAGE_VER = '264';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
 function cacheKey(){ return LS_NS + 'cache_p' + PAGE_VER + (SEL_T ? '_' + SEL_T : ''); }
 function cacheRead(){ try { const o = JSON.parse(localStorage.getItem(cacheKey()) || 'null'); return o && o.uid && o.S && o.S.labels ? o : null; } catch (e) { return null; } }
 function cacheWrite(uid, data){ try { const s = JSON.stringify({ uid, at: Date.now(), S: data }); if (s.length < 4000000) localStorage.setItem(cacheKey(), s); } catch (e) { /* 入らなければ覚えない */ } }
@@ -464,7 +466,7 @@ function tryApplyFresh(){ if (!FRESH_PENDING) return; const busy = document.getE
 window.addEventListener('load', async () => { stickyTop();
   if (typeof VIEW_MODE !== 'undefined' && VIEW_MODE) { viewerBoot(); return; }   // お客様の閲覧ページ（2026-10-11）
   tmark('load');
-  if (L_TYPES[TYPE_PRESET]) applyStaticLabels();   // 先出しの型の文・色・アイコン（2026-10-15）
+  if (L_TYPES[TYPE_PRESET]) applyStaticLabels();
   spin(true);
   if (!LIFF_ID) { STEP = '設定の読み込み'; try { const c = await (await fetch(API_URL + '?page=cfg', { redirect: 'follow' })).json(); LIFF_ID = c.liffId || ''; } catch (e) { LIFFD.api = '設定が読めない：' + (e && e.message || e); } }
   if (SERVER_MODE === 'api' && !DEV_UID) { const C = cacheRead(); if (C) { try { S = C.S; L = labelsOf(S.labels); UID = C.uid; STALE = true; boot(); spin(false); staleBar(true); tmark('cache'); } catch (e) { S = null; L = labelsOf(L_TYPES[TYPE_PRESET] || null); UID = ''; STALE = false; cacheClear(); spin(true); } } }   // 前回の内容で先に出す（2026-10-11）
@@ -518,8 +520,8 @@ window.addEventListener('load', async () => { stickyTop();
 /** サーバーの窓口（2026-10-11）。Googleの枠の中では google.script.run。外の置き場（静的な置き場）では fetch に差し替える（make_static.py） */
 const SERVER_MODE = 'api';   // 外の置き場（静的な置き場）
 function sessRead(){ try { const o = JSON.parse(localStorage.getItem(LS_NS + 'sess') || 'null'); return o && o.uid === UID && o.at > Date.now() - 5 * 3600 * 1000 ? o.sess : ''; } catch (e) { return ''; } }   // 合言葉（本人確認の時短 2026-10-12）。5時間で捨てる（サーバーは6時間）
-const SRV_READ = /^liff(Load|DraftLast|OrderInit|OrderLoad|PhotoGet|SearchLines|PreviewHtml|ViewUrl)$/;   // 読むだけの呼び出し（2本送っても害がない）
 function sessWrite(s){ try { if (s && UID) localStorage.setItem(LS_NS + 'sess', JSON.stringify({ uid: UID, sess: s, at: Date.now() })); } catch (e) {} }
+const SRV_READ = /^liff(Load|DraftLast|OrderInit|OrderLoad|PhotoGet|SearchLines|PreviewHtml|ViewUrl)$/;   // 読むだけの呼び出し（2本送っても害がない）
 function srvReal(fn, args){ let tok = ''; try { tok = (typeof liff !== 'undefined' && liff.getIDToken && liff.getIDToken()) || ''; } catch (e) { tok = ''; }
   const body = JSON.stringify({ fn, args, idToken: tok, uid: UID, sess: sessRead(), as: (typeof ACT_AS === 'string' ? ACT_AS : ''), t: (typeof SEL_T === 'string' ? SEL_T : ''), log: (fn === 'liffLoad' || fn === 'liffDraftLast' || typeof alogTake !== 'function') ? undefined : alogTake() });
   const once = () => fetch(API_URL, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body });
@@ -585,7 +587,7 @@ function bootDraft(dr){ if (!DEMO && UID && String(S.termsAgreed || '') !== TERM
   D = dr; if ((!D.sites || !D.sites.length) && D.items && D.items.length) D.sites = [{ case_id: '', owner: (D.customer || {}).name || '', name: D.subject || '', items: D.items }]; if (!D.sites || !D.sites.length) D = emptyDraft();
   if (D.sites.some(x => x.items.some(r => r.name))) setTimeout(() => dialog(`<h3>途中の書類があります</h3><p>前にアプリを閉じたときの${D.doc_type || ''}書です${D.customer && D.customer.name ? '（' + esc(D.customer.name) + '）' : ''}。</p><div class="row"><button class="warn" onclick="closeDlg();discardEd()">🗑 破棄</button><button class="pri" onclick="closeDlg();afterLoadDraft();openEd()">開く</button></div>`), 300); }
 const termsText = () => { let t = TERMS_TEXT.replace('{ブランド}', L.brand === 'Ton-Tech' ? 'Ton-Tech／トン・テック' : L.brand + '／マイビズ'); if (L.contract) t = t.replace('現場の情報', L.siteWord + 'の情報').replace('木葉かんな など', '水瀬みお など'); return t; };   // 業務委託の型は「案件」「水瀬みお」に（更新259）   // 規約のブランド名は業種の型で（2026-10-14）
-const TERMS_TEXT = "「LINE de 請求書」利用規約（2026年10月13日版）\n\n提供者：未来クリエイティブマネジメント合同会社（サービスブランド：{ブランド}）\n\n第1条（この規約について）\n1. この規約は、未来クリエイティブマネジメント合同会社（以下「当社」）が提供するLINE上の見積書・注文書・請求書・領収書の作成サービス「LINE de 請求書」（以下「本サービス」）の利用条件を定めます。\n2. 利用者は、本サービスの画面で「同意して始める」を押した時点で、この規約に同意したものとします。同意できない場合は、本サービスを利用できません。\n3. 当社は、必要に応じてこの規約を変更できます。変更後の規約は、本サービスの画面またはLINEで知らせた時点から効力を持ちます。\n\n第2条（本サービスの内容）\n1. 本サービスは、利用者が入力した内容をもとに、見積書・注文書・請求書・領収書などの書類（PDF）を作り、LINEで送るための道具です。\n2. 利用者の取引先（お客様）が「この内容で進めてください」「この内容で発注します」などのボタンを押した事実と日時を記録する機能は、やり取りの記録を残すものです。当社は、その記録が法律上の契約書面・電子契約の要件を満たすことを保証しません。\n3. 本サービスは、税務・法務・会計の助言を行うものではありません。書類の記載内容（消費税・インボイス番号・契約条件など）の適法性・正確性は、利用者自身が確認してください。\n\n第3条（利用者の責任）\n1. 利用者は、自分の責任と判断で本サービスを使い、作った書類の内容、送り先、送った結果について、すべての責任を負います。\n2. 利用者は、建設業法、下請法、消費税法（インボイス制度）、特定商取引法、個人情報保護法など、自分の事業に関係する法令を自分で守ってください。当社は法令の遵守を代行しません。\n3. 利用者は、自分のLINEアカウントとスマートフォンを、他人に使われないように管理してください。利用者のアカウントで行われた操作は、利用者本人が行ったものとみなします。\n4. 利用者は、お客様の氏名・住所・連絡先などの情報を本サービスに入力するにあたり、必要な範囲で、お客様の了解を得てください。\n\n第4条（禁止事項）\n次の行為を禁止します。\n・法令または公序良俗に反する行為、犯罪行為に関わる行為\n・事実と異なる書類（架空の請求書・領収書など）を作る行為\n・他人になりすます行為、他人の情報を無断で入力する行為\n・本サービスの仕組み（プログラム・スプレッドシート・自動更新）を無断で解析・改変・複製する行為\n・本サービスのサーバーや他の利用者に過大な負荷をかける行為\n・その他、当社が不適切と判断する行為\n\n第5条（利用者のデータの取り扱い）\n1. 利用者が入力した情報（屋号・口座・料金表・お客様の情報・現場の情報・書類・写真など。以下「利用者データ」）は、利用者のものです。\n2. 当社は、利用者データを、本サービスの提供・運用・保守・改善・障害対応の目的以外には使いません。他の事業、広告の配信、第三者への提供・販売には使いません。\n3. 当社は、利用者データを、本サービスの運用に必要な範囲でのみ閲覧することがあります（障害対応、利用者からの問い合わせへの対応など）。\n4. 利用者データは、Google（Googleスプレッドシート・Googleドライブ）およびLINE（LINEヤフー株式会社）のサービス上に保存・送信されます。これらの会社の利用規約・プライバシーポリシーが別途適用されます。\n5. 当社は、サービスの改善のために、個人や取引先を特定できない形に加工した統計情報（利用件数、機能の利用状況など）を使うことがあります。\n6. 利用者が本サービスの利用をやめたときは、利用者の求めに応じて、合理的な期間内に利用者データを削除します。ただし、法令で保存が求められるもの、および紛争対応のために必要なものは、その必要な期間、保存することがあります。\n\n第6条（免責）\n1. 当社は、本サービスに誤りがないこと、中断しないこと、利用者の目的に合うこと、作った書類が法令の要件を満たすことを保証しません。\n2. 当社は、本サービスの利用または利用できなかったことによって利用者や第三者に生じた損害（取引先との紛争、入金の遅れ、税務上の不利益、データの消失を含む）について、当社に故意または重大な過失がある場合を除き、責任を負いません。\n3. 当社が責任を負う場合でも、その範囲は、利用者が当社に支払った直近12か月分の利用料金の合計額（無料の場合は1万円）を上限とします。\n4. Google・LINEのサービスの仕様変更・停止・障害によって本サービスが使えなくなった場合、当社は責任を負いません。\n\n第7条（サービスの変更・停止・終了）\n1. 当社は、利用者への事前の知らせなしに、本サービスの内容を変更・追加・削除することがあります。\n2. 当社は、保守、障害、Google・LINE側の事情、その他やむを得ない理由があるときは、本サービスを一時的に止めることがあります。\n3. 当社は、本サービスを終了することがあります。終了するときは、原則として1か月前までにLINEまたは画面で知らせ、利用者が自分のデータ（スプレッドシート・PDF）を取り出せる期間を設けます。\n\n第8条（利用の停止・解除）\n1. 利用者がこの規約に違反したとき、または当社が本サービスの利用を続けることが不適切と判断したときは、当社は、事前の知らせなしに、利用者の利用を停止し、または利用契約を解除することがあります。\n2. 試験提供の期間中に、当社の了承なく第三者を紹介して登録させたときは、紹介された利用者と紹介した利用者の双方について、前項と同じ扱いをすることがあります。\n\n第9条（情報の開示）\n1. 当社は、次の場合を除き、利用者データを第三者に開示しません。\n・利用者の同意があるとき\n・法令に基づくとき（裁判所の命令・令状、法令上の義務に基づく照会など）\n・人の生命・身体・財産を守るために必要で、利用者の同意を得ることが難しいとき\n・本サービスの運用を委託する相手に、必要な範囲で預けるとき（守秘義務を負わせます）\n2. 警察などの捜査機関、裁判所、弁護士会からの照会については、法令上の義務がある場合（令状、裁判所の文書提出命令など）には応じます。法令上の義務がない任意の照会については、犯罪の防止・解決や人の安全のために必要と当社が判断した場合に限り、必要最小限の範囲で応じることがあります。\n3. 当社は、開示を行ったときは、法令で禁じられている場合を除き、利用者に知らせるよう努めます。\n\n第10条（知的財産）\n本サービスのプログラム、画面、文章、キャラクター（木葉かんな など）の権利は当社に帰属します。利用者が作った書類の内容の権利は、利用者に帰属します。\n\n第11条（広告の表示）\n1. 当社は、本サービスの画面（読み込み中・送信中の待ち時間の表示など）に、当社または第三者の広告を表示することがあります。\n2. 広告の表示にあたり、当社は、利用者のLINEアカウント情報および利用者データを広告の配信に使いません。\n3. 広告先の商品・サービスについては、広告主と利用者の間の取引であり、当社は責任を負いません。\n\n第12条（料金）\n本サービスの料金は、別に定める料金表によります。無料で提供している機能は、当社の判断で有料に変更することがあります（変更前に知らせます）。\n\n第13条（準拠法・裁判所）\nこの規約は日本法に従います。本サービスに関する紛争は、大阪地方裁判所を第一審の専属的合意管轄裁判所とします。\n\n第14条（連絡先）\n本サービスに関する問い合わせは、LINE公式アカウント「LINE de 請求書」のトークからお願いします。";
+const TERMS_TEXT = "「LINE de 請求書」利用規約（2026年10月13日版）\n\n提供者：未来クリエイティブマネジメント合同会社（サービスブランド：{ブランド}）\n\n第1条（この規約について）\n1. この規約は、未来クリエイティブマネジメント合同会社（以下「当社」）が提供するLINE上の見積書・注文書・請求書・領収書の作成サービス「LINE de 請求書」（以下「本サービス」）の利用条件を定めます。\n2. 利用者は、本サービスの画面で「同意して始める」を押した時点で、この規約に同意したものとします。同意できない場合は、本サービスを利用できません。\n3. 当社は、必要に応じてこの規約を変更できます。変更後の規約は、本サービスの画面またはLINEで知らせた時点から効力を持ちます。\n\n第2条（本サービスの内容）\n1. 本サービスは、利用者が入力した内容をもとに、見積書・注文書・請求書・領収書などの書類（PDF）を作り、LINEで送るための道具です。\n2. 利用者の取引先（お客様）が「この内容で進めてください」「この内容で発注します」などのボタンを押した事実と日時を記録する機能は、やり取りの記録を残すものです。当社は、その記録が法律上の契約書面・電子契約の要件を満たすことを保証しません。\n3. 本サービスは、税務・法務・会計の助言を行うものではありません。書類の記載内容（消費税・インボイス番号・契約条件など）の適法性・正確性は、利用者自身が確認してください。\n\n第3条（利用者の責任）\n1. 利用者は、自分の責任と判断で本サービスを使い、作った書類の内容、送り先、送った結果について、すべての責任を負います。\n2. 利用者は、建設業法、下請法、消費税法（インボイス制度）、特定商取引法、個人情報保護法など、自分の事業に関係する法令を自分で守ってください。当社は法令の遵守を代行しません。\n3. 利用者は、自分のLINEアカウントとスマートフォンを、他人に使われないように管理してください。利用者のアカウントで行われた操作は、利用者本人が行ったものとみなします。\n4. 利用者は、お客様の氏名・住所・連絡先などの情報を本サービスに入力するにあたり、必要な範囲で、お客様の了解を得てください。\n5. 請負か雇用かは、書類の形ではなく仕事の実態（指揮命令・時間の拘束・道具や材料の負担・報酬が成果か時間か）で判断されます。本サービスの書類は請負の体裁を整えますが、実態を保証するものではありません。\n\n第4条（禁止事項）\n次の行為を禁止します。\n・法令または公序良俗に反する行為、犯罪行為に関わる行為\n・事実と異なる書類（架空の請求書・領収書など）を作る行為\n・他人になりすます行為、他人の情報を無断で入力する行為\n・本サービスの仕組み（プログラム・スプレッドシート・自動更新）を無断で解析・改変・複製する行為\n・本サービスのサーバーや他の利用者に過大な負荷をかける行為\n・その他、当社が不適切と判断する行為\n\n第5条（利用者のデータの取り扱い）\n1. 利用者が入力した情報（屋号・口座・料金表・お客様の情報・現場の情報・書類・写真など。以下「利用者データ」）は、利用者のものです。\n2. 当社は、利用者データを、本サービスの提供・運用・保守・改善・障害対応の目的以外には使いません。他の事業、広告の配信、第三者への提供・販売には使いません。\n3. 当社は、利用者データを、本サービスの運用に必要な範囲でのみ閲覧することがあります（障害対応、利用者からの問い合わせへの対応など）。\n4. 利用者データは、Google（Googleスプレッドシート・Googleドライブ）およびLINE（LINEヤフー株式会社）のサービス上に保存・送信されます。これらの会社の利用規約・プライバシーポリシーが別途適用されます。\n5. 当社は、サービスの改善のために、個人や取引先を特定できない形に加工した統計情報（利用件数、機能の利用状況など）を使うことがあります。\n6. 利用者が本サービスの利用をやめたときは、利用者の求めに応じて、合理的な期間内に利用者データを削除します。ただし、法令で保存が求められるもの、および紛争対応のために必要なものは、その必要な期間、保存することがあります。\n\n第6条（免責）\n1. 当社は、本サービスに誤りがないこと、中断しないこと、利用者の目的に合うこと、作った書類が法令の要件を満たすことを保証しません。\n2. 当社は、本サービスの利用または利用できなかったことによって利用者や第三者に生じた損害（取引先との紛争、入金の遅れ、税務上の不利益、データの消失を含む）について、当社に故意または重大な過失がある場合を除き、責任を負いません。\n3. 当社が責任を負う場合でも、その範囲は、利用者が当社に支払った直近12か月分の利用料金の合計額（無料の場合は1万円）を上限とします。\n4. Google・LINEのサービスの仕様変更・停止・障害によって本サービスが使えなくなった場合、当社は責任を負いません。\n\n第7条（サービスの変更・停止・終了）\n1. 当社は、利用者への事前の知らせなしに、本サービスの内容を変更・追加・削除することがあります。\n2. 当社は、保守、障害、Google・LINE側の事情、その他やむを得ない理由があるときは、本サービスを一時的に止めることがあります。\n3. 当社は、本サービスを終了することがあります。終了するときは、原則として1か月前までにLINEまたは画面で知らせ、利用者が自分のデータ（スプレッドシート・PDF）を取り出せる期間を設けます。\n\n第8条（利用の停止・解除）\n1. 利用者がこの規約に違反したとき、または当社が本サービスの利用を続けることが不適切と判断したときは、当社は、事前の知らせなしに、利用者の利用を停止し、または利用契約を解除することがあります。\n2. 試験提供の期間中に、当社の了承なく第三者を紹介して登録させたときは、紹介された利用者と紹介した利用者の双方について、前項と同じ扱いをすることがあります。\n\n第9条（情報の開示）\n1. 当社は、次の場合を除き、利用者データを第三者に開示しません。\n・利用者の同意があるとき\n・法令に基づくとき（裁判所の命令・令状、法令上の義務に基づく照会など）\n・人の生命・身体・財産を守るために必要で、利用者の同意を得ることが難しいとき\n・本サービスの運用を委託する相手に、必要な範囲で預けるとき（守秘義務を負わせます）\n2. 警察などの捜査機関、裁判所、弁護士会からの照会については、法令上の義務がある場合（令状、裁判所の文書提出命令など）には応じます。法令上の義務がない任意の照会については、犯罪の防止・解決や人の安全のために必要と当社が判断した場合に限り、必要最小限の範囲で応じることがあります。\n3. 当社は、開示を行ったときは、法令で禁じられている場合を除き、利用者に知らせるよう努めます。\n\n第10条（知的財産）\n本サービスのプログラム、画面、文章、キャラクター（木葉かんな など）の権利は当社に帰属します。利用者が作った書類の内容の権利は、利用者に帰属します。\n\n第11条（広告の表示）\n1. 当社は、本サービスの画面（読み込み中・送信中の待ち時間の表示など）に、当社または第三者の広告を表示することがあります。\n2. 広告の表示にあたり、当社は、利用者のLINEアカウント情報および利用者データを広告の配信に使いません。\n3. 広告先の商品・サービスについては、広告主と利用者の間の取引であり、当社は責任を負いません。\n\n第12条（料金）\n本サービスの料金は、別に定める料金表によります。無料で提供している機能は、当社の判断で有料に変更することがあります（変更前に知らせます）。\n\n第13条（準拠法・裁判所）\nこの規約は日本法に従います。本サービスに関する紛争は、大阪地方裁判所を第一審の専属的合意管轄裁判所とします。\n\n第14条（連絡先）\n本サービスに関する問い合わせは、LINE公式アカウント「LINE de 請求書」のトークからお願いします。";
 const TERMS_VER = '2026-10-13';
 const TRIAL_VER = '2026-10-13';   // 試験提供のお願い（別口の同意 2026-10-13 三浦さん）
 const TRIAL_POINTS = ['無料の期間は、予告なく終わることがあります。有料に変わるときは事前にお知らせし、続けるかどうかを選べます', '試験中のため、機能の変更・一時停止・不具合が起こることがあります。大切な書類はPDFを手元にも保存してください', '試験を終えるときは、1か月前までにお知らせし、データ（スプレッドシート・PDF）を取り出せる期間を設けます', 'いまは、製作者（未来クリエイティブマネジメント合同会社）が直接ご案内した方だけにお使いいただいています。製作者の了承なく他の方を紹介して登録させた場合は、紹介された方と紹介した方の両方について、お知らせなく利用を止めることがあります'];
@@ -699,6 +701,11 @@ function nameGateHtml(){ return `<div style="background:#FDECEA;border-radius:8p
 function nameGate(next){ if (((S && S.tenants) || []).length < 2) { next(); return; }
   dialog(`<h3>📤 送る前に</h3>${nameGateHtml()}<div class="row"><button onclick="closeDlg()">やめる</button><button class="pri" onclick="closeDlg();window.__nameNext&&window.__nameNext()">この名義で送る</button></div>`); window.__nameNext = next; }
 /** 書類をどの台帳で作っているか（台帳が2つ以上あるときだけ）。別の台帳へ移せる（更新242） */
+/** 人工・日当だけの明細への薄い注意（偽装請負のケア。更新264） */
+function laborOnly(){ const rows = (D.sites || []).flatMap(x => x.items || []).filter(r => r && (r.name || r.unit_price)); if (!rows.length) return false;
+  return rows.every(r => unitN(r.unit) === '人工' || /人工|日当|日給|時給|出面/.test(String(r.name || ''))); }
+function laborHintDraw(){ const el = document.getElementById('laborHint'); if (!el) return; const on = laborOnly();
+  el.style.display = on ? '' : 'none'; if (on) el.innerHTML = `⚠ 明細が「人工・日当」だけです。この形の${kShort(VIEW)}書が続くと、請負ではなく雇用（日給で働く人）と見られることがあります。工事の内容（例：${esc(L.itemEx || '外壁塗装')} 一式）を品目に入れるのがおすすめです。`; }
 function edFromDraw(){ const el = document.getElementById('edFrom'); if (!el) return; const ts = (S && S.tenants) || []; if (ts.length < 2) { el.style.display = 'none'; return; }
   const t = S.tenant || {}; const nm = t.own ? '自分：' + ((S.iss || {}).name || t.name || '自分の書類') : '👥 ' + (t.name || 'チーム');
   el.style.display = ''; el.innerHTML = `この書類の台帳：<b>${esc(nm)}</b>`; }   // 「別の台帳へ移す」は廃止（更新245）
@@ -1111,7 +1118,7 @@ function render(){
   edMemo();
   document.getElementById('edGo').textContent = '📄 ' + kShort(VIEW) + 'PDFプレビュー・送る';
   document.getElementById('edT').textContent = (VIEW === '見積' && D.change_no ? (D.change_full ? '見積書（受注後の変更）' : '追加・変更の見積書') : kShort(VIEW) + '書') + (originId ? 'の編集（' + originNo + '）' : 'をつくる');
-  edFromDraw();
+  edFromDraw(); laborHintDraw();
   const ban = document.getElementById('banner');
   if (originId) { const o0 = S.docs.find(x => x.id === originId) || {}; const keep = o0.kind === '見積' && o0.sentN > 0; ban.style.display = 'block'; document.getElementById('bannerTxt').textContent = keep ? `第${o0.ver || 1}版（${originNo}）を元に、次の版を作成中（保存すると新しい版。第${o0.ver || 1}版は残ります）` : `${originNo} を編集中（保存すると新しい番号になり、${originNo} は「訂正前」に）`; } else ban.style.display = 'none';
   const c = cust(), moto = MODE === '元請';
@@ -2242,16 +2249,25 @@ function caseBox(c, show, solo){
   const ds = docsOf(c.id).filter(vis).sort((a, b) => (b.date || '').localeCompare(a.date || '') || b.id.localeCompare(a.id));
   const top = ds.find(d => d.kind === '請求') || ds.find(d => d.kind === '注文') || adoptedEst(c.id) || ds.find(d => d.kind === '見積') || ds[0];   // 見積は採用版（2026-10-10）
   const unpaid = ds.filter(d => d.kind === '請求').reduce((a, d) => a + caseDue(d, c.id), 0);   // 締め請求は現場の分だけ
-  const g = document.createElement('div'); g.className = 'crow'; g.onclick = () => openCase(c.id);
+  // 現場ごとに開閉（更新264）：見出しをタップすると、その現場の中身（書類・ボタン・メモ）がその場で開く。請求中の札と同じ見え方。標準は閉じる
+  const key = 'cs:' + c.id, on = cbOpenGet(key, false);
+  const g = document.createElement('div'); g.className = 'crow' + (on ? ' open' : '');
+  const hd = document.createElement('div'); hd.className = 'crh'; hd.onclick = () => cbToggle(key, false);
   const gp = caseGroup(c) === '済・過去', stl = gp && c.status === '相談' ? '失注' : ST_LABEL(caseSt(c));
-  g.innerHTML = `<div class="cr1"><b>${esc(c.name)}</b>${statusTag(stl)}</div>
+  hd.innerHTML = `<div class="cr1"><b>${esc(c.name)}</b>${statusTag(stl)}</div>
     ${c.owner && cu.kubun === '元請' ? `<div class="cr2">${L.ownerWord}：${esc(c.owner)}</div>` : ''}
     <div class="cr3">${top ? `${docCases(top).length > 1 ? caseWork(top, c.id) : docTitle(top)}${resTag(top)}${solo ? '' : '　' + yen(caseTop(c).amt)}${docCases(top).length > 1 ? `<span class="tag moto">${top.kind === '請求' ? '締め請求' : 'まとめて' + kindName(top)}</span>` : ''}${ds.length > 1 ? `<span class="more">ほか${ds.length - 1}件</span>` : ''}` : '<span style="color:var(--muted)">書類なし</span>'}
       ${unpaid && !solo ? `<span class="due">未入金：残り ${yen(unpaid)}</span>` : unpaid ? '' : (top && top.kind === '請求' ? '<span class="paid">入金済</span>' : '')}</div>
-    ${c.memo ? `<div class="cr4">📝 ${esc(c.memo.replace(/\s+/g, ' ').slice(0, 40))}${c.memo.length > 40 ? '…' : ''}</div>` : ''}
-    <span class="chev">›</span>`;
+    ${c.memo && !on ? `<div class="cr4">📝 ${esc(c.memo.replace(/\s+/g, ' ').slice(0, 40))}${c.memo.length > 40 ? '…' : ''}</div>` : ''}
+    <span class="chev">${on ? '▾' : '▸'}</span>`;
+  g.appendChild(hd);
+  if (on) { const b = document.createElement('div'); b.className = 'cinl'; b.innerHTML = caseInlineHtml(c.id); g.appendChild(b); setTimeout(() => { try { photoLoad(); } catch (e) {} }, 0); }
   return g;
 }
+/** 現場の札の中身（更新264）：下から出る画面と同じ中身を、見出し（×・︙）なしでその場に出す。中の操作で画面を描き直す指示は、一覧の描き直しに置き換える */
+function caseInlineHtml(id){ let h = caseSheetHtml(id); h = h.replace(/^\s*<h3>[\s\S]*?<\/h3>/, '');
+  h = h.split(`bsSet(caseSheetHtml('${id}'))`).join('renderCases()');
+  return h + `<div class="inlbar"><button onclick="caseMore('${id}')">︙ その他</button><button onclick="openCase('${id}')">⤢ 大きく開く</button></div>`; }
 function editCaseMemo(id){ const c = S.cases.find(x => x.id === id) || {};
   bsSet(bsHead('内容メモ：' + esc(c.name || '')) + `<textarea id="cmT" rows="6" maxlength="${CASE_MEMO_MAX}" oninput="cntUp(this,'cmC',${CASE_MEMO_MAX})" placeholder="${L.contract ? '例：会社案内サイト5ページ。来週火曜にオンラインで打合せ。見積は10月中に' : '例：2階ベランダの雨漏り。来週火曜の午後に下見。見積は10月中に'}">${esc(c.memo || '')}</textarea><div class="cnt2" id="cmC">${(c.memo || '').length} / ${CASE_MEMO_MAX}文字</div>
     <div class="hint">${CASE_MEMO_MAX}文字まで。書類には印字しません（自分用のメモ）。</div>
