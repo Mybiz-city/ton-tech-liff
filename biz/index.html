@@ -5317,6 +5317,28 @@
         opacity: 0.8;
         margin-top: 2px;
       }
+
+      /* 更新277：写真・ロゴの入力欄（display:none にしない。見えない大きさで置く） */
+      .fhid {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        border: 0;
+        opacity: 0;
+      }
+      .phadd,
+      .upl {
+        position: relative;
+        cursor: pointer;
+      }
+      /* 更新277：入金の記録の確認の板（いまの入力の上に重ねる） */
+      .dlg.cf > :not(#payCf) {
+        display: none;
+      }
     </style>
   </head>
   <body>
@@ -5585,7 +5607,7 @@
         <h2>🔧 動作の記録（保守用）</h2>
         <div class="hint" style="margin: 0 0 4px">
           画面の版：
-          <b>更新276</b>
+          <b>更新277</b>
           （2026-10-18）。古い画面が出るときは、LINEのトークを閉じて開き直してください
         </div>
         <div class="hint" id="bootTime" style="font-size: 11px; line-height: 1.7"></div>
@@ -6041,7 +6063,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbw0IYBUM85Mhh83220e2Ra3
           return '';
         }
       })(); // 選んだ台帳（親方ID。空＝自分の台帳）更新235
-      const PAGE_VER = '276'; // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
+      const PAGE_VER = '277'; // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
       function cacheKey() {
         return LS_NS + 'cache_p' + PAGE_VER + (SEL_T ? '_' + SEL_T : '');
       }
@@ -11180,7 +11202,7 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
         bsOpen(
           bsHead('発行者（自社の情報）とロゴ') +
             `<div class="ipv"><div class="ipvh">書類の右上はこう並びます</div><div class="piss" id="ipv"></div></div>` +
-            `<div class="nsec"><div class="nsh"><span class="nno">1</span>ロゴ<span class="nsub">すべての書類で共通</span></div><div class="prow2"><label class="upl" style="flex:1;margin:0">画像を選ぶ<input type="file" accept="${ACC}" onchange="pickLogo(this)" style="display:none"></label><button id="lgDel" class="dl" onclick="WL='';ipvDraw()" style="display:${WL ? 'block' : 'none'}">ロゴを外す</button></div>` +
+            `<div class="nsec"><div class="nsh"><span class="nno">1</span>ロゴ<span class="nsub">すべての書類で共通</span></div><div class="prow2"><span class="upl" style="flex:1;margin:0" onclick="fileOpen(this)">画像を選ぶ<input type="file" accept="${ACC}" onchange="pickLogo(this)" class="fhid"></span><button id="lgDel" class="dl" onclick="WL='';ipvDraw()" style="display:${WL ? 'block' : 'none'}">ロゴを外す</button></div>` +
             `<div id="lyBox">${lb('ロゴと会社名の並べ方')}<div class="pchips" id="lyC">${LAYOUTS.map((l) => `<button data-v="${l[0]}" onclick="WI.layout='${l[0]}';ipvDraw()">${l[1]}</button>`).join('')}</div>
        <div class="hint" id="lyH"></div></div></div>` +
             ISS_F.map(
@@ -14457,7 +14479,7 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
       const PH_CACHE = {};
       function photoBox(c) {
         const ps = c.photos || [];
-        return `<div class="phbox"><div class="phh"><span style="color:var(--muted);font-weight:400;font-size:12.5px">${ps.length ? ps.length + '枚。タップで大きく・一言' : '1' + L.siteWord + '12枚まで'}</span><label class="phadd">＋ 撮る・選ぶ<input type="file" accept="${ACC}" multiple style="display:none" onchange="photoPick('${c.id}',this.files)"></label></div>
+        return `<div class="phbox"><div class="phh"><span style="color:var(--muted);font-weight:400;font-size:12.5px">${ps.length ? ps.length + '枚。タップで大きく・一言' : '1' + L.siteWord + '12枚まで'}</span><span class="phadd" onclick="fileOpen(this)">＋ 撮る・選ぶ<input type="file" accept="${ACC}" multiple class="fhid" onchange="photoPick('${c.id}',this.files)"></span></div>
     ${ps.length ? `<div class="phl" id="phl_${c.id}">${ps.map((x) => `<div class="pht" onclick="photoView('${c.id}','${x.id}')"><img src="${PH_CACHE[x.id] || ''}" data-id="${x.id}" alt="">${x.memo ? `<small>${esc(x.memo)}</small>` : ''}</div>`).join('')}</div>` : `<div class="hint" style="margin:4px 0 0">見積・請求書に「${L.siteWord}写真」のページとして付けられます</div>`}</div>`;
       }
       function photoLoad() {
@@ -14569,7 +14591,7 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
         const all = docPhotos();
         if (!Array.isArray(D.photos)) D.photos = []; // 標準は付けない（2026-10-09）。付けるときは「写真を付ける」で選ぶ
         const n = D.photos.filter((id) => all.some((p) => p.id === id)).length;
-        return `<div class="psplit" style="background:#F7F7F7;color:#555;display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="flex:1">📷 ${L.siteWord}の写真 ${all.length ? (n ? `<b>${n}枚</b>を付ける（${all.length}枚中）` : `付けない<small>（${all.length}枚あり）</small>`) : 'なし'}</span>${all.length ? `<button class="phadd" style="font-family:inherit;background:#fff" onclick="openPhotoPick()">${n ? '写真を選び直す' : '写真を付ける'}</button>` : ''}<label class="phadd">＋ 撮る・選ぶ<input type="file" accept="${ACC}" multiple style="display:none" onchange="edPhotoPick(this.files)"></label></div>`;
+        return `<div class="psplit" style="background:#F7F7F7;color:#555;display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="flex:1">📷 ${L.siteWord}の写真 ${all.length ? (n ? `<b>${n}枚</b>を付ける（${all.length}枚中）` : `付けない<small>（${all.length}枚あり）</small>`) : 'なし'}</span>${all.length ? `<button class="phadd" style="font-family:inherit;background:#fff" onclick="openPhotoPick()">${n ? '写真を選び直す' : '写真を付ける'}</button>` : ''}<span class="phadd" onclick="fileOpen(this)">＋ 撮る・選ぶ<input type="file" accept="${ACC}" multiple class="fhid" onchange="edPhotoPick(this.files)"></span></div>`;
       }
       async function edPhotoPick(files) {
         const caseId = (D.sites || []).map((s) => s.case_id).filter(Boolean)[0] || '';
@@ -14619,7 +14641,7 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
         bsOpen(
           bsHead('付ける写真を選ぶ') +
             `<div class="hint" style="margin:0 0 8px">チェックした写真を、書類の最後に「${L.siteWord}写真」のページとして付けます。コメントは写真の下に印字します（40字まで）。</div><div class="phl2">${all.map((p) => `<div class="phc"><label class="phc-img"><input type="checkbox" ${D.photos.includes(p.id) ? 'checked' : ''} onchange="if(this.checked)D.photos.push('${p.id}');else D.photos=D.photos.filter(x=>x!=='${p.id}')"><img src="${PH_CACHE[p.id] || ''}" data-id="${p.id}"></label><textarea class="phm" rows="3" maxlength="40" placeholder="コメント（例：施工前・雨漏り箇所）" data-pid="${p.id}">${esc(p.memo || '')}</textarea></div>`).join('')}</div>
-    <label class="phadd" style="display:block;text-align:center;margin:8px 0">＋ さらに撮る・選ぶ<input type="file" accept="${ACC}" multiple style="display:none" onchange="closeBs();edPhotoPick(this.files)"></label>
+    <span class="phadd" style="display:block;text-align:center;margin:8px 0" onclick="fileOpen(this)">＋ さらに撮る・選ぶ<input type="file" accept="${ACC}" multiple class="fhid" onchange="closeBs();edPhotoPick(this.files)"></span>
     <div class="bsb"><button onclick="D.photos=[];closeBs();render()">付けない</button><button class="ok" onclick="photoPickDone()">決める</button></div>`
         );
         photoLoad();
@@ -16651,7 +16673,7 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
       /** 現場を足す画面の写真（2026-10-07）：依頼主や元請からLINEで先にもらった画像を、登録の時点で付けておける。保存時に現場へ付く */
       function ncPhotoHtml() {
         const ps = NC.photos_new || [];
-        return `<div class="phbox" style="margin:10px 0"><div class="phh">📷 ${L.siteWord}の写真${ps.length ? `（${ps.length}枚）` : ''}<label class="phadd">＋ 撮る・選ぶ<input type="file" accept="${ACC}" multiple style="display:none" onchange="ncPhotoPick(this.files)"></label></div>
+        return `<div class="phbox" style="margin:10px 0"><div class="phh">📷 ${L.siteWord}の写真${ps.length ? `（${ps.length}枚）` : ''}<span class="phadd" onclick="fileOpen(this)">＋ 撮る・選ぶ<input type="file" accept="${ACC}" multiple class="fhid" onchange="ncPhotoPick(this.files)"></span></div>
     ${ps.length ? `<div class="phl">${ps.map((x) => `<div class="pht" onclick="ncPhotoView('${x.id}')"><img src="${PH_CACHE[x.id] || ''}" data-id="${x.id}" alt="">${x.memo ? `<small>${esc(x.memo)}</small>` : ''}</div>`).join('')}</div>` : '<div class="hint" style="margin:4px 0 0">LINEでもらった画像も、ここで付けておけます（任意）</div>'}</div>`;
       }
       async function ncPhotoPick(files) {
@@ -18257,6 +18279,7 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
         if (el) el.focus();
         return null;
       } // 入金日は必須（税務調査・融資審査で最初に見られる記録 2026-10-10）
+      let PAY_CONFIRMED = false; // 更新277：確認の板を通ったか
       function doPay(docId, b) {
         const d = S.docs.find((x) => x.id === docId) || {};
         const { a, f } = payAmt(b),
@@ -18298,6 +18321,22 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
           }
           p.alloc = { by: al.by, cases: al.cases };
         }
+        if (!PAY_CONFIRMED) {
+          payConfirm(
+            [
+              ['請求書', esc(d.no || '') + (d.custName ? '　' + esc(d.custName) : '')],
+              ['方法', esc(method)],
+              ['入金日', esc(String(p.date || '').replace(/-/g, '/'))],
+              ['入金額', '<b>' + yen(p.amount) + '</b>' + (p.fee ? '（手数料 ' + yen(p.fee) + '）' : '')]
+            ],
+            () => {
+              PAY_CONFIRMED = true;
+              doPay(docId, b);
+            }
+          );
+          return;
+        }
+        PAY_CONFIRMED = false;
         closeDlg();
         spin(true, '💴 入金を記録しています…');
         thanksMark();
@@ -18626,6 +18665,24 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
           (groups[dt] = groups[dt] || []).push(x);
         });
         const dates = Object.keys(groups);
+        if (!CP.confirmed) {
+          const sum = items.reduce((t, x) => t + x.amount, 0);
+          payConfirm(
+            [
+              ['依頼主', esc(CP.cu.name || '')],
+              ['方法', esc(method)],
+              ['入金日', esc(dates.map((x) => x.replace(/-/g, '/')).join('・'))],
+              ['入金額', '<b>' + yen(sum) + '</b>' + (CP.a === '手数料' ? '（手数料引き）' : CP.a === '一部' ? '（一部入金）' : '（全額）')],
+              ['請求書', esc(items.map((x) => (S.docs.find((d) => d.id === x.docId) || {}).no || '').join('・'))]
+            ].concat(adjKind ? [[adjKind, yen(adjAmt)]] : []),
+            () => {
+              CP.confirmed = true;
+              cpSave();
+            }
+          );
+          return;
+        }
+        CP.confirmed = false;
         closeDlg();
         spin(true, '💴 入金を記録しています…');
         thanksMark();
@@ -18782,8 +18839,41 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
       }
 
       // ---------- 小道具
+      /** 写真・ロゴの入力欄を開く（更新277）：label で包む形だと LINE の中のブラウザで開かないことがあるため、タップで input を直接 click する。input は display:none にせず、見えない大きさで置く（.fhid） */
+      function fileOpen(el) {
+        const i = el && el.querySelector('input[type=file]');
+        if (!i) return;
+        try {
+          i.value = '';
+        } catch (e) {
+          /* 続ける */
+        }
+        i.click();
+      }
+      /** 入金の記録の前のひと呼吸（更新277 三浦さん：ミスタップで済・過去へ行かないように）。いまの画面の上に確認の板を重ねる。「← 直す」で入力に戻る */
+      function payConfirm(rows, onOk) {
+        const el = document.getElementById('dlg');
+        const old = el.querySelector('#payCf');
+        if (old) old.remove();
+        const box = document.createElement('div');
+        box.id = 'payCf';
+        box.innerHTML = `<h3>この内容で記録しますか？</h3><div class="cinfo2" style="margin:6px 0 10px">${rows.map((r) => `<div><span class="k">${esc(r[0])}</span>${r[1]}</div>`).join('')}</div><p class="hint" style="margin:0 0 8px">記録すると、全額そろった請求書は「済・過去」へ移ります（あとから「直す」で変えられます）</p><div class="row"><button>← 直す</button><button class="pri" id="payCfOk">💴 記録する</button></div>`;
+        el.appendChild(box);
+        el.classList.add('cf'); // 入力の部分は隠して、確認の板だけ見せる（.dlg.cf）
+        box.querySelector('button').onclick = () => {
+          box.remove();
+          el.classList.remove('cf');
+        };
+        document.getElementById('payCfOk').onclick = () => {
+          box.remove();
+          el.classList.remove('cf');
+          onOk();
+        };
+        el.scrollTop = 0;
+      }
       function dialog(html) {
         const el = document.getElementById('dlg');
+        el.classList.remove('cf');
         el.innerHTML = html;
         el.classList.toggle('editing', /class="editband"/.test(html.slice(0, 40)));
         document.getElementById('ov').classList.add('on');
