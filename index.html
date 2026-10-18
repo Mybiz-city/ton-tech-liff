@@ -4831,6 +4831,11 @@
         color: #777;
         font-weight: 600;
       }
+      .plan .bt .close {
+        background: #f3f4f6;
+        border-color: #d1d5db;
+        color: #374151;
+      } /* 済・過去へ（更新279） */
       .plan .bt .ord {
         background: #e9f6ec;
         border-color: #bfe3c6;
@@ -5607,7 +5612,7 @@
         <h2>🔧 動作の記録（保守用）</h2>
         <div class="hint" style="margin: 0 0 4px">
           画面の版：
-          <b>更新278</b>
+          <b>更新279</b>
           （2026-10-18）。古い画面が出るときは、LINEのトークを閉じて開き直してください
         </div>
         <div class="hint" id="bootTime" style="font-size: 11px; line-height: 1.7"></div>
@@ -5704,7 +5709,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwSWnGcrw-UOU72HIo0soyh
         dlvTitle: '納 品 書',
         dlvAmount: '納品金額',
         dlvDate: '納品日',
-        plan3: '未着工・未完成・未回収',
+        plan3: '一括操作',
         startWord: '着工',
         nostart: '未着工',
         termWord: '工期',
@@ -5766,7 +5771,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwSWnGcrw-UOU72HIo0soyh
           dlvTitle: '完 了 報 告 書',
           dlvAmount: '合計金額',
           dlvDate: '完了日', // 書類の種類は内部では「納品」のまま（番号 DLV）。見せる名前だけ完了報告書（2026-10-15）
-          plan3: '未着手・未完了・未回収',
+          plan3: '一括操作',
           startWord: '着手',
           nostart: '未着手',
           termWord: '納期',
@@ -6063,7 +6068,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwSWnGcrw-UOU72HIo0soyh
           return '';
         }
       })(); // 選んだ台帳（親方ID。空＝自分の台帳）更新235
-      const PAGE_VER = '278'; // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
+      const PAGE_VER = '279'; // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
       function cacheKey() {
         return LS_NS + 'cache_p' + PAGE_VER + (SEL_T ? '_' + SEL_T : '');
       }
@@ -7885,6 +7890,40 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
           });
           return { docs: S.docs, cases: S.cases, cancelled };
         },
+        liffCaseClose: (u, id, o) => {
+          // お試し用の「済・過去へ移す」（更新279）：本物と同じ形で、データは残さない
+          const c = S.cases.find((x) => x.id === id);
+          if (!c) return { docs: S.docs, cases: S.cases, payments: S.payments };
+          if (o.reason === '失注') return DEMO_FN.liffCancelCase(u, id);
+          let inv = S.docs.filter((d) => live(d) && d.kind === '請求' && docCases(d).includes(id));
+          const made = [];
+          if (o.reason === '完成' && !inv.some((d) => !d.stage)) {
+            const no = 'INV-2026-0' + (300 + ++DEMO_SEQ);
+            S.docs.push({ id: 'DDc' + DEMO_SEQ, kind: '請求', no, status: '有効', sub: '通常', caseId: id, caseIds: [id], custId: c.custId, custName: (S.customers.find((x) => x.id === c.custId) || {}).name || '', subject: c.name, date: ymdStr(new Date()), due: '', total: o.amount, amount: o.amount, pdf: 'demo', paid: 0, adj: 0, alloc: {}, top: c.name, lines: 1, ver: 1, subt: o.amount, caseSub: { [id]: o.amount }, paidReport: '', okAt: '' });
+            made.push(no);
+            inv = S.docs.filter((d) => live(d) && d.kind === '請求' && docCases(d).includes(id));
+          }
+          c.status = o.reason === '完成' ? L.done : '中止';
+          if (o.doneDate) c.done = o.doneDate;
+          c.closed = { at: ymdStr(new Date()), reason: o.reason, pay: o.pay, noDate: !o.doneDate || (o.pay !== '未入金' && !o.payDate) };
+          const open = inv.filter((d) => bal(d) > 0);
+          let cash = o.pay === '全部' ? open.reduce((a, d) => a + bal(d), 0) : o.pay === '一部' ? o.payAmount : 0;
+          let unpaid = 0;
+          open.forEach((d) => {
+            const b = bal(d),
+              v = Math.min(b, Math.max(0, cash));
+            if (v > 0) {
+              DEMO_FN.liffPayRecord(u, { docId: d.id, amount: v, date: o.payDate || '', method: '振込', memo: '〔済・過去へ移す〕' });
+              cash -= v;
+            }
+            if (b - v > 0) {
+              d.adj += b - v;
+              unpaid += b - v;
+              S.payments.push({ id: 'RD' + ++DEMO_SEQ, docId: d.id, custId: d.custId, kind: '未回収', method: '未回収', amount: b - v, date: o.payDate || '', cancel: false, memo: '〔済・過去へ移す〕', alloc: null, at: 0 });
+            }
+          });
+          return { ok: true, docs: S.docs, cases: S.cases, payments: S.payments, made, unpaid };
+        },
         liffPhotoAdd: (u, caseId, data, memo) => {
           const ph = { id: 'PH' + Date.now() + ++DEMO_SEQ, at: ymdStr(new Date()), memo: memo || '' };
           PH_CACHE[ph.id] = data;
@@ -8929,7 +8968,7 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
             ? `<button class="${cls}" onclick="${fn}">${txt}</button>`
             : `<button class="${cls} off" disabled>${txt}</button>`;
         const row = (c, g, l3, note) =>
-          `<div class="pr"><div class="pt" onclick="openCase('${c.id}')"><b>${esc(c.name)}</b><small>${kv(L.order ? '注文者' : L.custWord || '依頼主', who(c))}　${kv(L.order ? '請負代金' : '金額', yen(g === 'unpaid' ? invSum(c) : caseAmt(c)))}</small>${l3}</div><div class="bt">${B('back', '戻る', planBack(c, g))}${B('ord', L.order ? '注文' : '受注', planOrd(c, g))}${B('done', L.done, `doneAsk('${c.id}')`)}${B('pay', '入金', planPay(c, g))}</div>${note || ''}</div>`;
+          `<div class="pr"><div class="pt" onclick="openCase('${c.id}')"><b>${esc(c.name)}</b><small>${kv(L.order ? '注文者' : L.custWord || '依頼主', who(c))}　${kv(L.order ? '請負代金' : '金額', yen(g === 'unpaid' ? invSum(c) : caseAmt(c)))}</small>${l3}</div><div class="bt">${B('back', '戻る', planBack(c, g))}${B('ord', L.order ? '注文' : '受注', planOrd(c, g))}${B('done', L.done, `doneAsk('${c.id}')`)}${B('pay', '入金', planPay(c, g))}${B('close', '済へ', `closeAsk('${c.id}')`)}</div>${note || ''}</div>`;
         const l3 = (done, sent, due) =>
           `<small>${kv(L.done + '日', dt(done))}　${kv('送信日', dt(sent))}</small><small>${kv('振込期限', dt(due))}</small>`;
         const fn = {
@@ -12389,6 +12428,135 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
       function askCancel(docId) {
         askEnd('doc', docId);
       }
+      /* ===== 済・過去へ移す（更新279 三浦さん）：理由を1つ選んで済・過去へ。記録（日付・金額）は任意。日付を省略すると空のまま（今日を入れない） ===== */
+      let CL = null;
+      const caseUncollected = (c) => {
+        const ids = docsOf(c.id)
+          .filter((d) => live(d) && d.kind === '請求')
+          .map((d) => d.id);
+        return (S.payments || []).filter((p) => !p.cancel && p.kind === '未回収' && ids.includes(p.docId)).reduce((a, p) => a + p.amount, 0);
+      };
+      function closeAsk(id) {
+        const c = S.cases.find((x) => x.id === id);
+        if (!c) return;
+        const inv = docsOf(id).filter((d) => live(d) && d.kind === '請求');
+        const paid = inv.some((d) => (d.paid || 0) + (d.adj || 0) > 0);
+        const open = inv.filter((d) => bal(d) > 0),
+          rest = open.reduce((a, d) => a + bal(d), 0);
+        const hasFinal = inv.some((d) => !d.stage);
+        CL = { id, r: '', inv, paid, rest, hasFinal, confirmed: false };
+        const R = [
+          ['失注', '', '失注 → データ取消', paid ? '入金のある請求書があるので選べません' : '書類も取消。' + L.siteWord + 'は「失注・取消」へ'],
+          ['取り止め', '未入金', '取り止め → 全額・未入金', '途中でやめた。' + (rest ? '残り ' + yen(rest) + ' は未回収のまま閉じる' : '請求の残りなし')],
+          ['取り止め', '一部', '取り止め → 一部・入金', '一部だけ入金があった。残りは未回収のまま閉じる'],
+          ['完成', '未入金', L.done + ' → 全額・未入金', (hasFinal ? '' : '請求書を1枚作って') + (rest || !hasFinal ? '未回収のまま閉じる' : '請求の残りなし')],
+          ['完成', '一部', L.done + ' → 一部・入金', '入金を記録。残りは未回収のまま閉じる'],
+          ['完成', '全部', L.done + ' → 全部・入金', (hasFinal ? '' : '請求書を1枚作って') + '全額の入金を記録して閉じる']
+        ];
+        const dis = (r, pay) => (r === '失注' && paid) || (r !== '失注' && pay !== '未入金' && !rest && hasFinal && r !== '完成');
+        dialog(`<h3>📦 済・過去へ移す</h3><p style="font-size:13px;margin:0 0 6px"><b>${esc(c.name)}</b>　${inv.length ? `請求書 ${inv.length}枚・残り ${yen(rest)}` : '請求書なし'}</p>
+    <div class="ppst">① 理由<small style="font-weight:400;color:var(--muted)">（必須）</small></div><div class="pchips" style="flex-direction:column;align-items:stretch">${R.map(
+      (x, i) =>
+        `<button data-i="${i}" ${dis(x[0], x[1]) ? 'disabled style="opacity:.45;text-align:left"' : 'style="text-align:left"'} onclick="closePick(${i})">☐ ${x[2]}<small style="display:block;font-weight:400;font-size:11px;color:var(--muted)">${esc(x[3])}</small></button>`
+    ).join('')}</div>
+    <div id="clRec" style="display:none">
+      <div class="ppst">② 記録<small style="font-weight:400;color:var(--muted)">（任意。税務調査・融資審査の対策）</small></div>
+      <div id="clAmtW" class="drow" style="display:none;margin-top:4px"><span style="flex:none;font-size:13px">${esc(L.workAmount)}（税込）</span><input type="number" inputmode="numeric" id="clAmt" placeholder="請求書を作る金額"></div>
+      <div id="clPayW" class="drow" style="display:none;margin-top:4px"><span style="flex:none;font-size:13px">入金額</span><input type="number" inputmode="numeric" id="clPay" placeholder="入った金額（残り ${yen(rest)}）"></div>
+      <div id="clDoneW" class="drow" style="display:none;margin-top:4px"><span style="flex:none;font-size:13px" id="clDoneL">${esc(L.doneDate)}</span><input type="date" id="clDone" max="${ymdStr(new Date())}" onclick="try{this.showPicker()}catch(e){}"></div>
+      <div id="clPayDW" class="drow" style="display:none;margin-top:4px"><span style="flex:none;font-size:13px">入金日</span><input type="date" id="clPayD" max="${ymdStr(new Date())}" onclick="try{this.showPicker()}catch(e){}"></div>
+      <input type="text" id="clMemo" maxlength="100" placeholder="メモ（任意）" style="margin-top:6px">
+      <div class="pn" style="font-size:11.5px;color:#7A5A00;background:#FFF8E1;border:1px solid #F0D27A;border-radius:8px;padding:5px 8px;margin-top:6px">日付は空のまま記録できます（今日の日付は入れません。あとで税理士が書類の日付と移した日から推測します）。<b>日付を省略したときの税務・財務のリスクは自己責任です。</b></div>
+    </div>
+    <div class="row" style="margin-top:10px"><button onclick="closeDlg()">やめる</button><button class="pri" onclick="closeGo()">済・過去へ移す</button></div>`);
+      }
+      const CL_R = [
+        ['失注', ''],
+        ['取り止め', '未入金'],
+        ['取り止め', '一部'],
+        ['完成', '未入金'],
+        ['完成', '一部'],
+        ['完成', '全部']
+      ];
+      function closePick(i) {
+        CL.r = i;
+        document.querySelectorAll('#dlg button[data-i]').forEach((b) => {
+          const on = +b.dataset.i === i;
+          b.classList.toggle('on', on);
+          b.innerHTML = (on ? '☑' : '☐') + b.innerHTML.slice(1);
+        });
+        const [r, pay] = CL_R[i];
+        const q = (id) => document.getElementById(id);
+        q('clRec').style.display = r === '失注' ? 'none' : 'block';
+        q('clAmtW').style.display = r === '完成' && !CL.hasFinal ? 'flex' : 'none';
+        q('clPayW').style.display = pay === '一部' ? 'flex' : 'none';
+        q('clDoneW').style.display = r === '失注' ? 'none' : 'flex';
+        q('clDoneL').textContent = r === '完成' ? L.doneDate : '中止日';
+        q('clPayDW').style.display = pay === '一部' || pay === '全部' ? 'flex' : 'none';
+      }
+      function closeGo() {
+        if (!CL || CL.r === '') {
+          toast('理由を選んでください');
+          return;
+        }
+        const [r, pay] = CL_R[CL.r];
+        const q = (id) => document.getElementById(id);
+        const o = {
+          reason: r,
+          pay: pay || '未入金',
+          amount: r === '完成' && !CL.hasFinal ? +q('clAmt').value || 0 : 0,
+          payAmount: pay === '一部' ? +q('clPay').value || 0 : 0,
+          doneDate: r === '失注' ? '' : q('clDone').value || '',
+          payDate: pay === '一部' || pay === '全部' ? q('clPayD').value || '' : '',
+          memo: r === '失注' ? '' : q('clMemo').value.trim()
+        };
+        if (r === '完成' && !CL.hasFinal && o.amount <= 0) {
+          toast(L.workAmount + '（税込）を入れてください（請求書がないので1枚作ります）');
+          return;
+        }
+        if (pay === '一部' && (o.payAmount <= 0 || o.payAmount > CL.rest)) {
+          toast('入金額を、残り ' + yen(CL.rest) + ' の範囲で入れてください');
+          return;
+        }
+        const c = S.cases.find((x) => x.id === CL.id) || {};
+        const rest = CL.rest || o.amount;
+        const unpaid = pay === '未入金' ? rest : pay === '一部' ? rest - o.payAmount : 0;
+        if (!CL.confirmed) {
+          payConfirm(
+            [
+              [L.siteWord, esc(c.name || '')],
+              ['理由', esc(r + ' → ' + (r === '失注' ? 'データ取消' : pay === '未入金' ? '全額・未入金' : pay === '一部' ? '一部・入金' : '全部・入金'))]
+            ].concat(
+              r === '失注'
+                ? [['書類', '取消']]
+                : [
+                    [r === '完成' ? L.doneDate : '中止日', o.doneDate ? esc(o.doneDate.replace(/-/g, '/')) : '<span style="color:#B26A00">省略（空）</span>'],
+                    ...(o.amount ? [[L.workAmount, yen(o.amount) + '（請求書を1枚作る）']] : []),
+                    ...(pay !== '未入金' ? [['入金', yen(pay === '全部' ? rest : o.payAmount) + '　入金日 ' + (o.payDate ? esc(o.payDate.replace(/-/g, '/')) : '<span style="color:#B26A00">省略（空）</span>')]] : []),
+                    ...(unpaid > 0 ? [['未回収', '<b style="color:var(--danger)">' + yen(unpaid) + '</b>（請求は閉じる。相手への通知なし）']] : [])
+                  ]
+            ),
+            () => {
+              CL.confirmed = true;
+              closeGo();
+            }
+          );
+          return;
+        }
+        closeDlg();
+        spin(true, '📦 済・過去へ移しています…', o.amount ? '請求書も作ります（数秒）' : '');
+        run('liffCaseClose', [UID, CL.id, o], (res) => {
+          spin(false);
+          S.docs = res.docs;
+          S.cases = res.cases;
+          if (res.payments) S.payments = res.payments;
+          CL = null;
+          closeBs();
+          GSEL = '済・過去';
+          renderCases();
+          toast('済・過去へ移しました' + (res.unpaid ? '（未回収 ' + yen(res.unpaid) + '）' : ''));
+        });
+      }
       function askCancelCase(caseId) {
         askEnd('case', caseId);
       }
@@ -12760,7 +12928,8 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
             el.open = i === 0;
             const lbl = k ? k.slice(0, 4) + '年' + +k.slice(5, 7) + '月' : '日付なし';
             const amt = g.reduce((a, c) => a + caseTop(c).amt, 0);
-            el.innerHTML = `<summary>${lbl}${ok ? ' 入金分' : ''}<span>${g.length}${L.siteWord}${amt && ok ? ' ' + yen(amt) : ''}</span></summary>`;
+            const un = g.reduce((a, c) => a + caseUncollected(c), 0); // 未回収で終了した分（更新279）
+            el.innerHTML = `<summary>${lbl}${ok ? ' 入金分' : ''}<span>${g.length}${L.siteWord}${amt && ok ? ' ' + yen(amt) : ''}${un ? `<b style="color:var(--danger);margin-left:6px">⚠ 未回収 ${yen(un)}</b>` : ''}</span></summary>`;
             g.forEach((c) => el.appendChild(caseBox(c, show, solo)));
             box2.appendChild(el);
           });
@@ -13313,7 +13482,8 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
         hd.onclick = () => cbToggle(key, false);
         const gp = caseGroup(c) === '済・過去',
           stl = gp && c.status === '相談' ? '失注' : ST_LABEL(caseSt(c));
-        hd.innerHTML = `<div class="cr1"><b>${esc(c.name)}</b>${statusTag(stl)}</div>
+        const unc = caseUncollected(c); // 済・過去へ移すで未回収のまま閉じた分（更新279）
+        hd.innerHTML = `<div class="cr1"><b>${esc(c.name)}</b>${statusTag(stl)}${unc ? `<span class="tag" style="background:#FDE8E8;color:#B42318">⚠ 未回収 ${yen(unc)}</span>` : ''}${c.closed && c.closed.noDate ? '<span class="tag" style="background:#FFF4E0;color:#7A5A00">日付省略</span>' : ''}</div>
     ${c.owner && cu.kubun === '元請' ? `<div class="cr2">${L.ownerWord}：${esc(c.owner)}</div>` : ''}
     <div class="cr3">${top ? `${docCases(top).length > 1 ? caseWork(top, c.id) : docTitle(top)}${resTag(top)}${solo ? '' : '　' + yen(caseTop(c).amt)}${docCases(top).length > 1 ? `<span class="tag moto">${top.kind === '請求' ? '締め請求' : 'まとめて' + kindName(top)}</span>` : ''}${ds.length > 1 ? `<span class="more">ほか${ds.length - 1}件</span>` : ''}` : '<span style="color:var(--muted)">書類なし</span>'}
       ${unpaid && !solo ? `<span class="due">未入金：残り ${yen(unpaid)}</span>` : unpaid ? '' : top && top.kind === '請求' ? '<span class="paid">入金済</span>' : ''}</div>
@@ -14786,10 +14956,10 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
         B.unshift(
           `<button onclick="askStepBack('${id}')"${sp.err ? ' style="opacity:.55"' : ''}>↩ 一つ前に戻す<small>${esc(sp.err ? sp.err : sp.short)}</small></button>`
         );
-        if (c.status !== L.done && c.status !== L.statuses[3] && c.status !== '取りやめ' && !paid)
+        if (caseGroup(c) !== '済・過去')
           B.push(
-            `<button class="w" onclick="askCancelCase('${id}')">🗑 ${L.siteWord}ごと取消<small>書類もまとめて取消。しばらく止めるときも（理由「保留」）。再開は「複製」で</small></button>`
-          );
+            `<button class="w" onclick="closeAsk('${id}')">📦 済・過去へ移す<small>理由を選んで、この${L.siteWord}を済・過去へ。失注の取消も、${L.done}・入金の記録もここから（更新279）</small></button>`
+          ); // 「現場ごと取消」はこの中の「失注→データ取消」に（三浦さん 2026-10-18）
         bsSet(
           bsHead('その他の操作：' + esc(c.name)) +
             `<div class="cmore">${B.join('')}</div><div class="bsb"><button onclick="bsSet(caseSheetHtml('${id}'))">戻る</button></div>`
@@ -18895,7 +19065,7 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
         if (old) old.remove();
         const box = document.createElement('div');
         box.id = 'payCf';
-        box.innerHTML = `<h3>この内容で記録しますか？</h3><div class="cinfo2" style="margin:6px 0 10px">${rows.map((r) => `<div><span class="k">${esc(r[0])}</span>${r[1]}</div>`).join('')}</div><p class="hint" style="margin:0 0 8px">記録すると、全額そろった請求書は「済・過去」へ移ります（あとから「直す」で変えられます）</p><div class="row"><button>← 直す</button><button class="pri" id="payCfOk">💴 記録する</button></div>`;
+        box.innerHTML = `<h3>この内容で進めますか？</h3><div class="cinfo2" style="margin:6px 0 10px">${rows.map((r) => `<div><span class="k">${esc(r[0])}</span>${r[1]}</div>`).join('')}</div><p class="hint" style="margin:0 0 8px">記録はあとから「直す」で変えられます</p><div class="row"><button>← 直す</button><button class="pri" id="payCfOk">✔ 進める</button></div>`;
         el.appendChild(box);
         el.classList.add('cf'); // 入力の部分は隠して、確認の板だけ見せる（.dlg.cf）
         box.querySelector('button').onclick = () => {
