@@ -5585,7 +5585,7 @@
         <h2>🔧 動作の記録（保守用）</h2>
         <div class="hint" style="margin: 0 0 4px">
           画面の版：
-          <b>更新272</b>
+          <b>更新273</b>
           （2026-10-18）。古い画面が出るときは、LINEのトークを閉じて開き直してください
         </div>
         <div class="hint" id="bootTime" style="font-size: 11px; line-height: 1.7"></div>
@@ -5693,6 +5693,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwSWnGcrw-UOU72HIo0soyh
         placeWord: '場所',
         custWord: '施主（依頼主）',
         nameWord: '現場名',
+        nameHint: '場所・部位が分かる名前に（工事の種類は品目で選びます）',
         userWord: '親方',
         guardian: '地鎮さま',
         brand: 'Ton-Tech',
@@ -6040,7 +6041,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwSWnGcrw-UOU72HIo0soyh
           return '';
         }
       })(); // 選んだ台帳（親方ID。空＝自分の台帳）更新235
-      const PAGE_VER = '272'; // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
+      const PAGE_VER = '273'; // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
       function cacheKey() {
         return LS_NS + 'cache_p' + PAGE_VER + (SEL_T ? '_' + SEL_T : '');
       }
@@ -9332,7 +9333,7 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
           ? esc(c.name) + ' ' + esc(c.honor || '')
           : D.customer.name
             ? esc(D.customer.name) + ' ' + (moto ? '御中' : '様')
-            : pph(moto ? `${L.ownerKubun}を選ぶ` : '依頼主を選ぶ');
+            : pph(moto ? `${L.ownerKubun}を選ぶ` : (L.custWord || '依頼主') + 'を選ぶ');
         const auto = moto && D.subject_auto !== false;
         const subj = auto
           ? esc(subjAuto()) + '<span class="pmut">（自動）</span>'
@@ -9647,8 +9648,6 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
         '外まわり／外壁',
         '外まわり／雨どい',
         '外まわり／ベランダ',
-        '外まわり／塗装',
-        '外まわり／防水',
         '外まわり／外構',
         '外まわり／庭',
         '外まわり／植木',
@@ -9660,18 +9659,15 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
         '水まわり／洗面所',
         '水まわり／給湯器',
         '水まわり／配管',
-        '内装／内装',
         '内装／床',
         '内装／壁紙',
         '内装／天井',
         '内装／建具',
         '内装／窓',
-        '内装／電気',
         '内装／照明',
         '内装／エアコン',
         '建物・ほか／新築',
         '建物・ほか／増築',
-        '建物・ほか／解体',
         '建物・ほか／基礎',
         '建物・ほか／倉庫',
         '建物・ほか／店舗'
