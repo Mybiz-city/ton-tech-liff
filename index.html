@@ -5629,7 +5629,7 @@
         <h2>🔧 動作の記録（保守用）</h2>
         <div class="hint" style="margin: 0 0 4px">
           画面の版：
-          <b>更新282</b>
+          <b>更新283</b>
           （2026-10-18）。古い画面が出るときは、LINEのトークを閉じて開き直してください
         </div>
         <div class="hint" id="bootTime" style="font-size: 11px; line-height: 1.7"></div>
@@ -6085,7 +6085,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwSWnGcrw-UOU72HIo0soyh
           return '';
         }
       })(); // 選んだ台帳（親方ID。空＝自分の台帳）更新235
-      const PAGE_VER = '282'; // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
+      const PAGE_VER = '283'; // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
       function cacheKey() {
         return LS_NS + 'cache_p' + PAGE_VER + (SEL_T ? '_' + SEL_T : '');
       }
@@ -12464,7 +12464,9 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
           rest = open.reduce((a, d) => a + bal(d), 0);
         const hasFinal = inv.some((d) => !d.stage);
         const curTotal = inv.filter((d) => !d.stage).reduce((a, d) => a + (d.amount || d.total || 0), 0); // いまの請求金額（本請求書の合計）
-        CL = { id, r: '', inv, paid, rest, hasFinal, curTotal, confirmed: false };
+        // 請求書がないときは見積書の金額を転記できる（三浦さん 2026-10-19）：採用した版 → なければ一番新しい見積
+        const est0 = hasFinal ? null : adoptedEst(id) || docsOf(id).filter((d) => live(d) && d.kind === '見積').sort((a, b) => b.id.localeCompare(a.id))[0] || null;
+        CL = { id, r: '', inv, paid, rest, hasFinal, curTotal, est: est0 ? { id: est0.id, no: est0.no, total: est0.total || 0 } : null, confirmed: false };
         const R = [
           ['失注', '', '失注 → データ取消', paid ? '入金のある請求書があるので選べません' : '書類も取消。' + L.siteWord + 'は「失注・取消」へ'],
           ['取り止め', '未入金', '取り止め → 全額・未入金', '途中でやめた。' + (rest ? '残り ' + yen(rest) + ' は未回収のまま閉じる' : '請求の残りなし')],
@@ -12481,11 +12483,11 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
     ).join('')}</div>
     <div id="clRec" style="display:none">
       <div class="ppst">② 記録<small style="font-weight:400;color:var(--muted)">（任意）</small></div>
-      <div id="clAmtW" class="drow clrow"><span>請求額</span><input type="number" inputmode="numeric" id="clAmt" value="${curTotal || ''}" placeholder="${hasFinal ? '請求書の合計' : '請求書を1枚作る金額'}" oninput="closeAmtIn()"></div>
+      <div id="clAmtW" class="drow clrow"><span>請求額</span><input type="number" inputmode="numeric" id="clAmt" value="${curTotal || (CL.est && CL.est.total) || ''}" placeholder="${hasFinal ? '請求書の合計' : '請求書を1枚作る金額'}" oninput="closeAmtIn()">${CL.est ? `<button style="flex:none;font-size:11.5px;padding:6px 8px" onclick="document.getElementById('clAmt').value=${CL.est.total};closeAmtIn()">見積を転記</button>` : ''}</div>
       <div id="clPayW" class="drow clrow"><span>入金額</span><input type="number" inputmode="numeric" id="clPay" placeholder="入った金額"></div>
       <div id="clDoneW" class="drow clrow"><span id="clDoneL">${esc(L.doneDate)}</span><input type="date" id="clDone" max="${ymdStr(new Date())}" onclick="try{this.showPicker()}catch(e){}"></div>
       <div id="clPayDW" class="drow clrow"><span>入金日</span><input type="date" id="clPayD" max="${ymdStr(new Date())}" onclick="try{this.showPicker()}catch(e){}"></div>
-      <div class="hint" id="clAmtH" style="margin:2px 0 0">${hasFinal ? `請求書あり（合計 ${yen(curTotal)}・残り ${yen(rest)}）。金額を下げると差額を値引として記録します（上げることはできません）` : '請求書がないので、請求額で1枚作ります（記録用・相手には送りません）'}</div>
+      <div class="hint" id="clAmtH" style="margin:2px 0 0">${hasFinal ? `請求書あり（合計 ${yen(curTotal)}・残り ${yen(rest)}）。金額を下げると差額を値引として記録します（上げることはできません）` : CL.est ? `請求書がないので、請求額で1枚作ります（記録用・相手には送りません）。見積書 ${esc(CL.est.no)} の金額 ${yen(CL.est.total)} を入れてあります（直せます）` : '請求書がないので、請求額で1枚作ります（記録用・相手には送りません）'}</div>
       <input type="text" id="clMemo" maxlength="100" placeholder="メモ（任意）" style="margin-top:6px">
       <div class="pn" style="font-size:11.5px;color:#7A5A00;background:#FFF8E1;border:1px solid #F0D27A;border-radius:8px;padding:5px 8px;margin-top:6px">税務調査・融資審査の対策として記録が有効となります。<b>金額や日付を省略したときの法的リスクは自己責任となります。</b></div>
     </div>
@@ -14907,6 +14909,24 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
     <div class="row"><button onclick="closeDlg()">やめる</button><button class="pri" onclick="settleGo()">精算する</button></div>`);
         settlePaint();
       }
+      /** 精算書（返金・差額なし）をLINEで送る（更新283）。文は直せる。送らなくてもよい */
+      function settleNoticeSend(cid, res) {
+        const c = S.cases.find((x) => x.id === cid) || {};
+        const cu = S.customers.find((x) => x.id === c.custId) || {};
+        const head = `${cu.name || ''} ${cu.honor || (cu.kubun === '元請' ? '御中' : '様')}\n`;
+        const text =
+          head +
+          `${c.name} の${L.workWord}は中止となりました。中止までの出来高とお預かりの差額を精算書にまとめましたので、ご確認ください。\n` +
+          (res.refund ? `差額 ${yen(res.refund.amount)} はご指定の口座へご返金いたします。\n` : '追加のご請求・ご返金はございません。\n');
+        shareDlg({
+          title: '📨 精算書を送る',
+          head: '中止を記録し、精算書（PDF）を作りました',
+          text,
+          url: res.notice.url,
+          noPick: false,
+          docId: res.notice.docId || ''
+        });
+      }
       function settlePaint() {
         if (!ST) return;
         document
@@ -14993,6 +15013,7 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
               ? '中止を記録し、返金 ' + yen(res.refund.amount) + ' を記録しました'
               : '中止を記録しました（差額なし）'
           );
+          if (res.notice && res.notice.url) settleNoticeSend(cid, res); // 精算書PDFをLINEで送る（更新283 案A）
         });
       }
       function caseMore(id) {
