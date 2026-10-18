@@ -5629,7 +5629,7 @@
         <h2>🔧 動作の記録（保守用）</h2>
         <div class="hint" style="margin: 0 0 4px">
           画面の版：
-          <b>更新280</b>
+          <b>更新281</b>
           （2026-10-18）。古い画面が出るときは、LINEのトークを閉じて開き直してください
         </div>
         <div class="hint" id="bootTime" style="font-size: 11px; line-height: 1.7"></div>
@@ -6085,7 +6085,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbw0IYBUM85Mhh83220e2Ra3
           return '';
         }
       })(); // 選んだ台帳（親方ID。空＝自分の台帳）更新235
-      const PAGE_VER = '280'; // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
+      const PAGE_VER = '281'; // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
       function cacheKey() {
         return LS_NS + 'cache_p' + PAGE_VER + (SEL_T ? '_' + SEL_T : '');
       }
@@ -14877,7 +14877,8 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
     <div class="ppst">② 中止日</div><input type="date" id="stD" value="${today}" max="${today}" onclick="try{this.showPicker()}catch(e){}">
     <div class="ppst">③ ここまでの出来高（税込）</div><input type="number" inputmode="numeric" id="stW" placeholder="例：330000" oninput="settlePaint()">
     <div class="ppst">④ 手配済みの実費（税込・あれば）</div><input type="number" inputmode="numeric" id="stC" placeholder="材料など。なければ空" oninput="settlePaint()">
-    <div class="cinfo2" style="margin-top:8px"><div class="r"><span>お預かり済</span><b>${yen(deposit)}</b></div>${stg.length ? `<div class="hint" style="margin:2px 0 0">${stg.map((d) => esc(d.stage) + ' ' + esc(d.no) + (bal(d) > 0 ? '（未入金 → 取消）' : '（入金済）')).join('<br>')}</div>` : ''}<div class="r" style="margin-top:4px"><span>差額</span><b id="stDiff">—</b></div></div>
+    <div class="ppst">⑤ お預かり（着手金・中間金）<small style="font-weight:400;color:var(--muted)">記録上 ${yen(deposit)}。違えば直せます</small></div><input type="number" inputmode="numeric" id="stDep" value="${deposit || ''}" placeholder="0" oninput="settlePaint()">
+    <div class="cinfo2" style="margin-top:8px">${stg.length ? `<div class="hint" style="margin:2px 0 0">${stg.map((d) => esc(d.stage) + ' ' + esc(d.no) + (bal(d) > 0 ? '（未入金 → 取消）' : '（入金済）')).join('<br>')}</div>` : ''}<div class="r" style="margin-top:4px"><span>差額</span><b id="stDiff">—</b></div></div>
     <div id="stNote" class="hint" style="margin-top:6px"></div>
     <input type="text" id="stM" placeholder="メモ（任意）例：${L.ownerWord}の事情で中断" maxlength="100" style="margin-top:6px">
     <div class="row"><button onclick="closeDlg()">やめる</button><button class="pri" onclick="settleGo()">精算する</button></div>`);
@@ -14890,7 +14891,8 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
           .forEach((b) => b.classList.toggle('on', b.dataset.v === ST.reason));
         const w = Math.round(+document.getElementById('stW').value || 0),
           cst = Math.round(+document.getElementById('stC').value || 0),
-          diff = w + cst - ST.deposit;
+          dep = Math.round(+(document.getElementById('stDep') || {}).value || 0), // お預かりは直せる（更新281）
+          diff = w + cst - dep;
         const el = document.getElementById('stDiff'),
           nt = document.getElementById('stNote');
         el.textContent = diff > 0 ? yen(diff) + '（請求）' : diff < 0 ? '▲' + yen(-diff) + '（返金）' : '¥0';
@@ -14908,7 +14910,8 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
           reason: ST.reason,
           memo: document.getElementById('stM').value.trim(),
           workDone: +document.getElementById('stW').value || 0,
-          cost: +document.getElementById('stC').value || 0
+          cost: +document.getElementById('stC').value || 0,
+          deposit: Math.round(+document.getElementById('stDep').value || 0)
         };
         if (!o.date) {
           toast('中止日を入れてください');
@@ -14918,6 +14921,27 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
           toast('出来高を入れてください（0でよければそのまま）');
         }
         const cid = ST.caseId;
+        // 精算の記録の前に確認の板（更新281 三浦さん：押すとデータが動くので）
+        if (!ST.confirmed) {
+          const diff = o.workDone + o.cost - o.deposit;
+          const c0 = S.cases.find((x) => x.id === cid) || {};
+          payConfirm(
+            [
+              [L.siteWord, esc(c0.name || '')],
+              ['中止日', esc(o.date.replace(/-/g, '/')) + '　' + esc(o.reason)],
+              ['出来高', yen(o.workDone)],
+              ['実費', yen(o.cost)],
+              ['お預かり', yen(o.deposit) + (o.deposit !== ST.deposit ? `<small style="color:#B26A00">（記録上 ${yen(ST.deposit)}）</small>` : '')],
+              ['差額', diff > 0 ? '<b style="color:var(--danger)">' + yen(diff) + '</b>（請求書の下書きを開く）' : diff < 0 ? '<b style="color:var(--blue)">▲' + yen(-diff) + '</b>（返金を記録）' : '¥0（中止の記録だけ）']
+            ],
+            () => {
+              ST.confirmed = true;
+              settleGo();
+            },
+            '中止の記録は戻せません（一つ前に戻すは使えません）。差額の請求書は下書きで直せます'
+          );
+          return;
+        }
         closeDlg();
         spin(true, '⛔ 中止の記録をしています…');
         run('liffCancelSettle', [UID, cid, o], (res) => {
@@ -19076,13 +19100,13 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
         i.click();
       }
       /** 入金の記録の前のひと呼吸（更新277 三浦さん：ミスタップで済・過去へ行かないように）。いまの画面の上に確認の板を重ねる。「← 直す」で入力に戻る */
-      function payConfirm(rows, onOk) {
+      function payConfirm(rows, onOk, note) {
         const el = document.getElementById('dlg');
         const old = el.querySelector('#payCf');
         if (old) old.remove();
         const box = document.createElement('div');
         box.id = 'payCf';
-        box.innerHTML = `<h3>この内容で進めますか？</h3><div class="cinfo2" style="margin:6px 0 10px">${rows.map((r) => `<div><span class="k">${esc(r[0])}</span>${r[1]}</div>`).join('')}</div><p class="hint" style="margin:0 0 8px">記録はあとから「直す」で変えられます</p><div class="row"><button>← 直す</button><button class="pri" id="payCfOk">✔ 進める</button></div>`;
+        box.innerHTML = `<h3>この内容で進めますか？</h3><div class="cinfo2" style="margin:6px 0 10px">${rows.map((r) => `<div><span class="k">${esc(r[0])}</span>${r[1]}</div>`).join('')}</div><p class="hint" style="margin:0 0 8px">${esc(note || '記録はあとから「直す」で変えられます')}</p><div class="row"><button>← 直す</button><button class="pri" id="payCfOk">✔ 進める</button></div>`;
         el.appendChild(box);
         el.classList.add('cf'); // 入力の部分は隠して、確認の板だけ見せる（.dlg.cf）
         box.querySelector('button').onclick = () => {
