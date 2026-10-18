@@ -351,7 +351,7 @@
     <div class="row"><button class="pri" onclick="demoStart()">🎓 お試しを始める</button></div>
   </div>
   <div class="sec acc" data-acc="eng" style="margin-top:12px" id="engSec"><h2>🔧 動作の記録（保守用）</h2>
-    <div class="hint" style="margin:0 0 4px">画面の版：<b>更新268</b>（2026-10-18）。古い画面が出るときは、LINEのトークを閉じて開き直してください</div>
+    <div class="hint" style="margin:0 0 4px">画面の版：<b>更新269</b>（2026-10-18）。古い画面が出るときは、LINEのトークを閉じて開き直してください</div>
     <div class="hint" id="bootTime" style="font-size:11px;line-height:1.7"></div>
   </div>
 </div>
@@ -446,7 +446,7 @@ function snapRebuild(){ spin(true); run('liffSnapRebuild', [UID, true], () => { 
 // ② 前回の台帳をスマホに覚えさせ、まず前回の内容で画面を出す（外の置き場だけ。Google側は uid を信じる作りなので使わない）2026-10-11
 let STALE = false, FRESH_PENDING = null, CUR_TAB = 'cases';
 let SEL_T = (function () { try { return localStorage.getItem(LS_NS + 't') || ''; } catch (e) { return ''; } })();   // 選んだ台帳（親方ID。空＝自分の台帳）更新235
-const PAGE_VER = '268';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
+const PAGE_VER = '269';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
 function cacheKey(){ return LS_NS + 'cache_p' + PAGE_VER + (SEL_T ? '_' + SEL_T : ''); }
 function cacheRead(){ try { const o = JSON.parse(localStorage.getItem(cacheKey()) || 'null'); return o && o.uid && o.S && o.S.labels ? o : null; } catch (e) { return null; } }
 function cacheWrite(uid, data){ try { const s = JSON.stringify({ uid, at: Date.now(), S: data }); if (s.length < 4000000) localStorage.setItem(cacheKey(), s); } catch (e) { /* 入らなければ覚えない */ } }
@@ -2267,7 +2267,7 @@ function caseBox(c, show, solo){
 /** 現場の札の中身（更新264）：下から出る画面と同じ中身を、見出し（×・︙）なしでその場に出す。中の操作で画面を描き直す指示は、一覧の描き直しに置き換える */
 function caseInlineHtml(id){ let h = caseSheetHtml(id); h = h.replace(/^\s*<h3>[\s\S]*?<\/h3>/, '');
   h = h.split(`bsSet(caseSheetHtml('${id}'))`).join('renderCases()');
-  return h + `<div class="inlbar"><button onclick="caseMore('${id}')">︙ その他</button><button onclick="openCase('${id}')">⤢ 大きく開く</button></div>`; }
+  return h + `<div class="inlbar"><button onclick="openCase('${id}');caseMore('${id}')">︙ その他</button><button onclick="openCase('${id}')">⤢ 大きく開く</button></div>`; }
 function editCaseMemo(id){ const c = S.cases.find(x => x.id === id) || {};
   bsSet(bsHead('内容メモ：' + esc(c.name || '')) + `<textarea id="cmT" rows="6" maxlength="${CASE_MEMO_MAX}" oninput="cntUp(this,'cmC',${CASE_MEMO_MAX})" placeholder="${L.contract ? '例：会社案内サイト5ページ。来週火曜にオンラインで打合せ。見積は10月中に' : '例：2階ベランダの雨漏り。来週火曜の午後に下見。見積は10月中に'}">${esc(c.memo || '')}</textarea><div class="cnt2" id="cmC">${(c.memo || '').length} / ${CASE_MEMO_MAX}文字</div>
     <div class="hint">${CASE_MEMO_MAX}文字まで。書類には印字しません（自分用のメモ）。</div>
