@@ -346,7 +346,7 @@
     <div class="row"><button class="pri" onclick="demoStart()">🎓 お試しを始める</button></div>
   </div>
   <div class="sec acc" data-acc="eng" style="margin-top:12px" id="engSec"><h2>🔧 動作の記録（保守用）</h2>
-    <div class="hint" style="margin:0 0 4px">画面の版：<b>更新257</b>（2026-10-18）。古い画面が出るときは、LINEのトークを閉じて開き直してください</div>
+    <div class="hint" style="margin:0 0 4px">画面の版：<b>更新258</b>（2026-10-18）。古い画面が出るときは、LINEのトークを閉じて開き直してください</div>
     <div class="hint" id="bootTime" style="font-size:11px;line-height:1.7"></div>
   </div>
 </div>
@@ -391,7 +391,7 @@ const L_TYPES = {   // 起動時に先出しする型の言葉（GASの INV_LABE
     placeWords: ['サービス／作業', 'サービス／点検', 'サービス／修理', 'サービス／代行', '制作／デザイン', '制作／ページ', '相談／打合せ', '相談／顧問', '月額／顧問料', '月額／保守', '出張／訪問', '出張／講師'],   // 仮。テスト先が決まったら差し替え
     userWord: 'ご利用者', guardian: '恵比寿様', brand: 'Mybiz', color: 'ネイビー', colorHex: '#1E3A5F', colorMid: '#2B4C7E', colorLight: '#EAF0F8', colorLine: '#C5D3E8', colorSoft: '#F4F7FB', chara: '水瀬みお', prepay: true, order: false, breakdown: false, visit: false }
 };
-const TYPE_PRESET = '建設';   // 置き場ごとの業種の型（起動時の先出し 2026-10-15）
+const TYPE_PRESET = '建設';
 /** この端末に覚える名前の頭（2026-10-15 更新222）：建設と Mybiz を同じドメイン（app.mybiz-city.net）に置いているため、前回の内容・足あと・合言葉が混ざっていた。建設は今までどおり inv_、ほかの型は inv_型名_ */
 const LS_NS = 'inv_' + (L_TYPES[TYPE_PRESET] ? TYPE_PRESET + '_' : '');
 /** 水瀬みお（Biz city）のアイコン（2026-10-14 三浦さんの画像から96px）。かんなはHTMLに直書きのまま */
@@ -439,7 +439,7 @@ function snapRebuild(){ spin(true); run('liffSnapRebuild', [UID, true], () => { 
 // ② 前回の台帳をスマホに覚えさせ、まず前回の内容で画面を出す（外の置き場だけ。Google側は uid を信じる作りなので使わない）2026-10-11
 let STALE = false, FRESH_PENDING = null, CUR_TAB = 'cases';
 let SEL_T = (function () { try { return localStorage.getItem(LS_NS + 't') || ''; } catch (e) { return ''; } })();   // 選んだ台帳（親方ID。空＝自分の台帳）更新235
-const PAGE_VER = '257';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
+const PAGE_VER = '258';   // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
 function cacheKey(){ return LS_NS + 'cache_p' + PAGE_VER + (SEL_T ? '_' + SEL_T : ''); }
 function cacheRead(){ try { const o = JSON.parse(localStorage.getItem(cacheKey()) || 'null'); return o && o.uid && o.S && o.S.labels ? o : null; } catch (e) { return null; } }
 function cacheWrite(uid, data){ try { const s = JSON.stringify({ uid, at: Date.now(), S: data }); if (s.length < 4000000) localStorage.setItem(cacheKey(), s); } catch (e) { /* 入らなければ覚えない */ } }
@@ -459,7 +459,7 @@ function tryApplyFresh(){ if (!FRESH_PENDING) return; const busy = document.getE
 window.addEventListener('load', async () => { stickyTop();
   if (typeof VIEW_MODE !== 'undefined' && VIEW_MODE) { viewerBoot(); return; }   // お客様の閲覧ページ（2026-10-11）
   tmark('load');
-  if (L_TYPES[TYPE_PRESET]) applyStaticLabels();   // 先出しの型の文・色・アイコン（2026-10-15）
+  if (L_TYPES[TYPE_PRESET]) applyStaticLabels();
   spin(true);
   if (!LIFF_ID) { STEP = '設定の読み込み'; try { const c = await (await fetch(API_URL + '?page=cfg', { redirect: 'follow' })).json(); LIFF_ID = c.liffId || ''; } catch (e) { LIFFD.api = '設定が読めない：' + (e && e.message || e); } }
   if (SERVER_MODE === 'api' && !DEV_UID) { const C = cacheRead(); if (C) { try { S = C.S; L = labelsOf(S.labels); UID = C.uid; STALE = true; boot(); spin(false); staleBar(true); tmark('cache'); } catch (e) { S = null; L = labelsOf(L_TYPES[TYPE_PRESET] || null); UID = ''; STALE = false; cacheClear(); spin(true); } } }   // 前回の内容で先に出す（2026-10-11）
@@ -513,8 +513,8 @@ window.addEventListener('load', async () => { stickyTop();
 /** サーバーの窓口（2026-10-11）。Googleの枠の中では google.script.run。外の置き場（静的な置き場）では fetch に差し替える（make_static.py） */
 const SERVER_MODE = 'api';   // 外の置き場（静的な置き場）
 function sessRead(){ try { const o = JSON.parse(localStorage.getItem(LS_NS + 'sess') || 'null'); return o && o.uid === UID && o.at > Date.now() - 5 * 3600 * 1000 ? o.sess : ''; } catch (e) { return ''; } }   // 合言葉（本人確認の時短 2026-10-12）。5時間で捨てる（サーバーは6時間）
-const SRV_READ = /^liff(Load|DraftLast|OrderInit|OrderLoad|PhotoGet|SearchLines|PreviewHtml|ViewUrl)$/;   // 読むだけの呼び出し（2本送っても害がない）
 function sessWrite(s){ try { if (s && UID) localStorage.setItem(LS_NS + 'sess', JSON.stringify({ uid: UID, sess: s, at: Date.now() })); } catch (e) {} }
+const SRV_READ = /^liff(Load|DraftLast|OrderInit|OrderLoad|PhotoGet|SearchLines|PreviewHtml|ViewUrl)$/;   // 読むだけの呼び出し（2本送っても害がない）
 function srvReal(fn, args){ let tok = ''; try { tok = (typeof liff !== 'undefined' && liff.getIDToken && liff.getIDToken()) || ''; } catch (e) { tok = ''; }
   const body = JSON.stringify({ fn, args, idToken: tok, uid: UID, sess: sessRead(), as: (typeof ACT_AS === 'string' ? ACT_AS : ''), t: (typeof SEL_T === 'string' ? SEL_T : ''), log: (fn === 'liffLoad' || fn === 'liffDraftLast' || typeof alogTake !== 'function') ? undefined : alogTake() });
   const once = () => fetch(API_URL, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body });
@@ -2123,11 +2123,11 @@ function bulkCands(custId){ return S.cases.filter(c => c.custId === custId && ![
   const est = S.docs.find(d => d.id === invSrcOf(c.id)); if (!est) return null;   // 見積書のない現場は入れない
   const ord = ds.filter(d => d.kind === '注文' && d.sub !== '変更').sort((a, b) => a.id < b.id ? 1 : -1)[0];
   const ok = g === '見積中' || g === '工事中' || (g === '請求中' && c.status === L.done && !hasFinalInv(c.id));   // 着手金・中間金の請求書しかない完成現場も入れる（2026-10-12）
-  return ok ? { c, done: c.status === L.done, doc: ord || est, est, st: c.status === L.done ? L.done : est.result === '受注' || ord ? '受注' : '見積中' } : null; }).filter(Boolean); }
+  return ok ? { c, done: c.status === L.done && !!c.done, doc: ord || est, est, st: c.status === L.done ? L.done : est.result === '受注' || ord ? '受注' : '見積中' } : null; }).filter(Boolean); }
 function bulkOpen(custId){ const cu = S.customers.find(x => x.id === custId) || {}, list = bulkCands(custId), today = ymdStr(new Date());
   const tag = x => `<span class="tag ${x.st === '見積中' ? '' : 'ok'}" style="margin-left:4px">${x.st}${x.done && x.c.done ? ' ' + esc(x.c.done.slice(5).replace('-', '/')) : ''}</span>`;
   const row = x => `<div class="bkr"><label class="bkc"><input type="checkbox" data-c="${x.c.id}" data-d="${x.done ? 1 : 0}" ${x.done ? 'checked' : ''} onchange="bulkUi()"><span><b>${esc(x.c.name)}</b>${tag(x)}<small>${esc(docTitle(x.doc))}${x.doc.kind === '見積' && estVers(x.c.id).length > 1 ? '（第' + (x.doc.ver || 1) + '版）' : ''}　${esc(x.doc.no)}</small></span><span style="flex:none;font-weight:800">${yen(x.doc.total)}</span></label>`
-    + (x.done ? '' : `<div class="drow bkd" id="bkd_${x.c.id}" style="display:none"><span style="flex:none;font-size:12.5px">${L.done}日</span><input type="date" id="bkD_${x.c.id}" value="${today}" max="${today}" onclick="try{this.showPicker()}catch(e){}"></div>`) + `</div>`;
+    + (x.done ? '' : `<div class="drow bkd" id="bkd_${x.c.id}" style="display:none;background:#FDECEA;border-radius:8px;padding:6px 8px"><span style="flex:none;font-size:12.5px;color:#C0392B;font-weight:800">⚠ ${L.done}日を入れてください</span><input type="date" id="bkD_${x.c.id}" value="" max="${today}" onclick="try{this.showPicker()}catch(e){}" onchange="bulkUi()"></div>`) + `</div>`;   // 完成日が未記録の現場は、日付を入れないと変換できない（更新258）
   // 一緒にまとめる請求書：入金のない、未入金の請求書（チェックすると1枚に作り直す）
   const open = S.docs.filter(d => live(d) && d.kind === '請求' && !d.stage && d.custId === custId && bal(d) > 0 && !((d.paid || 0) + (d.adj || 0))).sort((a, b) => a.id < b.id ? 1 : -1);   // 着手金・中間金の請求書は合流させない（お預かり分として差し引く 2026-10-12）
   const mrow = d => `<label class="bkc"><input type="checkbox" data-m="${d.id}" onchange="bulkUi()"><span><b>${esc((S.cases.find(c => c.id === docCases(d)[0]) || {}).name || docTitle(d))}</b><small>${esc(docTitle(d))}　${esc(d.period || d.subject || '')}　${esc(d.no)}</small></span><span style="flex:none;font-weight:800">${yen(d.total)}</span></label>`;
@@ -2136,10 +2136,11 @@ function bulkOpen(custId){ const cu = S.customers.find(x => x.id === custId) || 
     + `<div class="bsb"><button onclick="closeBs()">やめる</button><button class="ok" id="bkGo" onclick="bulkGo('${custId}')">請求書へ変換</button></div>`); bulkUi(); }
 function bulkUi(){ const all = [...document.querySelectorAll('#bsh input[data-c]')], on = all.filter(x => x.checked), m = document.querySelectorAll('#bsh input[data-m]:checked').length;
   all.forEach(x => { const r = document.getElementById('bkd_' + x.dataset.c); if (r) r.style.display = x.checked ? '' : 'none'; });
-  document.getElementById('bkGo').textContent = on.length + m ? `請求書へ変換（${on.length + m}件）` : '請求書へ変換'; }
+  const miss = on.filter(x => x.dataset.d !== '1' && !((document.getElementById('bkD_' + x.dataset.c) || {}).value)).length;
+  document.getElementById('bkGo').textContent = miss ? `${L.done}日が未記録（${miss}件）` : on.length + m ? `請求書へ変換（${on.length + m}件）` : '請求書へ変換'; }
 function bulkGo(custId){ const on = [...document.querySelectorAll('#bsh input[data-c]:checked')], mids = [...document.querySelectorAll('#bsh input[data-m]:checked')].map(x => x.dataset.m);
   if (!on.length && !mids.length) { toast('書類を選んでください'); return; }
-  const dates = {}; for (const x of on) { if (x.dataset.d === '1') continue; const v = (document.getElementById('bkD_' + x.dataset.c) || {}).value; if (!v) { toast(L.done + '日を入れてください'); return; } dates[x.dataset.c] = v; }
+  const dates = {}; for (const x of on) { if (x.dataset.d === '1') continue; const v = (document.getElementById('bkD_' + x.dataset.c) || {}).value; if (!v) { const nm = (S.cases.find(c => c.id === x.dataset.c) || {}).name || ''; toast(`「${nm}」の${L.done}日を入れてください（記録のない${L.siteWord}は請求書にまとめられません）`); const r = document.getElementById('bkd_' + x.dataset.c); if (r) r.scrollIntoView({ block: 'center' }); return; } dates[x.dataset.c] = v; }
   closeBs(); spin(true, '💴 請求書の下書きを作っています…');
   run('liffBulkDraft', [UID, custId, on.map(x => x.dataset.c), dates, { mergeIds: mids }], res => { spin(false); S.cases = res.cases; if (res.docs) S.docs = res.docs; renderCases();
     D = res.draft; originId = ''; originNo = ''; FROM_ID = ''; swapNotes('請求'); VIEW = '請求'; afterLoadDraft(); openEd();
