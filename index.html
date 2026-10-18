@@ -5629,7 +5629,7 @@
         <h2>🔧 動作の記録（保守用）</h2>
         <div class="hint" style="margin: 0 0 4px">
           画面の版：
-          <b>更新281</b>
+          <b>更新282</b>
           （2026-10-18）。古い画面が出るときは、LINEのトークを閉じて開き直してください
         </div>
         <div class="hint" id="bootTime" style="font-size: 11px; line-height: 1.7"></div>
@@ -6085,7 +6085,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwSWnGcrw-UOU72HIo0soyh
           return '';
         }
       })(); // 選んだ台帳（親方ID。空＝自分の台帳）更新235
-      const PAGE_VER = '281'; // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
+      const PAGE_VER = '282'; // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
       function cacheKey() {
         return LS_NS + 'cache_p' + PAGE_VER + (SEL_T ? '_' + SEL_T : '');
       }
@@ -7914,7 +7914,7 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
           if (o.reason === '失注') return DEMO_FN.liffCancelCase(u, id);
           let inv = S.docs.filter((d) => live(d) && d.kind === '請求' && docCases(d).includes(id));
           const made = [];
-          if (o.reason === '完成' && !inv.some((d) => !d.stage)) {
+          if (o.amount > 0 && !inv.some((d) => !d.stage)) {
             const no = 'INV-2026-0' + (300 + ++DEMO_SEQ);
             S.docs.push({ id: 'DDc' + DEMO_SEQ, kind: '請求', no, status: '有効', sub: '通常', caseId: id, caseIds: [id], custId: c.custId, custName: (S.customers.find((x) => x.id === c.custId) || {}).name || '', subject: c.name, date: ymdStr(new Date()), due: '', total: o.amount, amount: o.amount, pdf: 'demo', paid: 0, adj: 0, alloc: {}, top: c.name, lines: 1, ver: 1, subt: o.amount, caseSub: { [id]: o.amount }, paidReport: '', okAt: '' });
             made.push(no);
@@ -7924,7 +7924,9 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
           if (o.doneDate) c.done = o.doneDate;
           c.closed = { at: ymdStr(new Date()), reason: o.reason, pay: o.pay, noDate: !o.doneDate || (o.pay !== '未入金' && !o.payDate) };
           const open = inv.filter((d) => bal(d) > 0);
-          let cash = o.pay === '全部' ? open.reduce((a, d) => a + bal(d), 0) : o.pay === '一部' ? o.payAmount : 0;
+          let disc = Math.max(0, inv.filter((d) => !d.stage).reduce((a, d) => a + (d.amount || d.total || 0), 0) - (o.amount || 0));
+          if (o.amount && made.length === 0) open.forEach((d) => { const v = Math.min(bal(d), disc); if (v > 0) { d.adj += v; disc -= v; S.payments.push({ id: 'RD' + ++DEMO_SEQ, docId: d.id, custId: d.custId, kind: '値引', method: '値引', amount: v, date: o.payDate || '', cancel: false, memo: '〔済・過去へ移す〕請求額の変更', alloc: null, at: 0 }); } });
+          let cash = o.payAmount || 0;
           let unpaid = 0;
           open.forEach((d) => {
             const b = bal(d),
@@ -12461,7 +12463,8 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
         const open = inv.filter((d) => bal(d) > 0),
           rest = open.reduce((a, d) => a + bal(d), 0);
         const hasFinal = inv.some((d) => !d.stage);
-        CL = { id, r: '', inv, paid, rest, hasFinal, confirmed: false };
+        const curTotal = inv.filter((d) => !d.stage).reduce((a, d) => a + (d.amount || d.total || 0), 0); // いまの請求金額（本請求書の合計）
+        CL = { id, r: '', inv, paid, rest, hasFinal, curTotal, confirmed: false };
         const R = [
           ['失注', '', '失注 → データ取消', paid ? '入金のある請求書があるので選べません' : '書類も取消。' + L.siteWord + 'は「失注・取消」へ'],
           ['取り止め', '未入金', '取り止め → 全額・未入金', '途中でやめた。' + (rest ? '残り ' + yen(rest) + ' は未回収のまま閉じる' : '請求の残りなし')],
@@ -12478,10 +12481,11 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
     ).join('')}</div>
     <div id="clRec" style="display:none">
       <div class="ppst">② 記録<small style="font-weight:400;color:var(--muted)">（任意）</small></div>
-      <div id="clAmtW" class="drow clrow" style="display:none"><span>請求金額</span><input type="number" inputmode="numeric" id="clAmt" placeholder="請求書を1枚作る金額"></div>
-      <div id="clPayW" class="drow clrow" style="display:none"><span>入金額</span><input type="number" inputmode="numeric" id="clPay" placeholder="入った金額（残り ${yen(rest)}）"></div>
-      <div id="clDoneW" class="drow clrow" style="display:none"><span id="clDoneL">${esc(L.doneDate)}</span><input type="date" id="clDone" max="${ymdStr(new Date())}" onclick="try{this.showPicker()}catch(e){}"></div>
-      <div id="clPayDW" class="drow clrow" style="display:none"><span>入金日</span><input type="date" id="clPayD" max="${ymdStr(new Date())}" onclick="try{this.showPicker()}catch(e){}"></div>
+      <div id="clAmtW" class="drow clrow"><span>請求額</span><input type="number" inputmode="numeric" id="clAmt" value="${curTotal || ''}" placeholder="${hasFinal ? '請求書の合計' : '請求書を1枚作る金額'}" oninput="closeAmtIn()"></div>
+      <div id="clPayW" class="drow clrow"><span>入金額</span><input type="number" inputmode="numeric" id="clPay" placeholder="入った金額"></div>
+      <div id="clDoneW" class="drow clrow"><span id="clDoneL">${esc(L.doneDate)}</span><input type="date" id="clDone" max="${ymdStr(new Date())}" onclick="try{this.showPicker()}catch(e){}"></div>
+      <div id="clPayDW" class="drow clrow"><span>入金日</span><input type="date" id="clPayD" max="${ymdStr(new Date())}" onclick="try{this.showPicker()}catch(e){}"></div>
+      <div class="hint" id="clAmtH" style="margin:2px 0 0">${hasFinal ? `請求書あり（合計 ${yen(curTotal)}・残り ${yen(rest)}）。金額を下げると差額を値引として記録します（上げることはできません）` : '請求書がないので、請求額で1枚作ります（記録用・相手には送りません）'}</div>
       <input type="text" id="clMemo" maxlength="100" placeholder="メモ（任意）" style="margin-top:6px">
       <div class="pn" style="font-size:11.5px;color:#7A5A00;background:#FFF8E1;border:1px solid #F0D27A;border-radius:8px;padding:5px 8px;margin-top:6px">税務調査・融資審査の対策として記録が有効となります。<b>金額や日付を省略したときの法的リスクは自己責任となります。</b></div>
     </div>
@@ -12504,12 +12508,22 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
         });
         const [r, pay] = CL_R[i];
         const q = (id) => document.getElementById(id);
+        // 4つの欄（請求金額・入金額・完成日・入金日）は失注以外で常に出す（三浦さん 2026-10-19）。理由に合わせて最初の値だけ変える
         q('clRec').style.display = r === '失注' ? 'none' : 'block';
-        q('clAmtW').style.display = r === '完成' && !CL.hasFinal ? 'flex' : 'none';
-        q('clPayW').style.display = pay === '一部' ? 'flex' : 'none';
-        q('clDoneW').style.display = r === '失注' ? 'none' : 'flex';
         q('clDoneL').textContent = r === '完成' ? L.doneDate : '中止日';
-        q('clPayDW').style.display = pay === '一部' || pay === '全部' ? 'flex' : 'none';
+        if (pay === '全部') q('clPay').value = closeRest();
+        else if (pay === '未入金') q('clPay').value = '';
+      }
+      /** 請求金額の欄から見た「残り」：請求書があれば 残り −（合計 − 入れた請求金額）、なければ 入れた請求金額 */
+      function closeRest() {
+        const amt = Math.round(+(document.getElementById('clAmt') || {}).value || 0);
+        if (!CL.hasFinal) return amt || '';
+        const disc = Math.max(0, CL.curTotal - (amt || CL.curTotal));
+        return Math.max(0, CL.rest - disc) || '';
+      }
+      function closeAmtIn() {
+        if (!CL || CL.r === '') return;
+        if (CL_R[CL.r][1] === '全部') document.getElementById('clPay').value = closeRest();
       }
       function closeGo() {
         if (!CL || CL.r === '') {
@@ -12521,23 +12535,32 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
         const o = {
           reason: r,
           pay: pay || '未入金',
-          amount: r === '完成' && !CL.hasFinal ? +q('clAmt').value || 0 : 0,
-          payAmount: pay === '一部' ? +q('clPay').value || 0 : 0,
+          amount: r === '失注' ? 0 : Math.round(+q('clAmt').value || 0),
+          payAmount: r === '失注' ? 0 : Math.round(+q('clPay').value || 0),
           doneDate: r === '失注' ? '' : q('clDone').value || '',
-          payDate: pay === '一部' || pay === '全部' ? q('clPayD').value || '' : '',
+          payDate: r === '失注' ? '' : q('clPayD').value || '',
           memo: r === '失注' ? '' : q('clMemo').value.trim()
         };
-        if (r === '完成' && !CL.hasFinal && o.amount <= 0) {
-          toast('請求金額を入れてください（請求書がないので1枚作ります）');
+        if (r !== '失注' && !CL.hasFinal && o.amount <= 0 && (o.payAmount > 0 || r === '完成')) {
+          toast('請求額を入れてください（請求書がないので1枚作ります）');
           return;
         }
-        if (pay === '一部' && (o.payAmount <= 0 || o.payAmount > CL.rest)) {
-          toast('入金額を、残り ' + yen(CL.rest) + ' の範囲で入れてください');
+        if (r !== '失注' && CL.hasFinal && o.amount > CL.curTotal) {
+          toast('請求額は請求書の合計 ' + yen(CL.curTotal) + ' より大きくできません（追加は新しい請求書で）');
+          return;
+        }
+        const disc = r !== '失注' && CL.hasFinal && o.amount ? Math.max(0, CL.curTotal - o.amount) : 0;
+        const rest = r === '失注' ? 0 : CL.hasFinal ? Math.max(0, CL.rest - disc) : o.amount;
+        if (o.payAmount > rest) {
+          toast('入金額を、残り ' + yen(rest) + ' の範囲で入れてください');
+          return;
+        }
+        if (pay !== '未入金' && o.payAmount <= 0 && rest > 0 && pay === '一部') {
+          toast('入金額を入れてください');
           return;
         }
         const c = S.cases.find((x) => x.id === CL.id) || {};
-        const rest = CL.rest || o.amount;
-        const unpaid = pay === '未入金' ? rest : pay === '一部' ? rest - o.payAmount : 0;
+        const unpaid = Math.max(0, rest - o.payAmount);
         if (!CL.confirmed) {
           payConfirm(
             [
@@ -12548,8 +12571,8 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
                 ? [['書類', '取消']]
                 : [
                     [r === '完成' ? L.doneDate : '中止日', o.doneDate ? esc(o.doneDate.replace(/-/g, '/')) : '<span style="color:#B26A00">省略（空）</span>'],
-                    ...(o.amount ? [['請求金額', yen(o.amount) + '（請求書を1枚作る）']] : []),
-                    ...(pay !== '未入金' ? [['入金', yen(pay === '全部' ? rest : o.payAmount) + '　入金日 ' + (o.payDate ? esc(o.payDate.replace(/-/g, '/')) : '<span style="color:#B26A00">省略（空）</span>')]] : []),
+                    ['請求額', o.amount ? yen(o.amount) + (CL.hasFinal ? (disc ? `（値引 ${yen(disc)} を記録）` : '') : '（請求書を1枚作る）') : CL.hasFinal ? yen(CL.curTotal) : '—'],
+                    ['入金', (o.payAmount ? yen(o.payAmount) : '¥0') + '　入金日 ' + (o.payDate ? esc(o.payDate.replace(/-/g, '/')) : '<span style="color:#B26A00">省略（空）</span>')],
                     ...(unpaid > 0 ? [['未回収', '<b style="color:var(--danger)">' + yen(unpaid) + '</b>（請求は閉じる。相手への通知なし）']] : [])
                   ]
             ),
