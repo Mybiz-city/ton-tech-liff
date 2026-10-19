@@ -5629,7 +5629,7 @@
         <h2>🔧 動作の記録（保守用）</h2>
         <div class="hint" style="margin: 0 0 4px">
           画面の版：
-          <b>更新284</b>
+          <b>更新285</b>
           （2026-10-18）。古い画面が出るときは、LINEのトークを閉じて開き直してください
         </div>
         <div class="hint" id="bootTime" style="font-size: 11px; line-height: 1.7"></div>
@@ -6085,7 +6085,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbw0IYBUM85Mhh83220e2Ra3
           return '';
         }
       })(); // 選んだ台帳（親方ID。空＝自分の台帳）更新235
-      const PAGE_VER = '284'; // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
+      const PAGE_VER = '285'; // 画面の版（下の「画面の版：更新○○」と同じ数字にする。前回の内容の置き場の名前に使い、版が変わったら前回の内容は使わない）
       function cacheKey() {
         return LS_NS + 'cache_p' + PAGE_VER + (SEL_T ? '_' + SEL_T : '');
       }
@@ -14906,7 +14906,7 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
     <div class="cinfo2" style="margin-top:8px">${stg.length ? `<div class="hint" style="margin:2px 0 0">${stg.map((d) => esc(d.stage) + ' ' + esc(d.no) + (bal(d) > 0 ? '（未入金 → 取消）' : '（入金済）')).join('<br>')}</div>` : ''}<div class="r" style="margin-top:4px"><span>差額</span><b id="stDiff">—</b></div></div>
     <div id="stNote" class="hint" style="margin-top:6px"></div>
     <input type="text" id="stM" placeholder="メモ（任意）例：${L.ownerWord}の事情で中断" maxlength="100" style="margin-top:6px">
-    <div class="row"><button onclick="closeDlg()">やめる</button><button class="pri" onclick="settleGo()">精算する</button></div>`);
+    <div class="row"><button onclick="closeDlg()">やめる</button><button class="pri" id="stBill" onclick="settleGo()">未入金を請求</button></div>`);
         settlePaint();
       }
       /** 精算書（返金・差額なし）をLINEで送る（更新283）。文は直せる。送らなくてもよい */
@@ -14917,7 +14917,7 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
         const text =
           head +
           `${c.name} の${L.workWord}は中止となりました。中止までの出来高とお預かりの差額を精算書にまとめましたので、ご確認ください。\n` +
-          (res.refund ? `差額 ${yen(res.refund.amount)} はご指定の口座へご返金いたします。\n` : '追加のご請求・ご返金はございません。\n');
+          (res.diff < 0 ? `差額 ${yen(-res.diff)} のご返金については、別途ご連絡いたします。\n` : '追加のご請求・ご返金はございません。\n');
         shareDlg({
           title: '📨 精算書を送る',
           head: '中止を記録し、精算書（PDF）を作りました',
@@ -14942,10 +14942,13 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
         el.style.color = diff > 0 ? 'var(--danger)' : diff < 0 ? 'var(--blue)' : 'var(--ok)';
         nt.innerHTML =
           diff > 0
-            ? '「精算する」を押すと、精算の請求書の下書きが開きます。確かめてから送ってください'
+            ? '「未入金を請求」を押すと、精算の請求書の下書きが開きます。確かめてから送ってください'
             : diff < 0
-              ? '「精算する」を押すと、差額を返金として記録します（通帳で返金したあとに押してください）'
-              : '差額なし。中止の記録だけ残します';
+              ? 'お預かりの方が多い分（' + yen(-diff) + '）は、このアプリでは返金の記録をしません。返金は通帳で行ってください。押すと中止の記録と精算書（PDF）だけ残します'
+              : '差額なし。押すと中止の記録と精算書（PDF）だけ残します';
+        // ボタンは「やめる／未入金を請求」の2つ（更新285 三浦さん：返金の管理はアプリで持たない）。差額がないときは文字を変える
+        const bb = document.getElementById('stBill');
+        if (bb) bb.textContent = diff > 0 ? '未入金を請求' : '中止を記録';
       }
       function settleGo() {
         const o = {
@@ -14964,6 +14967,7 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
           toast('出来高を入れてください（0でよければそのまま）');
         }
         const cid = ST.caseId;
+        o.noRefund = true; // 返金の記録はアプリで持たない（更新285）
         // 精算の記録の前に確認の板（更新281 三浦さん：押すとデータが動くので）
         if (!ST.confirmed) {
           const diff = o.workDone + o.cost - o.deposit;
@@ -14975,7 +14979,7 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
               ['出来高', yen(o.workDone)],
               ['実費', yen(o.cost)],
               ['お預かり', yen(o.deposit) + (o.deposit !== ST.deposit ? `<small style="color:#B26A00">（記録上 ${yen(ST.deposit)}）</small>` : '')],
-              ['差額', diff > 0 ? '<b style="color:var(--danger)">' + yen(diff) + '</b>（請求書の下書きを開く）' : diff < 0 ? '<b style="color:var(--blue)">▲' + yen(-diff) + '</b>（返金を記録）' : '¥0（中止の記録だけ）']
+              ['差額', diff > 0 ? '<b style="color:var(--danger)">' + yen(diff) + '</b>（請求書の下書きを開く）' : diff < 0 ? '<b style="color:var(--blue)">▲' + yen(-diff) + '</b>（返金は通帳で。アプリには記録しない）' : '¥0（中止の記録と精算書だけ）']
             ],
             () => {
               ST.confirmed = true;
@@ -15008,11 +15012,7 @@ function snapKick(){ if (SNAP_KICK) clearTimeout(SNAP_KICK); SNAP_KICK = setTime
           }
           GSEL = '済・過去';
           renderCases();
-          toast(
-            res.refund
-              ? '中止を記録し、返金 ' + yen(res.refund.amount) + ' を記録しました'
-              : '中止を記録しました（差額なし）'
-          );
+          toast(res.refund ? '中止を記録し、返金 ' + yen(res.refund.amount) + ' を記録しました' : res.diff < 0 ? '中止を記録しました（返金 ' + yen(-res.diff) + ' は通帳で）' : '中止を記録しました（差額なし）');
           if (res.notice && res.notice.url) settleNoticeSend(cid, res); // 精算書PDFをLINEで送る（更新283 案A）
         });
       }
